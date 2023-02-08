@@ -1,0 +1,40 @@
+runtime: go119
+api_version: go1
+Server:
+  # http listening address.
+  # the default value is "0.0.0.0"
+  Host: "0.0.0.0"
+  # http listening port.
+  # the default value is 8080
+  Port: 8080
+  # https cert file path
+  # the default value is ""
+  CertFile: ""
+  # https key file path
+  # the default value is ""
+  KeyFile: ""
+  # http graceful shutdown timeout, unit: s
+  # the default value is 30
+  ShutdownTimeout: 30
+  # http server read timeout, unit: s
+  # the default value is 20
+  ReadTimeout: 20
+  # http server write timeout, unit: s
+  # the default value is 40
+  WriteTimeout: 40
+  # http server idle timeout, unit: s
+  # the default value is 120
+  IdleTimeout: 120
+Log:
+  # configure the path where the logs are written
+  # the default is /var/log/dbagent/proxy.log
+  Path: "/var/log/jingcai/jingcai.log"
+  # sets log level, available value are: false, true
+  # the default value is false
+  Debug: false
+  # log rotate, rotate by time, unit: h
+  # the default value is 24
+  RotateHours: 24
+  # log rotate, keep time, unit: h
+  # the default value is 24*7
+  KeepHours: 168

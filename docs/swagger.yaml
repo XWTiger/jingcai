@@ -1,0 +1,28 @@
+info:
+  contact: {}
+paths:
+  /ping:
+    get:
+      consumes:
+      - application/json
+      description: 状态检测
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+  /super/creep:
+    get:
+      consumes:
+      - application/json
+      description: 爬虫接口
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+swagger: "2.0"
