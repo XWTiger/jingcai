@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gocolly/colly"
 	ilog "jingcai/log"
+	"time"
 )
 
 type Titan struct {
@@ -46,11 +47,13 @@ func (tan Titan) Creep() []Content {
 			Title:   title,
 			Summery: info,
 		}
+		tan.childCreeper(realUrl, content)
 		contentList = append(contentList, *content)
+		time.Sleep(500 * time.Microsecond)
+
 		bytes, _ := json.Marshal(content)
 		log.Info(string(bytes))
-
-		//c.Visit(e.Request.AbsoluteURL(link))
+		//c.Visit(e.Request.AbsoluteURL(url))
 	})
 
 	c.OnRequest(func(r *colly.Request) {
@@ -64,6 +67,7 @@ func (tan Titan) Creep() []Content {
 	c.OnError(func(r *colly.Response, err error) {
 		fmt.Printf("Error %s: %v\n", r.Request.URL, err)
 	})
+
 	c.Visit(baseUrl)
 
 	return contentList
@@ -79,10 +83,23 @@ func (tan Titan) childCreeper(url string, content *Content) {
 		colly.MaxDepth(1),
 	)
 
-	c.OnHTML(".theme-content", func(e *colly.HTMLElement) {
-		link := e.Attr("href")
-		fmt.Printf("Link found: %q -> %s\n", e.Text, link)
-		//c.Visit(e.Request.AbsoluteURL(link))
+	c.OnHTML(".qiuba_Info", func(e *colly.HTMLElement) {
+		time := e.ChildText(".info-box > .relatmatch > .time >.blue")
+		theme := e.ChildText(".info-box > .relatmatch > .time")
+		homename := e.ChildText(".info-box > .match > .homename")
+		guestName := e.ChildText(".info-box > .match > .guestname")
+		winer := e.ChildText(".info-box > .match   .on")
+		var condition = make([]string, 0)
+		condition1 := e.ChildText(".info-box > .match  .Nbg > span:first-child")
+		condition2 := e.ChildText(".info-box > .match  .Nbg > span:last-child")
+		condition = append(condition, condition1, condition2)
+		contxt := e.ChildText("#openContentData")
+		content.Content = contxt
+		content.Match = fmt.Sprintf("%s vs %s", homename, guestName)
+		content.time = time
+		content.league = theme
+		content.Predict = winer
+		content.Conditions = condition
 	})
 
 	c.OnRequest(func(r *colly.Request) {
