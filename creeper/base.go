@@ -12,7 +12,7 @@ type Content struct {
 	Predict    string   //预测谁赢
 	Conditions []string //条件 让球 1.25
 	time       string
-	league     string
+	league     string // 联赛
 }
 type Creeper interface {
 	Creep() []Content
