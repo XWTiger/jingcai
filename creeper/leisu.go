@@ -26,7 +26,7 @@ func (Lei Leisu) Creep() []Content {
 	c.OnHTML(".guide-match > .guide-match-date", func(e *colly.HTMLElement) {
 
 		mTime := e.ChildText(".match-date")
-		e.ForEach("div[guide-match-list]", func(i int, element *colly.HTMLElement) {
+		e.ForEach("div[class=guide-match-list]", func(i int, element *colly.HTMLElement) {
 
 			timeTail := element.ChildText(".match-time-vip > .time")
 			league := element.ChildText(".match-comp > .comp-name")
@@ -36,16 +36,18 @@ func (Lei Leisu) Creep() []Content {
 			guestName := element.ChildText(".match-away > .team-name-ranking > .name")
 			guestRanking := element.ChildText(".match-away > .team-name-ranking > .ranking")
 
-			childUrl := element.ChildAttr(".match-live-news > a", "href")
+			childUrl := element.ChildAttr(".match-live-news > a:nth-of-type(2)", "href")
 
 			if !visited && Lei.checkIfExist(childUrl) {
 				visited = true
 			}
+			match := fmt.Sprintf("%s vs %s", homename, guestName)
 			content := &Content{
-				Type:    "球探",
+				Type:    "雷速",
 				Extra:   "",
 				Url:     childUrl,
-				Title:   fmt.Sprintf("%s vs %s", homename, guestName),
+				Title:   match,
+				Match:   match,
 				Summery: fmt.Sprintf("%s(%s)  %s(%s)  %s", homename, homeRanking, guestName, guestRanking, round),
 				league:  league,
 				time:    fmt.Sprintf("%s %s", mTime, timeTail),
@@ -73,7 +75,8 @@ func (Lei Leisu) Creep() []Content {
 		fmt.Printf("Error %s: %v\n", r.Request.URL, err)
 	})
 
-	c.Visit(baseUrl)
+	log.Info("url =============>", leiBaseUrl)
+	c.Visit(leiBaseUrl)
 
 	return contentList
 }
@@ -89,9 +92,22 @@ func (tan Leisu) childCreeper(url string, content *Content) {
 		colly.MaxDepth(1),
 	)
 
-	c.OnHTML(".guide-match-list", func(e *colly.HTMLElement) {
-		time := e.ChildText(".info-box > .relatmatch > .time >.blue")
-		theme := e.ChildText(".info-box > .relatmatch > .time")
+	c.OnHTML(".content-max", func(e *colly.HTMLElement) {
+		var conditionMaster = ""
+		var conditionGuest = ""
+		e.ForEach(".thead-bottom > .clearfix-row > .highcharts > .text", func(i int, element *colly.HTMLElement) {
+
+			conditionMasterRate := e.ChildText(".txt")
+			conditionName := e.ChildText(".clearfix-row")
+			if i == 1 {
+				conditionMaster = fmt.Sprintf("主：(%s %s%)", conditionName, conditionMasterRate)
+			} else {
+				conditionGuest = fmt.Sprintf("客：(%s %s%)", conditionName, conditionMasterRate)
+			}
+			fmt.Println(i, "")
+		})
+		content.Extra = fmt.Sprintf("%s   %s", conditionMaster, conditionGuest)
+		/*theme := e.ChildText(".info-box > .relatmatch > .time")
 		homename := e.ChildText(".info-box > .match > .homename")
 		guestName := e.ChildText(".info-box > .match > .guestname")
 		winer := e.ChildText(".info-box > .match   .on")
@@ -105,7 +121,8 @@ func (tan Leisu) childCreeper(url string, content *Content) {
 		content.time = time
 		content.league = theme
 		content.Predict = winer
-		content.Conditions = condition
+		content.Conditions = condition*/
+
 	})
 
 	c.OnRequest(func(r *colly.Request) {

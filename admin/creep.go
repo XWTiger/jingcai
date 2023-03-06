@@ -46,8 +46,9 @@ func (cc *CreepCenter) Doing() error {
 // @Success 200 {object} string
 // @Router /super/creep [get]
 func CreepHandler(c *gin.Context) {
-	tianIns := creeper.NewTianInstance()
-	CreepRegistry.registry(tianIns)
+	//tianIns := creeper.NewTianInstance()
+	Leisu := creeper.NewInstance()
+	CreepRegistry.registry(Leisu)
 	CreepRegistry.Doing()
 	c.String(http.StatusOK, "finished creep")
 }
