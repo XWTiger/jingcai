@@ -49,7 +49,7 @@ func (tan Titan) Creep() []Content {
 		}
 		tan.childCreeper(realUrl, content)
 		contentList = append(contentList, *content)
-		time.Sleep(500 * time.Microsecond)
+		time.Sleep(5000 * time.Microsecond)
 
 		bytes, _ := json.Marshal(content)
 		log.Info(string(bytes))

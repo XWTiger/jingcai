@@ -1,6 +1,7 @@
 package creeper
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/gocolly/colly"
@@ -52,9 +53,10 @@ func (Lei Leisu) Creep() []Content {
 				league:  league,
 				time:    fmt.Sprintf("%s %s", mTime, timeTail),
 			}
+			fmt.Println("==============", league, "=================")
+			time.Sleep(5000 * time.Microsecond)
 			Lei.childCreeper(childUrl, content)
 			contentList = append(contentList, *content)
-			time.Sleep(500 * time.Microsecond)
 
 			bytes, _ := json.Marshal(content)
 			log.Info(string(bytes))
@@ -92,21 +94,63 @@ func (tan Leisu) childCreeper(url string, content *Content) {
 		colly.MaxDepth(1),
 	)
 
-	c.OnHTML(".content-max", func(e *colly.HTMLElement) {
+	c.OnHTML(".layout-score-top > .content-max", func(e *colly.HTMLElement) {
 		var conditionMaster = ""
 		var conditionGuest = ""
 		e.ForEach(".thead-bottom > .clearfix-row > .highcharts > .text", func(i int, element *colly.HTMLElement) {
 
-			conditionMasterRate := e.ChildText(".txt")
-			conditionName := e.ChildText(".clearfix-row")
+			conditionMasterRate := element.ChildText(".txt")
+			conditionName := element.ChildText(".clearfix-row")
 			if i == 1 {
-				conditionMaster = fmt.Sprintf("主：(%s %s%)", conditionName, conditionMasterRate)
+				conditionMaster = fmt.Sprintf("主：(%s %s)", conditionName, conditionMasterRate)
 			} else {
-				conditionGuest = fmt.Sprintf("客：(%s %s%)", conditionName, conditionMasterRate)
+				conditionGuest = fmt.Sprintf("客：(%s %s)", conditionName, conditionMasterRate)
 			}
 			fmt.Println(i, "")
 		})
+		var condition = make([]string, 0)
 		content.Extra = fmt.Sprintf("%s   %s", conditionMaster, conditionGuest)
+		//conTitle := e.ChildText(".thead-bottom > .clearfix-row > .center > .title")
+		e.ForEach(".thead-bottom > .clearfix-row > .center > .bar-list > .children", func(i int, element *colly.HTMLElement) {
+			var masterWinScore = ""
+			var masterDrawScore = ""
+			var masterFailedSore = ""
+			var guestWinScore = ""
+			var guestDrawScore = ""
+			var guestFailedSore = ""
+			element.ForEach(".f-s-16 > .float-left > span", func(i int, ele *colly.HTMLElement) {
+				if i == 0 {
+					masterWinScore = ele.Text
+				}
+				if i == 1 {
+					masterDrawScore = ele.Text
+				}
+				if i == 2 {
+					masterFailedSore = ele.Text
+				}
+			})
+			var name = element.ChildText(".f-s-16 > .f-s-14")
+			element.ForEach(".f-s-16 > .float-right > span", func(i int, ele *colly.HTMLElement) {
+				if i == 0 {
+					guestWinScore = ele.Text
+				}
+				if i == 1 {
+					guestDrawScore = ele.Text
+				}
+				if i == 2 {
+					guestFailedSore = ele.Text
+				}
+			})
+			masterRate := element.ChildText(".bar > .num1")
+			guesetRate := element.ChildText(".bar > .num2")
+			condition1 := fmt.Sprintf("%s \n 主: (胜率: %s  胜%s, 平%s, 负%s ) \n 客: (胜率: %s 胜%s,平%s,负%s )", name, masterRate, masterWinScore, masterDrawScore, masterFailedSore, guesetRate, guestWinScore, guestDrawScore, guestFailedSore)
+			condition = append(condition, condition1)
+		})
+
+		condition3 := e.ChildText(".thead-bottom > .clearfix-row > .clearfix-row  > .cols-table")
+		condition = append(condition, condition3)
+		content.Conditions = condition
+
 		/*theme := e.ChildText(".info-box > .relatmatch > .time")
 		homename := e.ChildText(".info-box > .match > .homename")
 		guestName := e.ChildText(".info-box > .match > .guestname")
@@ -125,6 +169,53 @@ func (tan Leisu) childCreeper(url string, content *Content) {
 
 	})
 
+	c.OnHTML("#oddvue > .content-max > .clearfix-row > .information", func(e *colly.HTMLElement) {
+		name := e.ChildText(".team-item:nth-child(1) > .team > .name")
+		title := e.ChildText(".team-item:nth-child(1) > .good > .title")
+		buf := new(bytes.Buffer)
+		e.ForEach(".team-item:nth-child(1) > .good > .list > li", func(i int, ele *colly.HTMLElement) {
+			buf.WriteString(fmt.Sprintf("%d. %s \n", i, ele.Text))
+		})
+		favora := buf.String() //有利情报
+		harmfulTitle := e.ChildText(".team-item:nth-child(1) > .harmful > .title")
+		buf2 := new(bytes.Buffer)
+		e.ForEach(".team-item:nth-child(1) > .harmful > .list > li", func(i int, ele *colly.HTMLElement) {
+			buf2.WriteString(fmt.Sprintf("%d. %s \n", i, ele.Text))
+		})
+		harmful := buf2.String()
+		favoraContent := fmt.Sprintf("%s: \n %s: \n %s: \n %s: \n %s \n", name, title, favora, harmfulTitle, harmful)
+		fmt.Println(favoraContent)
+
+		cname := e.ChildText(".common-item > .middle > .name")
+		ctitle := e.ChildText(".common-item > .middle > .title")
+		cbuf := new(bytes.Buffer)
+		e.ForEach(".common-item > .good > .list > li", func(i int, ele *colly.HTMLElement) {
+			cbuf.WriteString(fmt.Sprintf("%d. %s \n", i, ele.Text))
+		})
+		cfavora := cbuf.String() //有利情报
+
+		cfavoraContent := fmt.Sprintf("%s: \n %s: \n %s: \n ", cname, ctitle, cfavora)
+		fmt.Println(cfavoraContent)
+
+		gname := e.ChildText(".team-item:nth-last-child(1) > .team > .name")
+		gtitle := e.ChildText(".team-item:nth-last-child(1) > .good > .title")
+		gbuf := new(bytes.Buffer)
+		e.ForEach(".team-item:nth-last-child(1) > .good > .list > li", func(i int, ele *colly.HTMLElement) {
+			gbuf.WriteString(fmt.Sprintf("%d. %s \n", i, ele.Text))
+		})
+		gfavora := gbuf.String() //有利情报
+		gharmfulTitle := e.ChildText(".team-item:nth-last-child(1) > .harmful > .title")
+		gbuf2 := new(bytes.Buffer)
+		e.ForEach(".team-item:nth-last-child(1) > .harmful > .list > li", func(i int, ele *colly.HTMLElement) {
+			gbuf2.WriteString(fmt.Sprintf("%d. %s \n", i, ele.Text))
+		})
+		gharmful := gbuf2.String()
+		gfavoraContent := fmt.Sprintf("%s: \n %s: \n %s: \n %s: \n %s \n", gname, gtitle, gfavora, gharmfulTitle, gharmful)
+		fmt.Println(gfavoraContent)
+		content.Content = fmt.Sprintf("%s \n %s \n %s \n", favoraContent, cfavoraContent, gfavoraContent)
+
+	})
+
 	c.OnRequest(func(r *colly.Request) {
 		fmt.Println("Visiting", r.URL.String())
 	})
@@ -136,6 +227,7 @@ func (tan Leisu) childCreeper(url string, content *Content) {
 	c.OnError(func(r *colly.Response, err error) {
 		fmt.Printf("Error %s: %v\n", r.Request.URL, err)
 	})
+	time.Sleep(500 * time.Microsecond)
 	c.Visit(url)
 }
 func (Lei Leisu) checkIfExist(url string) bool {
