@@ -5,6 +5,7 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"jingcai/admin"
+	"jingcai/bbs"
 	"net/http"
 )
 
@@ -29,6 +30,12 @@ func BindRouters(r *gin.Engine) {
 	s := r.Group("/super")
 	{
 		s.GET("/creep", admin.CreepHandler)
+	}
+
+	bbsGroup := r.Group("/bbs")
+	{
+		bbsGroup.GET("/list", bbs.ListHandler)
+		bbsGroup.POST("/commit", bbs.CommitHandler)
 	}
 
 }

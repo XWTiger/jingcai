@@ -1,6 +1,134 @@
+definitions:
+  bbs.BBS:
+    properties:
+      bbsContent:
+        $ref: '#/definitions/creeper.Content'
+        description: 论坛信息
+      userInfo:
+        $ref: '#/definitions/user.User'
+        description: 用户信息
+    type: object
+  common.BaseResponse:
+    properties:
+      code:
+        description: 1 成功 0 失败
+        type: integer
+      content:
+        description: 'in: body'
+      message:
+        description: 错误信息
+        type: string
+    type: object
+  creeper.Content:
+    properties:
+      conditions:
+        description: 条件 让球 1.25
+        items:
+          type: string
+        type: array
+      content:
+        type: string
+      createdAt:
+        type: string
+      deletedAt:
+        type: string
+      extra:
+        description: 额外的一些信息
+        type: string
+      id:
+        type: integer
+      imageUrl:
+        items:
+          type: string
+        type: array
+      match:
+        description: 比赛
+        type: string
+      predict:
+        description: 预测谁赢
+        type: string
+      summery:
+        type: string
+      title:
+        type: string
+      type:
+        description: 网站名称
+        example: 雷速
+        type: string
+      updatedAt:
+        type: string
+      url:
+        type: string
+      userID:
+        type: integer
+    type: object
+  user.User:
+    properties:
+      createdAt:
+        type: string
+      deletedAt:
+        type: string
+      id:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
 info:
   contact: {}
 paths:
+  /bbs/commit:
+    post:
+      consumes:
+      - application/json
+      description: 提交论坛的帖子
+      parameters:
+      - description: 提交对象
+        in: body
+        name: param
+        schema:
+          $ref: '#/definitions/bbs.BBS'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+  /bbs/list:
+    get:
+      consumes:
+      - application/json
+      description: 提交论坛的帖子
+      parameters:
+      - description: 日期 unix time
+        in: query
+        name: date
+        type: integer
+      - description: 页码
+        in: query
+        name: pageNo
+        required: true
+        type: integer
+      - description: 每页条数
+        in: query
+        name: pageSize
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
   /ping:
     get:
       consumes:

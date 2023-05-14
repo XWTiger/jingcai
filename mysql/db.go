@@ -1,16 +1,27 @@
 package mysql
 
 import (
-	"github.com/jinzhu/gorm"
+	"database/sql"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 	ilog "jingcai/log"
 )
 
-var db gorm.DB
+var DB *gorm.DB
+var SqlDB *sql.DB
 var log = ilog.Logger
 
-func initDB() {
-	db, err := gorm.Open("mysql", "root:root@(127.0.0.1:3306)/db1?charset=utf8mb4&parseTime=True&loc=Local")
+func InitDB() error {
+	dbIns, err := gorm.Open(mysql.Open("tiger:123456@(127.0.0.1:3306)/jingcai?charset=utf8mb4&parseTime=True&loc=Local"), &gorm.Config{})
 	if err != nil {
 		log.Error("mysql connect failed", err)
+		return err
 	}
+	sqlDB, _ := dbIns.DB()
+	sqlDB.SetMaxIdleConns(10)
+	sqlDB.SetMaxOpenConns(2048)
+	DB = dbIns
+	SqlDB = sqlDB
+
+	return nil
 }

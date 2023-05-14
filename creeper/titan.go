@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"github.com/gocolly/colly"
 	ilog "jingcai/log"
+	"jingcai/mysql"
 	"time"
 )
 
 type Titan struct {
 }
 
-var visited = false
 var log = ilog.Logger
 var baseUrl = "http://ba2.titan007.com/"
 
@@ -37,9 +37,6 @@ func (tan Titan) Creep() []Content {
 		if info == "" {
 			return
 		}
-		if !visited && tan.checkIfExist(realUrl) {
-			visited = true
-		}
 		content := &Content{
 			Type:    "球探",
 			Extra:   predict,
@@ -47,12 +44,19 @@ func (tan Titan) Creep() []Content {
 			Title:   title,
 			Summery: info,
 		}
-		tan.childCreeper(realUrl, content)
-		contentList = append(contentList, *content)
-		time.Sleep(5000 * time.Microsecond)
+		content.CreatedAt = time.Now()
+		content.UpdatedAt = time.Now()
+		if !tan.checkIfExist(realUrl) {
+			tan.childCreeper(realUrl, content)
+			contentList = append(contentList, *content)
+			time.Sleep(5000 * time.Microsecond)
 
-		bytes, _ := json.Marshal(content)
-		log.Info(string(bytes))
+			bytes, _ := json.Marshal(content)
+			log.Info(string(bytes))
+		} else {
+			log.Info("=======>", realUrl, " 已经被爬过了！")
+		}
+
 		//c.Visit(e.Request.AbsoluteURL(url))
 	})
 
@@ -73,8 +77,18 @@ func (tan Titan) Creep() []Content {
 	return contentList
 }
 
+/*
+*
+
+	false 还没有爬过
+*/
 func (tan Titan) checkIfExist(url string) bool {
-	return false
+	var content Content
+	mysql.DB.AutoMigrate(&content)
+	if err := mysql.DB.First(&content, "url=?", url).Error; err != nil {
+		return false
+	}
+	return true
 }
 
 func (tan Titan) childCreeper(url string, content *Content) {

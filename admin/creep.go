@@ -3,6 +3,7 @@ package admin
 import (
 	"github.com/gin-gonic/gin"
 	"jingcai/creeper"
+	"jingcai/mysql"
 	"net/http"
 )
 import ilog "jingcai/log"
@@ -28,13 +29,26 @@ func (cc *CreepCenter) registry(member creeper.Creeper) error {
 	log.Info(len(cc.Creepers))
 	return nil
 }
-
+func initTables() {
+	mysql.DB.AutoMigrate(&creeper.Content{})
+	mysql.DB.AutoMigrate(&creeper.Condition{})
+}
 func (cc *CreepCenter) Doing() error {
+	initTables()
 	for k, c := range cc.Creepers {
 		log.Info("url=", k)
 		content := c.Creep()
+		mysql.DB.Create(&content)
 		for _, ctx := range content {
 			log.Info("content: ", ctx.Content, "url: ", ctx.Url)
+			if len(ctx.Conditions) > 0 {
+				for _, cond := range ctx.Conditions {
+					mysql.DB.Create(&creeper.Condition{
+						ParentId:  ctx.ID,
+						Condition: cond,
+					})
+				}
+			}
 		}
 	}
 	return nil
@@ -46,7 +60,8 @@ func (cc *CreepCenter) Doing() error {
 // @Success 200 {object} string
 // @Router /super/creep [get]
 func CreepHandler(c *gin.Context) {
-	//tianIns := creeper.NewTianInstance()
+	tianIns := creeper.NewTianInstance()
+	CreepRegistry.registry(tianIns)
 	Leisu := creeper.NewInstance()
 	CreepRegistry.registry(Leisu)
 	CreepRegistry.Doing()
