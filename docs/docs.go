@@ -25,6 +25,7 @@ const docTemplate = `{
                 "produces": [
                     "application/json"
                 ],
+                "summary": "提交帖子",
                 "parameters": [
                     {
                         "description": "提交对象",
@@ -60,6 +61,7 @@ const docTemplate = `{
                 "produces": [
                     "application/json"
                 ],
+                "summary": "查询全部贴子",
                 "parameters": [
                     {
                         "type": "integer",
@@ -126,6 +128,7 @@ const docTemplate = `{
                 "produces": [
                     "application/json"
                 ],
+                "summary": "爬虫接口",
                 "responses": {
                     "200": {
                         "description": "OK",

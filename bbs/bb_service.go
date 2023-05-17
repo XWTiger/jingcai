@@ -23,6 +23,7 @@ type BBS struct {
 
 var log = ilog.Logger
 
+// @Summary 提交帖子
 // @Description 提交论坛的帖子
 // @Accept json
 // @Produce json
@@ -54,6 +55,7 @@ func CommitHandler(c *gin.Context) {
 
 }
 
+// @Summary 查询全部贴子
 // @Description 提交论坛的帖子
 // @Accept json
 // @Produce json
@@ -70,7 +72,6 @@ func ListHandler(c *gin.Context) {
 	date := c.Query("date")
 
 	if pageNo != "" && pageSize != "" {
-		var content creeper.Content
 		pageN, _ := strconv.Atoi(pageNo)
 		pageS, _ := strconv.Atoi(pageSize)
 		if date != "" {
@@ -78,13 +79,13 @@ func ListHandler(c *gin.Context) {
 			intValue, _ := strconv.Atoi(date)
 			time := time.Unix(int64(intValue), 0)
 			year, month, day := time.Date()
-			var dateStart = fmt.Sprintf("%s-%s-%s 00:00:00", year, month, day)
-			var dateEnd = fmt.Sprintf("%s-%s-%s 23:59:59", year, month, day)
+			var dateStart = fmt.Sprintf("%d-%d-%d 00:00:00", year, int(month), day)
+			var dateEnd = fmt.Sprintf("%d-%d-%d 23:59:59", year, int(month), day)
 
 			var total int64
 			mysql.DB.Model(&creeper.Content{}).Where("created_at BETWEEN ? AND ? ", dateStart, dateEnd).Count(&total)
 			var resultList []creeper.Content
-			mysql.DB.Select(&content, "created_at BETWEEN ? AND ?  limit ?,?", dateStart, dateEnd, (pageN-1)*pageS, pageN*pageS).Find(&resultList)
+			mysql.DB.Model(&creeper.Content{}).Where("created_at BETWEEN ? AND ? ", dateStart, dateEnd).Offset((pageN - 1) * pageS).Limit(pageS).Find(&resultList)
 
 			c.JSON(http.StatusOK, common.Success(common.PageCL{
 				PageNo:   pageN,
@@ -94,12 +95,12 @@ func ListHandler(c *gin.Context) {
 			}))
 		} else {
 			year, month, day := time.Now().Date()
-			var dateStart = fmt.Sprintf("%s-%s-%s 00:00:00", year, int(month), day)
-			var dateEnd = fmt.Sprintf("%s-%s-%s 23:59:59", year, int(month), day)
+			var dateStart = fmt.Sprintf("%d-%d-%d 00:00:00", year, int(month), day)
+			var dateEnd = fmt.Sprintf("%d-%d-%d 23:59:59", year, int(month), day)
 			var total int64
 			mysql.DB.Model(&creeper.Content{}).Where("created_at BETWEEN ? AND ? ", dateStart, dateEnd).Count(&total)
 			var resultList []creeper.Content
-			mysql.DB.Select(&content, "created_at BETWEEN ? AND ?  limit ?,?", dateStart, dateEnd, (pageN-1)*pageS, pageN*pageS).Find(&resultList)
+			mysql.DB.Model(&creeper.Content{}).Where("created_at BETWEEN ? AND ? ", dateStart, dateEnd).Offset((pageN - 1) * pageS).Limit(pageS).Find(&resultList)
 			c.JSON(http.StatusOK, common.Success(common.PageCL{
 				PageNo:   pageN,
 				PageSize: pageS,

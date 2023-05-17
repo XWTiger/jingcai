@@ -54,6 +54,7 @@ func (cc *CreepCenter) Doing() error {
 	return nil
 }
 
+// @Summary 爬虫接口
 // @Description 爬虫接口
 // @Accept json
 // @Produce json

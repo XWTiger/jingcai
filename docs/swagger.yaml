@@ -98,6 +98,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/common.BaseResponse'
+      summary: 提交帖子
   /bbs/list:
     get:
       consumes:
@@ -129,6 +130,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/common.BaseResponse'
+      summary: 查询全部贴子
   /ping:
     get:
       consumes:
@@ -153,4 +155,5 @@ paths:
           description: OK
           schema:
             type: string
+      summary: 爬虫接口
 swagger: "2.0"
