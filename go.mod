@@ -3,10 +3,13 @@ module jingcai
 go 1.19
 
 require (
+	github.com/Lyafei/go-rsa v0.0.0-20200519074919-6694e0e47bb8
 	github.com/gin-gonic/gin v1.8.2
 	github.com/gocolly/colly v1.2.0
 	github.com/jinzhu/gorm v1.9.16
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
+	github.com/muesli/cache2go v0.0.0-20221011235721-518229cd8021
+	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/swaggo/files v1.0.0
 	github.com/swaggo/gin-swagger v1.5.3
@@ -48,6 +51,7 @@ require (
 	github.com/mattn/go-isatty v0.0.16 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
+	github.com/pascaldekloe/jwt v1.12.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect

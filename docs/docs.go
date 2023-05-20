@@ -119,6 +119,32 @@ const docTemplate = `{
                 }
             }
         },
+        "/salt": {
+            "get": {
+                "description": "公钥 默认10分钟过期",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "获取加密的公钥",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/super/creep": {
             "get": {
                 "description": "爬虫接口",
@@ -134,6 +160,80 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/user": {
+            "post": {
+                "description": "创建用户",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "创建用户",
+                "parameters": [
+                    {
+                        "description": "用户对象",
+                        "name": "param",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/user.UserVO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/login": {
+            "post": {
+                "description": "公钥放在头里 salt， 密码：需要和公钥rsa 加密 账号为手机号",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "登录接口",
+                "parameters": [
+                    {
+                        "description": "用户对象",
+                        "name": "param",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/user.UserVO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -244,7 +344,42 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
+                "name": {
+                    "description": "昵称",
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "role": {
+                    "description": "\"enum: Admin,User\"",
+                    "type": "string"
+                },
+                "salt": {
+                    "description": "盐",
+                    "type": "string"
+                },
+                "secret": {
+                    "description": "密码",
+                    "type": "string"
+                },
                 "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "user.UserVO": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "description": "昵称",
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "secret": {
+                    "description": "密码",
                     "type": "string"
                 }
             }

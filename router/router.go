@@ -1,11 +1,14 @@
 package router
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"jingcai/admin"
 	"jingcai/bbs"
+	"jingcai/common"
+	"jingcai/user"
 	"net/http"
 )
 
@@ -27,12 +30,19 @@ import (
 func BindRouters(r *gin.Engine) {
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	r.GET("/ping", pong)
+	r.GET("/salt", common.Salt)
+	userGroup := r.Group("/user")
+	{
+		userGroup.POST("", user.UserCreateHandler)
+		userGroup.POST("/login", user.Login)
+	}
+
+	r.Use(user.Authorize())
+	bbsGroup := r.Group("/bbs")
 	s := r.Group("/super")
 	{
 		s.GET("/creep", admin.CreepHandler)
 	}
-
-	bbsGroup := r.Group("/bbs")
 	{
 		bbsGroup.GET("/list", bbs.ListHandler)
 		bbsGroup.POST("/commit", bbs.CommitHandler)
@@ -46,5 +56,8 @@ func BindRouters(r *gin.Engine) {
 // @Success 200 {object} string
 // @Router /ping [get]
 func pong(c *gin.Context) {
+	pwd, _ := common.DePwdCode("rBhpl45Z3NpBxYhMuAuIqA==", []byte("c5b55acf-b0d4-43"))
+	fmt.Println(string(pwd))
 	c.String(http.StatusOK, "pong")
+
 }

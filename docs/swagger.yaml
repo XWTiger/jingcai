@@ -70,7 +70,32 @@ definitions:
         type: string
       id:
         type: integer
+      name:
+        description: 昵称
+        type: string
+      phone:
+        type: string
+      role:
+        description: '"enum: Admin,User"'
+        type: string
+      salt:
+        description: 盐
+        type: string
+      secret:
+        description: 密码
+        type: string
       updatedAt:
+        type: string
+    type: object
+  user.UserVO:
+    properties:
+      name:
+        description: 昵称
+        type: string
+      phone:
+        type: string
+      secret:
+        description: 密码
         type: string
     type: object
 info:
@@ -143,6 +168,23 @@ paths:
           description: OK
           schema:
             type: string
+  /salt:
+    get:
+      consumes:
+      - application/json
+      description: 公钥 默认10分钟过期
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 获取加密的公钥
   /super/creep:
     get:
       consumes:
@@ -156,4 +198,52 @@ paths:
           schema:
             type: string
       summary: 爬虫接口
+  /user:
+    post:
+      consumes:
+      - application/json
+      description: 创建用户
+      parameters:
+      - description: 用户对象
+        in: body
+        name: param
+        required: true
+        schema:
+          $ref: '#/definitions/user.UserVO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 创建用户
+  /user/login:
+    post:
+      consumes:
+      - application/json
+      description: 公钥放在头里 salt， 密码：需要和公钥rsa 加密 账号为手机号
+      parameters:
+      - description: 用户对象
+        in: body
+        name: param
+        required: true
+        schema:
+          $ref: '#/definitions/user.UserVO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 登录接口
 swagger: "2.0"
