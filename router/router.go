@@ -8,6 +8,7 @@ import (
 	"jingcai/admin"
 	"jingcai/bbs"
 	"jingcai/common"
+	"jingcai/files"
 	"jingcai/user"
 	"net/http"
 )
@@ -35,18 +36,27 @@ func BindRouters(r *gin.Engine) {
 	{
 		userGroup.POST("", user.UserCreateHandler)
 		userGroup.POST("/login", user.Login)
+		userGroup.POST("/logout", user.Logout)
 	}
 
 	r.Use(user.Authorize())
 	bbsGroup := r.Group("/bbs")
+	r.POST("/user/complain", user.UserComplain)
+	r.GET("/user/info", user.GetUserInfo)
+	r.POST("/user/info", user.UpdateUser)
 	s := r.Group("/super")
 	{
 		s.GET("/creep", admin.CreepHandler)
+		s.GET("/complains", admin.ListComplain)
 	}
 	{
 		bbsGroup.GET("/list", bbs.ListHandler)
 		bbsGroup.POST("/commit", bbs.CommitHandler)
 	}
+
+	//文件上传下载
+	r.POST("/upload", files.Upload)
+	r.GET("/download", files.DownLoad)
 
 }
 

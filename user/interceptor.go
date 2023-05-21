@@ -9,6 +9,9 @@ import (
 
 var WHITE_LIST = [...]string{"sss", "sdsaf"}
 
+const ROLE_USER = "User"
+const ROLE_ADMIN = "Admin"
+
 func Authorize() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
@@ -33,11 +36,12 @@ func Authorize() gin.HandlerFunc {
 		} else {
 			// 验证通过，会继续访问下一个中间件
 			user := res.Data().(User)
-			if strings.HasPrefix(c.FullPath(), "/super") && strings.Compare(user.Role, "user") == 0 {
+			if strings.HasPrefix(c.FullPath(), "/super") && strings.Compare(user.Role, ROLE_USER) == 0 {
 				common.FailedAuthReturn(c, "用户无权访问该接口")
 				c.Abort()
 				return
 			}
+			c.Set("userInfo", user)
 			c.Next()
 		}
 	}

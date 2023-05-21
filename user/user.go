@@ -33,6 +33,12 @@ type User struct {
 	//盐
 	Salt string
 	Role string //"enum: Admin,User"
+	//微信号
+	Wechat string
+	//支付宝号
+	Ali string
+	//余额
+	Score float32
 }
 
 // 用户对象
@@ -44,6 +50,88 @@ type UserVO struct {
 	Secret string `minLength:"6" maxLength:"16"`
 }
 
+// token 对象
+type TokenVO struct {
+	Token string
+}
+
+type UserDTO struct {
+	Phone string
+	//昵称
+	Name string
+
+	Role string //"enum: Admin,User"
+	//微信号
+	Wechat string
+	//支付宝号
+	Ali string
+
+	//余额
+	Score float32
+}
+
+// @Summary 查询用户信息
+// @Description 查询用户信息
+// @Accept json
+// @Produce json
+// @Success 200 {object} common.BaseResponse
+// @failure 500 {object} common.BaseResponse
+// @Router /user/info [get]
+func GetUserInfo(c *gin.Context) {
+	var user = getUserInfo(c)
+	var userPO User
+	var param = User{}
+	param.ID = user.ID
+
+	if mysql.DB.Model(param).First(&userPO).Error != nil {
+		common.FailedReturn(c, "查询信息失败")
+	}
+	var userDTO = UserDTO{
+		Phone:  userPO.Phone,
+		Name:   userPO.Name,
+		Role:   userPO.Role,
+		Wechat: userPO.Wechat,
+		Ali:    userPO.Ali,
+		Score:  userPO.Score,
+	}
+	common.SuccessReturn(c, userDTO)
+}
+
+// @Summary 更新用户信息
+// @Description 更新用户信息
+// @Accept json
+// @Produce json
+// @Success 200 {object} common.BaseResponse
+// @failure 500 {object} common.BaseResponse
+// @param param body UserDTO true "用户对象, socre 可以不传"
+// @Router /user/info [post]
+func UpdateUser(c *gin.Context) {
+	var user = getUserInfo(c)
+	var userDTO UserDTO
+	var param = User{
+		Model: gorm.Model{
+			ID: user.ID,
+		},
+	}
+
+	var realUsr User
+	c.BindJSON(&userDTO)
+	var update = User{
+		Phone:  userDTO.Phone,
+		Name:   userDTO.Name,
+		Role:   userDTO.Role,
+		Wechat: userDTO.Wechat,
+		Ali:    userDTO.Ali,
+	}
+	if mysql.DB.Model(param).First(&realUsr).Error != nil {
+		common.FailedReturn(c, "查不到当前用户")
+	}
+	if err := mysql.DB.Model(param).Updates(&update).Error; err != nil {
+		log.Error("update user failed, id: ", user.ID, " err: ", err)
+		common.FailedReturn(c, "更新用户失败")
+	}
+}
+
 func CreateUser(user UserVO) error {
 	var userPo User = User{
 		Phone:  user.Phone,
@@ -51,6 +139,7 @@ func CreateUser(user UserVO) error {
 		Name:   user.Name,
 		Salt:   uuid.NewV4().String()[0:16],
 		Role:   "User",
+		Score:  0.00,
 	}
 
 	pwd, err := common.EnPwdCode([]byte(user.Secret), []byte(userPo.Salt))
@@ -169,4 +258,64 @@ func Login(c *gin.Context) {
 		userCahe.Add(base64.StdEncoding.EncodeToString(token), TOKEN_TIME_OUT, user)
 		common.SuccessReturn(c, token)
 	}
+}
+
+// 投诉对象
+type Complain struct {
+	gorm.Model
+	//投诉类型
+	Type string
+	//投诉详情
+	Content string
+	//图片
+	Image string
+	//联系电话
+	Phone string
+	//建议
+	Proposal string
+	UserId   uint
+	UserName string
+	//修改备注
+	Comment string
+}
+
+// @Summary 注销登录
+// @Description 注销当前用户
+// @Accept json
+// @Produce json
+// @Success 200 {object} common.BaseResponse
+// @failure 500 {object} common.BaseResponse
+// @param param body TokenVO true "token对象"
+// @Router /user/logout [post]
+func Logout(c *gin.Context) {
+	var tokenVO TokenVO
+	c.BindJSON(&tokenVO)
+	if tokenVO.Token != "" {
+		userCahe.Delete(tokenVO.Token)
+	}
+	common.SuccessReturn(c, "注销成功")
+}
+
+func getUserInfo(c *gin.Context) User {
+	user, _ := c.Get("userInfo")
+	return user.(User)
+}
+
+// @Summary 投诉
+// @Description 投诉
+// @Accept json
+// @Produce json
+// @Success 200 {object} common.BaseResponse
+// @failure 500 {object} common.BaseResponse
+// @param param body Complain true "投诉对象"
+// @Router /user/complain [post]
+func UserComplain(c *gin.Context) {
+	var user = getUserInfo(c)
+	var complain Complain
+	c.BindJSON(&complain)
+	complain.UserId = user.ID
+	complain.UserName = user.Name
+	mysql.DB.AutoMigrate(&complain)
+	mysql.DB.Create(&complain)
+	common.SuccessReturn(c, "提交成功")
 }

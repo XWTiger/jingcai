@@ -62,8 +62,49 @@ definitions:
       userID:
         type: integer
     type: object
+  user.Complain:
+    properties:
+      comment:
+        description: 修改备注
+        type: string
+      content:
+        description: 投诉详情
+        type: string
+      createdAt:
+        type: string
+      deletedAt:
+        type: string
+      id:
+        type: integer
+      image:
+        description: 图片
+        type: string
+      phone:
+        description: 联系电话
+        type: string
+      proposal:
+        description: 建议
+        type: string
+      type:
+        description: 投诉类型
+        type: string
+      updatedAt:
+        type: string
+      userId:
+        type: integer
+      userName:
+        type: string
+    type: object
+  user.TokenVO:
+    properties:
+      token:
+        type: string
+    type: object
   user.User:
     properties:
+      ali:
+        description: 支付宝号
+        type: string
       createdAt:
         type: string
       deletedAt:
@@ -81,21 +122,53 @@ definitions:
       salt:
         description: 盐
         type: string
+      score:
+        description: 余额
+        type: number
       secret:
         description: 密码
         type: string
       updatedAt:
+        type: string
+      wechat:
+        description: 微信号
+        type: string
+    type: object
+  user.UserDTO:
+    properties:
+      ali:
+        description: 支付宝号
+        type: string
+      name:
+        description: 昵称
+        type: string
+      phone:
+        type: string
+      role:
+        description: '"enum: Admin,User"'
+        type: string
+      score:
+        description: 余额
+        type: number
+      wechat:
+        description: 微信号
         type: string
     type: object
   user.UserVO:
     properties:
       name:
         description: 昵称
+        maxLength: 16
+        minLength: 4
         type: string
       phone:
+        maxLength: 11
+        minLength: 11
         type: string
       secret:
         description: 密码
+        maxLength: 16
+        minLength: 6
         type: string
     type: object
 info:
@@ -156,6 +229,29 @@ paths:
           schema:
             $ref: '#/definitions/common.BaseResponse'
       summary: 查询全部贴子
+  /download:
+    get:
+      consumes:
+      - application/json
+      description: 下载文件/图片
+      parameters:
+      - description: 文件名称
+        in: query
+        name: file
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 下载文件/图片
   /ping:
     get:
       consumes:
@@ -185,6 +281,34 @@ paths:
           schema:
             $ref: '#/definitions/common.BaseResponse'
       summary: 获取加密的公钥
+  /super/complains:
+    get:
+      consumes:
+      - application/json
+      description: 查看投诉
+      parameters:
+      - description: 页码
+        in: query
+        name: pageNo
+        required: true
+        type: integer
+      - description: 每页条数
+        in: query
+        name: pageSize
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 查看投诉
   /super/creep:
     get:
       consumes:
@@ -198,6 +322,33 @@ paths:
           schema:
             type: string
       summary: 爬虫接口
+  /upload:
+    post:
+      consumes:
+      - application/json
+      description: 上传文件或者图片
+      parameters:
+      - description: BBS,USER,HEADER 或则null
+        in: query
+        name: type
+        type: string
+      - description: 文件
+        in: formData
+        name: files
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 上传文件或者图片
   /user:
     post:
       consumes:
@@ -222,6 +373,70 @@ paths:
           schema:
             $ref: '#/definitions/common.BaseResponse'
       summary: 创建用户
+  /user/complain:
+    post:
+      consumes:
+      - application/json
+      description: 投诉
+      parameters:
+      - description: 投诉对象
+        in: body
+        name: param
+        required: true
+        schema:
+          $ref: '#/definitions/user.Complain'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 投诉
+  /user/info:
+    get:
+      consumes:
+      - application/json
+      description: 查询用户信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 查询用户信息
+    post:
+      consumes:
+      - application/json
+      description: 更新用户信息
+      parameters:
+      - description: 用户对象, socre 可以不传
+        in: body
+        name: param
+        required: true
+        schema:
+          $ref: '#/definitions/user.UserDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 更新用户信息
   /user/login:
     post:
       consumes:
@@ -246,4 +461,28 @@ paths:
           schema:
             $ref: '#/definitions/common.BaseResponse'
       summary: 登录接口
+  /user/logout:
+    post:
+      consumes:
+      - application/json
+      description: 注销当前用户
+      parameters:
+      - description: token对象
+        in: body
+        name: param
+        required: true
+        schema:
+          $ref: '#/definitions/user.TokenVO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 注销登录
 swagger: "2.0"
