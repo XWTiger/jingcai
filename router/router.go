@@ -6,6 +6,7 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"jingcai/admin"
+	"jingcai/advise"
 	"jingcai/bbs"
 	"jingcai/common"
 	"jingcai/files"
@@ -32,6 +33,7 @@ func BindRouters(r *gin.Engine) {
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	r.GET("/ping", pong)
 	r.GET("/salt", common.Salt)
+	r.GET("/notify", advise.Query)
 	userGroup := r.Group("/user")
 	{
 		userGroup.POST("", user.UserCreateHandler)
@@ -48,6 +50,7 @@ func BindRouters(r *gin.Engine) {
 	{
 		s.GET("/creep", admin.CreepHandler)
 		s.GET("/complains", admin.ListComplain)
+		s.POST("/notify", advise.Create)
 	}
 	{
 		bbsGroup.GET("/list", bbs.ListHandler)

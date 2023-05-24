@@ -135,6 +135,32 @@ const docTemplate = `{
                 }
             }
         },
+        "/notify": {
+            "get": {
+                "description": "查询通告",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "查询通告",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/ping": {
             "get": {
                 "description": "状态检测",
@@ -237,6 +263,42 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/super/notify": {
+            "post": {
+                "description": "查询通告",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "查询通告",
+                "parameters": [
+                    {
+                        "description": "通告对象",
+                        "name": "param",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/advise.NotificationPO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -494,6 +556,32 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "advise.NotificationPO": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "description": "通知内容，富文本",
+                    "type": "string",
+                    "minLength": 2
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "deletedAt": {
+                    "type": "string"
+                },
+                "expired": {
+                    "description": "过期时间",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
         "bbs.BBS": {
             "type": "object",
             "properties": {

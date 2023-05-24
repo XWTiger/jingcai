@@ -1,4 +1,22 @@
 definitions:
+  advise.NotificationPO:
+    properties:
+      content:
+        description: 通知内容，富文本
+        minLength: 2
+        type: string
+      createdAt:
+        type: string
+      deletedAt:
+        type: string
+      expired:
+        description: 过期时间
+        type: string
+      id:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
   bbs.BBS:
     properties:
       bbsContent:
@@ -252,6 +270,23 @@ paths:
           schema:
             $ref: '#/definitions/common.BaseResponse'
       summary: 下载文件/图片
+  /notify:
+    get:
+      consumes:
+      - application/json
+      description: 查询通告
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 查询通告
   /ping:
     get:
       consumes:
@@ -322,6 +357,29 @@ paths:
           schema:
             type: string
       summary: 爬虫接口
+  /super/notify:
+    post:
+      consumes:
+      - application/json
+      description: 查询通告
+      parameters:
+      - description: 通告对象
+        in: body
+        name: param
+        schema:
+          $ref: '#/definitions/advise.NotificationPO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 查询通告
   /upload:
     post:
       consumes:
