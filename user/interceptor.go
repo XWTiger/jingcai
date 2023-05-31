@@ -11,6 +11,7 @@ var WHITE_LIST = [...]string{"sss", "sdsaf"}
 
 const ROLE_USER = "User"
 const ROLE_ADMIN = "Admin"
+const USER_INFO = "userInfo"
 
 func Authorize() gin.HandlerFunc {
 	return func(c *gin.Context) {

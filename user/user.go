@@ -301,6 +301,11 @@ func getUserInfo(c *gin.Context) User {
 	return user.(User)
 }
 
+func FetUserInfo(c *gin.Context) User {
+	user, _ := c.Get("userInfo")
+	return user.(User)
+}
+
 // @Summary 投诉
 // @Description 投诉
 // @Accept json

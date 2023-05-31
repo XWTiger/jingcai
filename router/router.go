@@ -8,8 +8,10 @@ import (
 	"jingcai/admin"
 	"jingcai/advise"
 	"jingcai/bbs"
+	"jingcai/cache"
 	"jingcai/common"
 	"jingcai/files"
+	"jingcai/order"
 	"jingcai/user"
 	"net/http"
 )
@@ -34,6 +36,7 @@ func BindRouters(r *gin.Engine) {
 	r.GET("/ping", pong)
 	r.GET("/salt", common.Salt)
 	r.GET("/notify", advise.Query)
+	r.POST("/cache", cache.Set)
 	userGroup := r.Group("/user")
 	{
 		userGroup.POST("", user.UserCreateHandler)
@@ -56,6 +59,11 @@ func BindRouters(r *gin.Engine) {
 		bbsGroup.GET("/list", bbs.ListHandler)
 		bbsGroup.POST("/commit", bbs.CommitHandler)
 	}
+	//订单
+	orderGroup := r.Group("/order")
+	{
+		orderGroup.POST("", order.OrderCreate)
+	}
 
 	//文件上传下载
 	r.POST("/upload", files.Upload)
@@ -71,6 +79,7 @@ func BindRouters(r *gin.Engine) {
 func pong(c *gin.Context) {
 	pwd, _ := common.DePwdCode("rBhpl45Z3NpBxYhMuAuIqA==", []byte("c5b55acf-b0d4-43"))
 	fmt.Println(string(pwd))
+
 	c.String(http.StatusOK, "pong")
 
 }

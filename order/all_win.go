@@ -12,6 +12,7 @@ type AllWinVO struct {
 	Number int
 
 	//关联Order
+	Order Order
 
 	//发起人
 	Initiator user.UserDTO

@@ -1,5 +1,5 @@
 definitions:
-  advise.NotificationPO:
+  advise.Notification:
     properties:
       content:
         description: 通知内容，富文本
@@ -10,7 +10,7 @@ definitions:
       deletedAt:
         type: string
       expired:
-        description: 过期时间
+        description: 过期时间 2023-05-24 17:01:11
         type: string
       id:
         type: integer
@@ -20,10 +20,12 @@ definitions:
   bbs.BBS:
     properties:
       bbsContent:
-        $ref: '#/definitions/creeper.Content'
+        allOf:
+        - $ref: '#/definitions/creeper.Content'
         description: 论坛信息
       userInfo:
-        $ref: '#/definitions/user.User'
+        allOf:
+        - $ref: '#/definitions/user.User'
         description: 用户信息
     type: object
   common.BaseResponse:
@@ -79,6 +81,159 @@ definitions:
         type: string
       userID:
         type: integer
+    type: object
+  order.LotteryDetail:
+    properties:
+      createdAt:
+        type: string
+      deletedAt:
+        type: string
+      id:
+        type: integer
+      odds:
+        description: 赔率
+        type: number
+      parentId:
+        type: integer
+      scoreVsScore:
+        description: |-
+          比分， 类型BF才有 s00s00 s05s02
+          半全场胜平负， 类型BQSFP  aa hh
+          总进球数， 类型ZJQ s0 - s7
+          胜负平， 类型SFP hada主负 hadd主平 hadh 主胜  hhada客负 hhadd客平 hhadh 客胜
+        type: string
+      type:
+        description: 类型 枚举：SFP（胜负平）、BF（比分）、ZJQ(总进球)、BQSFP（半全场胜负平）
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  order.Match:
+    properties:
+      awayTeamAllName:
+        description: 客队全名
+        type: string
+      awayTeamCode:
+        description: 客队缩写
+        type: string
+      awayTeamId:
+        description: 客队id
+        type: string
+      awayTeamName:
+        description: 客队名称
+        type: string
+      combines:
+        description: 彩票组合
+        items:
+          $ref: '#/definitions/order.LotteryDetail'
+        type: array
+      createdAt:
+        type: string
+      deletedAt:
+        type: string
+      homeTeamAllName:
+        description: 主队全名
+        type: string
+      homeTeamCode:
+        description: 主队缩写
+        type: string
+      homeTeamId:
+        description: 主队id
+        type: string
+      homeTeamName:
+        description: 主队名称
+        type: string
+      id:
+        type: integer
+      leagueAllName:
+        description: 联赛全名
+        type: string
+      leagueCode:
+        description: 联赛编号
+        type: string
+      leagueId:
+        description: 联赛id
+        type: string
+      leagueName:
+        description: 联赛名称
+        type: string
+      matchDate:
+        description: 比赛时间 2023-05-23 01:10:00
+        type: string
+      matchId:
+        description: 比赛id
+        type: string
+      matchNum:
+        description: 比赛编号
+        type: string
+      orderId:
+        type: string
+      updatedAt:
+        type: string
+    required:
+    - awayTeamAllName
+    - awayTeamCode
+    - awayTeamId
+    - awayTeamName
+    - combines
+    - homeTeamAllName
+    - homeTeamCode
+    - homeTeamId
+    - homeTeamName
+    - leagueAllName
+    - leagueCode
+    - leagueId
+    - leagueName
+    - matchDate
+    - matchId
+    - matchNum
+    - orderId
+    type: object
+  order.Order:
+    properties:
+      allWinId:
+        description: 合买id
+        type: integer
+      content:
+        description: 数字内容
+        type: string
+      logicWinMaX:
+        description: 逻辑最大中奖
+        type: number
+      logicWinMin:
+        description: 逻辑最小中奖
+        type: number
+      lotteryType:
+        description: 足彩（FOOTBALL） 大乐透（SUPER_LOTTO）  排列三（P3） 篮球(BASKETBALL) 七星彩（SEVEN_STAR）
+          排列五（P5）
+        type: string
+      lotteryUuid:
+        description: 查询id
+        type: string
+      matches:
+        description: 比赛
+        items:
+          $ref: '#/definitions/order.Match'
+        type: array
+      saveType:
+        description: 保存类型 TEMP（临时保存） TOMASTER（提交到店）  合买(ALLWIN)
+        type: string
+      share:
+        description: 是否让人跟单
+        type: boolean
+      times:
+        description: 倍数
+        type: integer
+      userID:
+        description: 用户编号
+        type: integer
+      uuid:
+        type: string
+      way:
+        description: 过关
+        type: string
+    required:
+    - times
     type: object
   user.Complain:
     properties:
@@ -247,6 +402,29 @@ paths:
           schema:
             $ref: '#/definitions/common.BaseResponse'
       summary: 查询全部贴子
+  /cache:
+    post:
+      consumes:
+      - application/json
+      description: 内部缓存使用接口
+      parameters:
+      - description: 提交对象
+        in: body
+        name: param
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 内部缓存使用接口
   /download:
     get:
       consumes:
@@ -287,6 +465,29 @@ paths:
           schema:
             $ref: '#/definitions/common.BaseResponse'
       summary: 查询通告
+  /order:
+    post:
+      consumes:
+      - application/json
+      description: 订单创建接口
+      parameters:
+      - description: 订单对象
+        in: body
+        name: param
+        schema:
+          $ref: '#/definitions/order.Order'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 订单创建接口
   /ping:
     get:
       consumes:
@@ -361,13 +562,13 @@ paths:
     post:
       consumes:
       - application/json
-      description: 查询通告
+      description: 创建通告
       parameters:
       - description: 通告对象
         in: body
         name: param
         schema:
-          $ref: '#/definitions/advise.NotificationPO'
+          $ref: '#/definitions/advise.Notification'
       produces:
       - application/json
       responses:
@@ -379,7 +580,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/common.BaseResponse'
-      summary: 查询通告
+      summary: 创建通告
   /upload:
     post:
       consumes:

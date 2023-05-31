@@ -1,6 +1,8 @@
 package main
 
 import (
+	/*_ "github.com/swaggo/files"
+	_ "github.com/swaggo/gin-swagger"*/
 	"gopkg.in/yaml.v3"
 	"jingcai/config"
 	_ "jingcai/docs"
