@@ -19,4 +19,7 @@ type AllWinVO struct {
 
 	//发起成功/失败
 	Status string
+
+	//购买份数
+	BuyNumber int
 }

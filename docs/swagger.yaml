@@ -82,11 +82,22 @@ definitions:
       userID:
         type: integer
     type: object
+  gorm.DeletedAt:
+    properties:
+      time:
+        type: string
+      valid:
+        description: Valid is true if Time is not NULL
+        type: boolean
+    type: object
   order.LotteryDetail:
     properties:
       createdAt:
         type: string
       deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      goalLine:
+        description: 让球 胜平负才有
         type: string
       id:
         type: integer
@@ -95,6 +106,10 @@ definitions:
         type: number
       parentId:
         type: integer
+      poolCode:
+        type: string
+      poolId:
+        type: string
       scoreVsScore:
         description: |-
           比分， 类型BF才有 s00s00 s05s02
@@ -130,7 +145,7 @@ definitions:
       createdAt:
         type: string
       deletedAt:
-        type: string
+        $ref: '#/definitions/gorm.DeletedAt'
       homeTeamAllName:
         description: 主队全名
         type: string
@@ -158,7 +173,7 @@ definitions:
         description: 联赛名称
         type: string
       matchDate:
-        description: 比赛时间 2023-05-23 01:10:00
+        description: 比赛时间 2023-05-23
         type: string
       matchId:
         description: 比赛id
@@ -166,7 +181,15 @@ definitions:
       matchNum:
         description: 比赛编号
         type: string
+      matchNumStr:
+        description: 比赛时间票
+        type: string
+      matchTime:
+        type: string
       orderId:
+        type: string
+      timeDate:
+        description: 比赛时间 2023-05-23 01:10:00
         type: string
       updatedAt:
         type: string
@@ -187,16 +210,30 @@ definitions:
     - matchDate
     - matchId
     - matchNum
+    - matchTime
     - orderId
     type: object
   order.Order:
     properties:
+      allMatchFinished:
+        description: 比赛完成且完成对比， true 全完成
+        type: boolean
       allWinId:
         description: 合买id
         type: integer
+      bonus:
+        description: 奖金
+        type: number
+      bonusStatus:
+        description: 兑奖状态 NO_BONUS(未中奖) READY(已发放) NO_PAY(未发放)
+        type: string
       content:
         description: 数字内容
         type: string
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
       logicWinMaX:
         description: 逻辑最大中奖
         type: number
@@ -215,12 +252,21 @@ definitions:
         items:
           $ref: '#/definitions/order.Match'
         type: array
+      payStatus:
+        description: 付款是否成功？
+        type: boolean
+      payWay:
+        description: 支付方式 ALI  WECHAT SCORE（积分）
+        type: string
       saveType:
         description: 保存类型 TEMP（临时保存） TOMASTER（提交到店）  合买(ALLWIN)
         type: string
       share:
         description: 是否让人跟单
         type: boolean
+      shouldPay:
+        description: 付款金额
+        type: number
       times:
         description: 倍数
         type: integer
@@ -232,7 +278,11 @@ definitions:
       way:
         description: 过关
         type: string
+      win:
+        description: 是否中奖
+        type: boolean
     required:
+    - lotteryUuid
     - times
     type: object
   user.Complain:
@@ -246,7 +296,7 @@ definitions:
       createdAt:
         type: string
       deletedAt:
-        type: string
+        $ref: '#/definitions/gorm.DeletedAt'
       id:
         type: integer
       image:
@@ -281,6 +331,9 @@ definitions:
       createdAt:
         type: string
       deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      headerImageUrl:
+        description: 头像地址
         type: string
       id:
         type: integer
@@ -311,6 +364,9 @@ definitions:
     properties:
       ali:
         description: 支付宝号
+        type: string
+      headerImageUrl:
+        description: 头像地址
         type: string
       name:
         description: 昵称
@@ -466,6 +522,42 @@ paths:
             $ref: '#/definitions/common.BaseResponse'
       summary: 查询通告
   /order:
+    get:
+      consumes:
+      - application/json
+      description: 订单查询接口
+      parameters:
+      - description: 保存类型 TEMP（临时保存） TOMASTER（提交到店）  ALLWIN（合买）
+        in: query
+        name: saveType
+        type: string
+      - description: 足彩（FOOTBALL） 大乐透（SUPER_LOTTO）  排列三（P3） 篮球(BASKETBALL) 七星彩（SEVEN_STAR）
+          排列五（P5）
+        in: query
+        name: lotteryType
+        type: string
+      - description: 页码
+        in: query
+        name: pageNo
+        required: true
+        type: integer
+      - description: 每页大小
+        in: query
+        name: pageSize
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 订单查询接口
     post:
       consumes:
       - application/json
@@ -581,6 +673,34 @@ paths:
           schema:
             $ref: '#/definitions/common.BaseResponse'
       summary: 创建通告
+  /tiger-dragon-list:
+    get:
+      consumes:
+      - application/json
+      description: 龙虎榜
+      parameters:
+      - description: 时间戳 unix time
+        in: query
+        name: start
+        required: true
+        type: integer
+      - description: 时间戳 unix time
+        in: query
+        name: end
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 龙虎榜
   /upload:
     post:
       consumes:

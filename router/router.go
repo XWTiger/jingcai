@@ -36,6 +36,7 @@ func BindRouters(r *gin.Engine) {
 	r.GET("/ping", pong)
 	r.GET("/salt", common.Salt)
 	r.GET("/notify", advise.Query)
+	r.GET("/tiger-dragon-list", order.TigerDragonList)
 	r.POST("/cache", cache.Set)
 	userGroup := r.Group("/user")
 	{
@@ -63,6 +64,9 @@ func BindRouters(r *gin.Engine) {
 	orderGroup := r.Group("/order")
 	{
 		orderGroup.POST("", order.OrderCreate)
+		orderGroup.GET("", order.OrderList)
+		orderGroup.GET("/bets", order.GetBetByOrder)
+
 	}
 
 	//文件上传下载

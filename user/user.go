@@ -6,10 +6,10 @@ import (
 	"encoding/pem"
 	gorsa "github.com/Lyafei/go-rsa"
 	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/gorm"
 	"github.com/muesli/cache2go"
 	"github.com/pascaldekloe/jwt"
 	uuid "github.com/satori/go.uuid"
+	"gorm.io/gorm"
 	"jingcai/common"
 	ilog "jingcai/log"
 	"jingcai/mysql"
@@ -39,6 +39,8 @@ type User struct {
 	Ali string
 	//余额
 	Score float32
+	//头像地址
+	HeaderImageUrl string
 }
 
 // 用户对象
@@ -68,6 +70,21 @@ type UserDTO struct {
 
 	//余额
 	Score float32
+
+	//头像地址
+	HeaderImageUrl string
+}
+
+func (u User) GetDTO() UserDTO {
+	return UserDTO{
+		Phone:          u.Phone,
+		Name:           u.Name,
+		Role:           u.Role,
+		Wechat:         u.Wechat,
+		Ali:            u.Ali,
+		Score:          u.Score,
+		HeaderImageUrl: u.HeaderImageUrl,
+	}
 }
 
 // @Summary 查询用户信息

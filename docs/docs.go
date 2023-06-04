@@ -198,6 +198,58 @@ const docTemplate = `{
             }
         },
         "/order": {
+            "get": {
+                "description": "订单查询接口",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "订单查询接口",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "保存类型 TEMP（临时保存） TOMASTER（提交到店）  ALLWIN（合买）",
+                        "name": "saveType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "足彩（FOOTBALL） 大乐透（SUPER_LOTTO）  排列三（P3） 篮球(BASKETBALL) 七星彩（SEVEN_STAR） 排列五（P5）",
+                        "name": "lotteryType",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "页码",
+                        "name": "pageNo",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "每页大小",
+                        "name": "pageSize",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            },
             "post": {
                 "description": "订单创建接口",
                 "consumes": [
@@ -358,6 +410,48 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/advise.Notification"
                         }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/tiger-dragon-list": {
+            "get": {
+                "description": "龙虎榜",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "龙虎榜",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "时间戳 unix time",
+                        "name": "start",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "时间戳 unix time",
+                        "name": "end",
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -753,6 +847,18 @@ const docTemplate = `{
                 }
             }
         },
+        "gorm.DeletedAt": {
+            "type": "object",
+            "properties": {
+                "time": {
+                    "type": "string"
+                },
+                "valid": {
+                    "description": "Valid is true if Time is not NULL",
+                    "type": "boolean"
+                }
+            }
+        },
         "order.LotteryDetail": {
             "type": "object",
             "properties": {
@@ -760,6 +866,10 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "deletedAt": {
+                    "$ref": "#/definitions/gorm.DeletedAt"
+                },
+                "goalLine": {
+                    "description": "让球 胜平负才有",
                     "type": "string"
                 },
                 "id": {
@@ -771,6 +881,12 @@ const docTemplate = `{
                 },
                 "parentId": {
                     "type": "integer"
+                },
+                "poolCode": {
+                    "type": "string"
+                },
+                "poolId": {
+                    "type": "string"
                 },
                 "scoreVsScore": {
                     "description": "比分， 类型BF才有 s00s00 s05s02\n半全场胜平负， 类型BQSFP  aa hh\n总进球数， 类型ZJQ s0 - s7\n胜负平， 类型SFP hada主负 hadd主平 hadh 主胜  hhada客负 hhadd客平 hhadh 客胜",
@@ -804,6 +920,7 @@ const docTemplate = `{
                 "matchDate",
                 "matchId",
                 "matchNum",
+                "matchTime",
                 "orderId"
             ],
             "properties": {
@@ -834,7 +951,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "deletedAt": {
-                    "type": "string"
+                    "$ref": "#/definitions/gorm.DeletedAt"
                 },
                 "homeTeamAllName": {
                     "description": "主队全名",
@@ -872,7 +989,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "matchDate": {
-                    "description": "比赛时间 2023-05-23 01:10:00",
+                    "description": "比赛时间 2023-05-23",
                     "type": "string"
                 },
                 "matchId": {
@@ -883,7 +1000,18 @@ const docTemplate = `{
                     "description": "比赛编号",
                     "type": "string"
                 },
+                "matchNumStr": {
+                    "description": "比赛时间票",
+                    "type": "string"
+                },
+                "matchTime": {
+                    "type": "string"
+                },
                 "orderId": {
+                    "type": "string"
+                },
+                "timeDate": {
+                    "description": "比赛时间 2023-05-23 01:10:00",
                     "type": "string"
                 },
                 "updatedAt": {
@@ -894,16 +1022,35 @@ const docTemplate = `{
         "order.Order": {
             "type": "object",
             "required": [
+                "lotteryUuid",
                 "times"
             ],
             "properties": {
+                "allMatchFinished": {
+                    "description": "比赛完成且完成对比， true 全完成",
+                    "type": "boolean"
+                },
                 "allWinId": {
                     "description": "合买id",
                     "type": "integer"
                 },
+                "bonus": {
+                    "description": "奖金",
+                    "type": "number"
+                },
+                "bonusStatus": {
+                    "description": "兑奖状态 NO_BONUS(未中奖) READY(已发放) NO_PAY(未发放)",
+                    "type": "string"
+                },
                 "content": {
                     "description": "数字内容",
                     "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "deletedAt": {
+                    "$ref": "#/definitions/gorm.DeletedAt"
                 },
                 "logicWinMaX": {
                     "description": "逻辑最大中奖",
@@ -928,6 +1075,14 @@ const docTemplate = `{
                         "$ref": "#/definitions/order.Match"
                     }
                 },
+                "payStatus": {
+                    "description": "付款是否成功？",
+                    "type": "boolean"
+                },
+                "payWay": {
+                    "description": "支付方式 ALI  WECHAT SCORE（积分）",
+                    "type": "string"
+                },
                 "saveType": {
                     "description": "保存类型 TEMP（临时保存） TOMASTER（提交到店）  合买(ALLWIN)",
                     "type": "string"
@@ -935,6 +1090,10 @@ const docTemplate = `{
                 "share": {
                     "description": "是否让人跟单",
                     "type": "boolean"
+                },
+                "shouldPay": {
+                    "description": "付款金额",
+                    "type": "number"
                 },
                 "times": {
                     "description": "倍数",
@@ -950,6 +1109,10 @@ const docTemplate = `{
                 "way": {
                     "description": "过关",
                     "type": "string"
+                },
+                "win": {
+                    "description": "是否中奖",
+                    "type": "boolean"
                 }
             }
         },
@@ -968,7 +1131,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "deletedAt": {
-                    "type": "string"
+                    "$ref": "#/definitions/gorm.DeletedAt"
                 },
                 "id": {
                     "type": "integer"
@@ -1019,6 +1182,10 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "deletedAt": {
+                    "$ref": "#/definitions/gorm.DeletedAt"
+                },
+                "headerImageUrl": {
+                    "description": "头像地址",
                     "type": "string"
                 },
                 "id": {
@@ -1061,6 +1228,10 @@ const docTemplate = `{
             "properties": {
                 "ali": {
                     "description": "支付宝号",
+                    "type": "string"
+                },
+                "headerImageUrl": {
+                    "description": "头像地址",
                     "type": "string"
                 },
                 "name": {
