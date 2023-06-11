@@ -5,12 +5,14 @@ import (
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"gorm.io/gorm"
 	"jingcai/admin"
 	"jingcai/advise"
 	"jingcai/bbs"
 	"jingcai/cache"
 	"jingcai/common"
 	"jingcai/files"
+	"jingcai/mysql"
 	"jingcai/order"
 	"jingcai/user"
 	"net/http"
@@ -66,7 +68,9 @@ func BindRouters(r *gin.Engine) {
 		orderGroup.POST("", order.OrderCreate)
 		orderGroup.GET("", order.OrderList)
 		orderGroup.GET("/bets", order.GetBetByOrder)
-
+		orderGroup.GET("/all_win", order.AllWinList)
+		orderGroup.POST("/all_win", order.AllWinCreateHandler)
+		orderGroup.POST("/follow", order.FollowOrder)
 	}
 
 	//文件上传下载
@@ -83,6 +87,11 @@ func BindRouters(r *gin.Engine) {
 func pong(c *gin.Context) {
 	pwd, _ := common.DePwdCode("rBhpl45Z3NpBxYhMuAuIqA==", []byte("c5b55acf-b0d4-43"))
 	fmt.Println(string(pwd))
+	var user2 user.User
+	mysql.DB.Model(&user.User{Model: gorm.Model{
+		ID: 1,
+	}}).Find(&user2)
+	fmt.Println(user2.Name)
 
 	c.String(http.StatusOK, "pong")
 

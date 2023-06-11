@@ -16,6 +16,7 @@ func CheckLottery(whenStart time.Time) error {
 	job := Job{
 		Time: whenStart,
 		CallBack: func(param interface{}) {
+			log.Info("======= 比赛对账线程开始 ========")
 
 			time := time.Now()
 			date := time.Format("2006-01-02 15:04:05")
@@ -694,6 +695,16 @@ func CheckLottery(whenStart time.Time) error {
 						log.Error("定时任务，更新订单")
 						orderTx.Rollback()
 						return
+					}
+					if order.AllWinId > 0 {
+						log.Info("=====  确定合买订单  ======")
+						all := GetAllWinByParentId(order.AllWinId)
+						for _, win := range all {
+							win.Bonus = order.Bonus / float32(win.BuyNumber)
+							win.Timeout = true
+							orderTx.Save(&win)
+						}
+
 					}
 
 				}

@@ -239,7 +239,7 @@
                 }
             },
             "post": {
-                "description": "订单创建接口",
+                "description": "订单创建接口， matchs 比赛按时间从先到后排序",
                 "consumes": [
                     "application/json"
                 ],
@@ -255,6 +255,102 @@
                         "schema": {
                             "$ref": "#/definitions/order.Order"
                         }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/order/all_win": {
+            "get": {
+                "description": "合买列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "合买列表",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "合买跟买，发起/跟买 自动确认",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "合买发起/跟买",
+                "parameters": [
+                    {
+                        "description": "购买对象",
+                        "name": "param",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/order.AllWinCreate"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/order/follow": {
+            "post": {
+                "description": "跟单订单",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "跟单订单",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "跟单对象id",
+                        "name": "order_id",
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -847,6 +943,57 @@
                 }
             }
         },
+        "order.AllWinCreate": {
+            "type": "object",
+            "required": [
+                "buyNumber",
+                "orderId",
+                "parentId",
+                "payWay"
+            ],
+            "properties": {
+                "buyNumber": {
+                    "description": "购买份数",
+                    "type": "integer"
+                },
+                "finishedTime": {
+                    "description": "结束时间",
+                    "type": "string"
+                },
+                "number": {
+                    "description": "份数",
+                    "type": "integer"
+                },
+                "orderId": {
+                    "description": "发起合买人订单号",
+                    "type": "string"
+                },
+                "parentId": {
+                    "description": "合伙人 id,id",
+                    "type": "integer"
+                },
+                "payWay": {
+                    "description": "支付方式 ALI  WECHAT SCORE（积分）",
+                    "type": "string"
+                },
+                "shouldPay": {
+                    "description": "付款金额",
+                    "type": "number"
+                },
+                "status": {
+                    "description": "发起成功/失败",
+                    "type": "boolean"
+                },
+                "timeout": {
+                    "description": "已经超时",
+                    "type": "boolean"
+                },
+                "userId": {
+                    "description": "发起人",
+                    "type": "integer"
+                }
+            }
+        },
         "order.LotteryDetail": {
             "type": "object",
             "properties": {
@@ -1057,7 +1204,7 @@
                     "type": "string"
                 },
                 "matches": {
-                    "description": "比赛",
+                    "description": "比赛 按时间正序",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/order.Match"

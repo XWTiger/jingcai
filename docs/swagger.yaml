@@ -90,6 +90,44 @@ definitions:
         description: Valid is true if Time is not NULL
         type: boolean
     type: object
+  order.AllWinCreate:
+    properties:
+      buyNumber:
+        description: 购买份数
+        type: integer
+      finishedTime:
+        description: 结束时间
+        type: string
+      number:
+        description: 份数
+        type: integer
+      orderId:
+        description: 发起合买人订单号
+        type: string
+      parentId:
+        description: 合伙人 id,id
+        type: integer
+      payWay:
+        description: 支付方式 ALI  WECHAT SCORE（积分）
+        type: string
+      shouldPay:
+        description: 付款金额
+        type: number
+      status:
+        description: 发起成功/失败
+        type: boolean
+      timeout:
+        description: 已经超时
+        type: boolean
+      userId:
+        description: 发起人
+        type: integer
+    required:
+    - buyNumber
+    - orderId
+    - parentId
+    - payWay
+    type: object
   order.LotteryDetail:
     properties:
       createdAt:
@@ -248,7 +286,7 @@ definitions:
         description: 查询id
         type: string
       matches:
-        description: 比赛
+        description: 比赛 按时间正序
         items:
           $ref: '#/definitions/order.Match'
         type: array
@@ -561,7 +599,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: 订单创建接口
+      description: 订单创建接口， matchs 比赛按时间从先到后排序
       parameters:
       - description: 订单对象
         in: body
@@ -580,6 +618,69 @@ paths:
           schema:
             $ref: '#/definitions/common.BaseResponse'
       summary: 订单创建接口
+  /order/all_win:
+    get:
+      consumes:
+      - application/json
+      description: 合买列表
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 合买列表
+    post:
+      consumes:
+      - application/json
+      description: 合买跟买，发起/跟买 自动确认
+      parameters:
+      - description: 购买对象
+        in: body
+        name: param
+        required: true
+        schema:
+          $ref: '#/definitions/order.AllWinCreate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 合买发起/跟买
+  /order/follow:
+    post:
+      consumes:
+      - application/json
+      description: 跟单订单
+      parameters:
+      - description: 跟单对象id
+        in: query
+        name: order_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 跟单订单
   /ping:
     get:
       consumes:

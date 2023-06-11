@@ -121,7 +121,7 @@ type Order struct {
 	//逻辑最大中奖
 	LogicWinMaX float32
 
-	//比赛
+	//比赛 按时间正序
 	Matches []Match `gorm:"-:all"`
 
 	//查询id
@@ -213,7 +213,7 @@ type FootView struct {
 }
 
 // @Summary 订单创建接口
-// @Description 订单创建接口
+// @Description 订单创建接口， matchs 比赛按时间从先到后排序
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse
@@ -221,8 +221,17 @@ type FootView struct {
 // @param param body Order false "订单对象"
 // @Router /order [post]
 func OrderCreate(c *gin.Context) {
+	orderCreateFunc(c, nil)
+}
+func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 	var order Order
-	c.BindJSON(&order)
+	if orderFrom != nil {
+		log.Info("======== 跟单订单 ========")
+		order = *orderFrom
+	} else {
+		log.Info("======== 发起订单 =========")
+		c.BindJSON(&order)
+	}
 	if order.Times <= 0 {
 		common.FailedReturn(c, "倍数不能为空")
 		return
@@ -306,6 +315,28 @@ func OrderList(c *gin.Context) {
 	}
 	common.SuccessReturn(c, list)
 }
+func FindById(uuid string) Order {
+	var param = Order{
+		UUID: uuid,
+	}
+	var order Order
+	mysql.DB.Model(&param).First(&order)
+	var mathParam = Match{
+		OrderId: order.UUID,
+	}
+	var matchList = make([]Match, 0)
+	mysql.DB.Model(&mathParam).Find(&matchList)
+	order.Matches = matchList
+	for _, match := range matchList {
+		var detailParam = LotteryDetail{
+			ParentId: match.ID,
+		}
+		var detailList = make([]LotteryDetail, 0)
+		mysql.DB.Model(&detailParam).Find(&detailList)
+		match.Combines = detailList
+	}
+	return order
+}
 
 func getNotFinishedOrders() []Order {
 	var param = Order{
@@ -327,7 +358,15 @@ func football(c *gin.Context, order *Order) {
 	mysql.DB.AutoMigrate(&Bet{})
 	mysql.DB.AutoMigrate(&FootView{})
 	tx := mysql.DB.Begin()
-
+	// 校验比赛是否已经有已经开始的了 或者超过时间
+	now := time.Now()
+	ftime := common.GetMatchFinishedTime(order.Matches[0].TimeDate)
+	if now.UnixMicro() > ftime.UnixMicro() {
+		log.Error("比赛已经开始或者已经停售了", "截止时间：", ftime.Format("2006-01-02 15:04:05"))
+		common.FailedReturn(c, "比赛已经开始或者已经停售了")
+		tx.Rollback()
+		return
+	}
 	//保存所有组合
 	mm, err := order.WayDetail()
 	bonus := make([]float32, 0)
@@ -1493,4 +1532,33 @@ func GetDesc(t string, scoreVsScore string) string {
 
 	}
 	return ""
+}
+
+// @Summary 跟单订单
+// @Description 跟单订单
+// @Accept json
+// @Produce json
+// @Success 200 {object} common.BaseResponse
+// @failure 500 {object} common.BaseResponse
+// @param order_id query string true "跟单对象id"
+// @Router /order/follow [post]
+func FollowOrder(c *gin.Context) {
+	orderId := c.Param("order_id")
+	if len(orderId) <= 0 {
+		common.FailedReturn(c, "订单id不能为空")
+	}
+	order := FindById(orderId)
+	order.UUID = ""
+	if len(order.Matches) > 0 {
+		for _, match := range order.Matches {
+			match.OrderId = ""
+			match.ID = 0
+			if len(match.Combines) > 0 {
+				for _, combine := range match.Combines {
+					combine.ID = 0
+				}
+			}
+		}
+	}
+	orderCreateFunc(c, &order)
 }

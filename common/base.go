@@ -3,6 +3,7 @@ package common
 import (
 	_ "crypto/rsa"
 	"encoding/base64"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/muesli/cache2go"
 	"net/http"
@@ -89,4 +90,22 @@ func Salt(c *gin.Context) {
 	decodePubKey := base64.StdEncoding.EncodeToString([]byte(pubKey))
 	CacheJingCai.Add(decodePubKey, SALT_OUT_TIME, privateKey)
 	SuccessReturn(c, decodePubKey)
+}
+
+func GetMatchFinishedTime(time2 time.Time) time.Time {
+	now := time.Now()
+	var dateEnd string
+	if now.Weekday() == 0 || now.Weekday() == 6 {
+		dateEnd = fmt.Sprintf("%d-%d-%d 22:55:00", now.Year(), now.Month(), now.Day())
+	} else {
+		dateEnd = fmt.Sprintf("%d-%d-%d 21:55:00", now.Year(), now.Month(), now.Day())
+	}
+
+	time, _ := time.ParseInLocation("2006-01-02 15:04:05", dateEnd, time.Local)
+	if time.UnixMicro() > time2.UnixMicro() {
+		return time2
+	} else {
+		return time
+	}
+
 }

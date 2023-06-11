@@ -196,6 +196,7 @@ func UserCreateHandler(c *gin.Context) {
 	//校验手机号是否已经存在
 	//校验昵称是否存在
 	var nameExist int64
+	mysql.DB.AutoMigrate(&User{})
 	mysql.DB.Model(&User{}).Where("name = ?", user.Name).Count(&nameExist)
 	if nameExist > 0 {
 		common.FailedReturn(c, "昵称已经存在")
@@ -321,6 +322,16 @@ func getUserInfo(c *gin.Context) User {
 func FetUserInfo(c *gin.Context) User {
 	user, _ := c.Get("userInfo")
 	return user.(User)
+}
+
+func FindUserById(id uint) User {
+	var user User
+	mysql.DB.Model(&User{
+		Model: gorm.Model{
+			ID: id,
+		},
+	}).First(&user)
+	return user
 }
 
 // @Summary 投诉
