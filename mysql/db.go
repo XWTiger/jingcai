@@ -17,6 +17,7 @@ func InitDB() error {
 		log.Error("mysql connect failed", err)
 		return err
 	}
+	dbIns.Set("gorm:table_options", "ENGINE=InnoDB DEFAULT CHARSET=utf8")
 	sqlDB, _ := dbIns.DB()
 	sqlDB.SetMaxIdleConns(10)
 	sqlDB.SetMaxOpenConns(2048)

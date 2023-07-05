@@ -1,7 +1,10 @@
 package admin
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/robfig/cron"
+	"golang.org/x/net/context"
 	"jingcai/creeper"
 	"jingcai/mysql"
 	"net/http"
@@ -35,15 +38,16 @@ func initTables() {
 }
 func (cc *CreepCenter) Doing() error {
 	initTables()
+	tx := mysql.DB.Begin()
 	for k, c := range cc.Creepers {
 		log.Info("url=", k)
 		content := c.Creep()
-		mysql.DB.Create(&content)
+		tx.Create(&content)
 		for _, ctx := range content {
 			log.Info("content: ", ctx.Content, "url: ", ctx.Url)
 			if len(ctx.Conditions) > 0 {
 				for _, cond := range ctx.Conditions {
-					mysql.DB.Create(&creeper.Condition{
+					tx.Create(&creeper.Condition{
 						ParentId:  ctx.ID,
 						Condition: cond,
 					})
@@ -51,6 +55,7 @@ func (cc *CreepCenter) Doing() error {
 			}
 		}
 	}
+	tx.Commit()
 	return nil
 }
 
@@ -61,10 +66,32 @@ func (cc *CreepCenter) Doing() error {
 // @Success 200 {object} string
 // @Router /super/creep [get]
 func CreepHandler(c *gin.Context) {
+
 	tianIns := creeper.NewTianInstance()
 	CreepRegistry.registry(tianIns)
 	Leisu := creeper.NewInstance()
 	CreepRegistry.registry(Leisu)
 	CreepRegistry.Doing()
-	c.String(http.StatusOK, "finished creep")
+	if c != nil {
+		c.String(http.StatusOK, "finished creep")
+	} else {
+		log.Info("====== 爬虫定时任务结束 =======")
+	}
+}
+
+func InitCronForCreep(ctx context.Context) {
+	c := cron.New()
+	spec := "30 */10 * * *"
+	err := c.AddFunc(spec, func() {
+		CreepHandler(nil)
+	})
+	fmt.Println(err)
+	c.Start()
+
+	select {
+	case <-ctx.Done():
+		fmt.Println("======== 爬虫定时任务退出 ========")
+		return
+
+	}
 }

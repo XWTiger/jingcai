@@ -6,6 +6,7 @@ import (
 	"github.com/gocolly/colly"
 	ilog "jingcai/log"
 	"jingcai/mysql"
+	"strings"
 	"time"
 )
 
@@ -34,7 +35,9 @@ func (tan Titan) Creep() []Content {
 		url := e.ChildAttr(".title  > a", "href")
 		realUrl := fmt.Sprintf("%s%s", baseUrl, url)
 		info := e.ChildText(".info > .shareinfo")
-		if info == "" {
+
+		if info == "" || strings.HasPrefix(info, "收费") {
+			log.Info("====无效====", info)
 			return
 		}
 		content := &Content{

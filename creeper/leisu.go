@@ -18,6 +18,7 @@ var leiLog = ilog.Logger
 var leiBaseUrl = "https://www.leisu.com/guide/"
 
 func (Lei Leisu) Creep() []Content {
+	fmt.Println("===================== 雷速开始 ========================")
 	contentList := make([]Content, 0)
 	// Instantiate default collector
 	c := colly.NewCollector(
@@ -61,6 +62,7 @@ func (Lei Leisu) Creep() []Content {
 
 				bytes, _ := json.Marshal(content)
 				log.Info(string(bytes))
+				time.Sleep(2000 * time.Microsecond)
 			} else {
 				log.Info("=======>", childUrl, " 已经被爬过了！")
 			}
@@ -220,7 +222,7 @@ func (tan Leisu) childCreeper(url string, content *Content) {
 }
 func (Lei Leisu) checkIfExist(url string) bool {
 	var content Content
-	if err := mysql.DB.First(&content, "url=?", url).Error; err != nil {
+	if err := mysql.DB.First(&content, "title=?", url).Error; err != nil {
 		return false
 	}
 	return true

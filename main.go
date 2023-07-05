@@ -1,9 +1,11 @@
 package main
 
 import (
-	/*_ "github.com/swaggo/files"
-	_ "github.com/swaggo/gin-swagger"*/
+	_ "github.com/swaggo/files"
+	_ "github.com/swaggo/gin-swagger"
+	"golang.org/x/net/context"
 	"gopkg.in/yaml.v3"
+	"jingcai/admin"
 	"jingcai/config"
 	_ "jingcai/docs"
 	ihttp "jingcai/http"
@@ -30,6 +32,8 @@ func main() {
 		clean()
 		os.Exit(1)
 	}
+	ctx, cancel := context.WithCancel(context.Background())
+	go admin.InitCronForCreep(ctx)
 
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	for {
@@ -38,6 +42,7 @@ func main() {
 		mysql.SqlDB.Close()
 		break
 	}
+	cancel()
 	clean()
 
 }

@@ -367,6 +367,13 @@ func football(c *gin.Context, order *Order) {
 		tx.Rollback()
 		return
 	}
+	//回填比赛信息
+	officalMatch := cache.GetOnTimeFootballMatch(order.LotteryUuid)
+	if officalMatch == nil {
+		common.FailedReturn(c, "查公布信息异常， 请联系管理员！")
+		return
+	}
+	fillMatches(*officalMatch, order)
 	//保存所有组合
 	mm, err := order.WayDetail()
 	bonus := make([]float32, 0)
@@ -424,7 +431,7 @@ func football(c *gin.Context, order *Order) {
 		tx.Rollback()
 		return
 	}
-	//反填胜率
+	//反填胜率  获取实时的
 	data := cache.Get(order.LotteryUuid).(string)
 	var game cache.FootBallGames
 	jerr := json.Unmarshal([]byte(data), &game)
@@ -476,6 +483,39 @@ func football(c *gin.Context, order *Order) {
 	CheckLottery(order.Matches[len(order.Matches)-1].TimeDate)
 	cache.Remove(order.LotteryUuid)
 	tx.Commit()
+}
+func fillMatches(games cache.FootBallGames, order *Order) {
+	if len(order.Matches) <= 0 {
+		return
+	}
+	var mapper = games.MatchListToMap()
+	for _, match := range order.Matches {
+		matchMapper, ok := mapper[match.MatchId]
+		if ok {
+			match.MatchDate = matchMapper.MatchDate
+			match.AwayTeamAllName = matchMapper.AwayTeamAllName
+			match.AwayTeamCode = matchMapper.AwayTeamCode
+			match.AwayTeamId = strconv.Itoa(matchMapper.AwayTeamId)
+			match.AwayTeamName = matchMapper.AwayTeamAbbName
+			match.HomeTeamId = strconv.Itoa(matchMapper.HomeTeamId)
+			match.HomeTeamAllName = matchMapper.HomeTeamAllName
+			match.HomeTeamCode = matchMapper.HomeTeamCode
+			match.HomeTeamName = matchMapper.HomeTeamAbbName
+			match.LeagueAllName = matchMapper.LeagueAllName
+			match.LeagueCode = matchMapper.LeagueCode
+			match.LeagueId = strconv.Itoa(matchMapper.LeagueId)
+			match.MatchDate = matchMapper.MatchDate
+			match.MatchTime = matchMapper.MatchTime
+			match.MatchNumStr = matchMapper.MatchNumStr
+			match.MatchNum = strconv.Itoa(matchMapper.MatchNum)
+			date, error := time.Parse("2006-01-02 15:04:05", fmt.Sprintf("%s %s", matchMapper.MatchDate, matchMapper.MatchTime))
+			if error == nil {
+				match.TimeDate = date
+			} else {
+				fmt.Println("====== 比赛日期转换失败， 要影响订单统计 order id：=======", order.UUID)
+			}
+		}
+	}
 }
 
 func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (float64, error) {
