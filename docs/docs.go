@@ -426,6 +426,41 @@ const docTemplate = `{
                 }
             }
         },
+        "/super/check/lottery_check": {
+            "post": {
+                "description": "手动触发对账接口",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "手动触发对账接口",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "2023-01-01 21:27:00",
+                        "name": "date",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/super/complains": {
             "get": {
                 "description": "查看投诉",
@@ -1008,6 +1043,12 @@ const docTemplate = `{
         },
         "order.LotteryDetail": {
             "type": "object",
+            "required": [
+                "poolCode",
+                "poolId",
+                "scoreVsScore",
+                "type"
+            ],
             "properties": {
                 "createdAt": {
                     "type": "string"
@@ -1051,24 +1092,8 @@ const docTemplate = `{
         "order.Match": {
             "type": "object",
             "required": [
-                "awayTeamAllName",
-                "awayTeamCode",
-                "awayTeamId",
-                "awayTeamName",
                 "combines",
-                "homeTeamAllName",
-                "homeTeamCode",
-                "homeTeamId",
-                "homeTeamName",
-                "leagueAllName",
-                "leagueCode",
-                "leagueId",
-                "leagueName",
-                "matchDate",
-                "matchId",
-                "matchNum",
-                "matchTime",
-                "orderId"
+                "matchId"
             ],
             "properties": {
                 "awayTeamAllName": {

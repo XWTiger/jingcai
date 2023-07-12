@@ -4,13 +4,8 @@ type FootBallGames struct {
 	TotalCount     interface{} `json:"totalCount"`
 	LastUpdateTime interface{} `json:"lastUpdateTime"`
 	CacheId        string
-	MatchInfoList  []struct {
-		BusinessDate string  `json:"businessDate"`
-		MatchCount   int     `json:"matchCount"`
-		Weekday      string  `json:"weekday"`
-		SubMatchList []Match `json:"subMatchList"`
-	} `json:"matchInfoList"`
-	MatchDateList []struct {
+	MatchInfoList  []MatchInfo `json:"matchInfoList"`
+	MatchDateList  []struct {
 		BusinessDate   string `json:"businessDate"`
 		BusinessDateCn string `json:"businessDateCn"`
 	} `json:"matchDateList"`
@@ -19,6 +14,13 @@ type FootBallGames struct {
 		LeagueName     interface{} `json:"leagueName"`
 		LeagueNameAbbr interface{} `json:"leagueNameAbbr"`
 	} `json:"leagueList"`
+}
+
+type LotteryResult struct {
+	Content    FootBallGames `json:"content"`
+	Resource   interface{}   `json:"resource"`
+	StatusCode int           `json:"status_code"`
+	StatusMes  string        `json:"status_mes"`
 }
 
 type Match struct {
@@ -240,6 +242,13 @@ type Pool struct {
 	AllUp             int    `json:"allUp"`
 	UpdateDate        string `json:"updateDate"`
 	UpdateTime        string `json:"updateTime"`
+}
+
+type MatchInfo struct {
+	BusinessDate string  `json:"businessDate"`
+	MatchCount   int     `json:"matchCount"`
+	Weekday      string  `json:"weekday"`
+	SubMatchList []Match `json:"subMatchList"`
 }
 
 func (f *FootBallGames) MatchListToMap() map[string]Match {

@@ -160,6 +160,11 @@ definitions:
         type: string
       updatedAt:
         type: string
+    required:
+    - poolCode
+    - poolId
+    - scoreVsScore
+    - type
     type: object
   order.Match:
     properties:
@@ -232,24 +237,8 @@ definitions:
       updatedAt:
         type: string
     required:
-    - awayTeamAllName
-    - awayTeamCode
-    - awayTeamId
-    - awayTeamName
     - combines
-    - homeTeamAllName
-    - homeTeamCode
-    - homeTeamId
-    - homeTeamName
-    - leagueAllName
-    - leagueCode
-    - leagueId
-    - leagueName
-    - matchDate
     - matchId
-    - matchNum
-    - matchTime
-    - orderId
     type: object
   order.Order:
     properties:
@@ -710,6 +699,29 @@ paths:
           schema:
             $ref: '#/definitions/common.BaseResponse'
       summary: 获取加密的公钥
+  /super/check/lottery_check:
+    post:
+      consumes:
+      - application/json
+      description: 手动触发对账接口
+      parameters:
+      - description: "2023-01-01 21:27:00"
+        in: query
+        name: date
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 手动触发对账接口
   /super/complains:
     get:
       consumes:

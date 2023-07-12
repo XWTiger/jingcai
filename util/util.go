@@ -1,5 +1,10 @@
 package util
 
+import (
+	"fmt"
+	"time"
+)
+
 func Combine(n int, k int) [][]int {
 	res := [][]int{}
 	// 记录回溯算法的递归路径
@@ -26,5 +31,19 @@ func backtrack(start int, n int, k int, res *[][]int, track *[]int) {
 		backtrack(i+1, n, k, res, track)
 		// 撤销选择
 		*track = (*track)[:len(*track)-1]
+	}
+}
+
+func AddTwoHToTime(date time.Time) time.Time {
+	return date.Add(time.Hour * 2)
+}
+
+func StrToTime(timeStr string) (time.Time, error) {
+	date, error := time.ParseInLocation("2006-01-02 15:04:05", timeStr, time.Local)
+	if error != nil {
+		fmt.Println(error)
+		return AddTwoHToTime(time.Now()), error
+	} else {
+		return date, nil
 	}
 }

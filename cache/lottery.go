@@ -1,9 +1,9 @@
 package cache
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/goccy/go-json"
 	"github.com/muesli/cache2go"
 	uuid "github.com/satori/go.uuid"
 	"io"
@@ -70,12 +70,12 @@ func GetOnTimeFootballMatch(uuid string) *FootBallGames {
 	}
 	defer resp.Body.Close()
 	body, _ := io.ReadAll(resp.Body)
-	var result FootBallGames
+	var result LotteryResult
 	err = json.Unmarshal(body, &result)
 	if err != nil {
 		log.Error("转换足彩后台查询实时对象失败")
 		return nil
 	}
-	lotteryCahe.Add(uuid, 10*time.Minute, body)
-	return &result
+	lotteryCahe.Add(uuid, 10*time.Minute, string(body))
+	return &result.Content
 }

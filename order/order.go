@@ -36,69 +36,69 @@ const (
 type Match struct {
 	gorm.Model
 	//比赛编号
-	MatchNum string `validate:"required"`
+	MatchNum string
 	//比赛时间 2023-05-23 01:10:00
 	TimeDate time.Time
 
 	//比赛时间 2023-05-23
-	MatchDate string `validate:"required"`
+	MatchDate string
 
 	//01:10:00
-	MatchTime string `validate:"required"`
+	MatchTime string
 
 	//比赛时间票
 	MatchNumStr string
 	//主队缩写
-	HomeTeamCode string `validate:"required"`
+	HomeTeamCode string
 	//客队缩写
-	AwayTeamCode string `validate:"required"`
+	AwayTeamCode string
 
 	//联赛id
-	LeagueId string `validate:"required"`
+	LeagueId string
 	//联赛编号
-	LeagueCode string `validate:"required"`
+	LeagueCode string
 	//联赛名称
-	LeagueName string `validate:"required"`
+	LeagueName string
 	//联赛全名
-	LeagueAllName string `validate:"required"`
+	LeagueAllName string
 
 	//主队id
-	HomeTeamId string `validate:"required"`
+	HomeTeamId string
 	//客队id
-	AwayTeamId string `validate:"required"`
+	AwayTeamId string
 
 	//比赛id
 	MatchId string `validate:"required"`
 
 	//主队名称
-	HomeTeamName string `validate:"required"`
+	HomeTeamName string
 	//主队全名
-	HomeTeamAllName string `validate:"required"`
+	HomeTeamAllName string
 
 	//客队名称
-	AwayTeamName string `validate:"required"`
+	AwayTeamName string
 	//客队全名
-	AwayTeamAllName string `validate:"required"`
+	AwayTeamAllName string
 	//彩票组合
 	Combines []LotteryDetail `gorm:"-:all" validate:"required"`
-	OrderId  string          `validate:"required"`
+	OrderId  string
 }
 
 type LotteryDetail struct {
 	gorm.Model
 	//类型 枚举：SFP（胜负平）、BF（比分）、ZJQ(总进球)、BQSFP（半全场胜负平）
-	Type string
+	Type string `validate:"required"`
 	//赔率
 	Odds float32
 
-	PoolCode string
-	PoolId   string
+	PoolCode string `validate:"required"`
+	PoolId   string `json:"poolId" validate:"required"`
 
 	//比分， 类型BF才有 s00s00 s05s02
 	//半全场胜平负， 类型BQSFP  aa hh
 	//总进球数， 类型ZJQ s0 - s7
 	//胜负平， 类型SFP hada主负 hadd主平 hadh 主胜  hhada客负 hhadd客平 hhadh 客胜
-	ScoreVsScore string
+	ScoreVsScore string `validate:"required"`
 	//让球 胜平负才有
 	GoalLine string
 	ParentId uint
@@ -246,8 +246,8 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 		return
 	}
 	order.UUID = uuid.NewV4().String()
-	var user = user.FetUserInfo(c)
-	order.UserID = user.ID
+	//var user = user.FetUserInfo(c)
+	//order.UserID = user.ID
 	switch order.LotteryType {
 
 	case FOOTBALL:
@@ -343,7 +343,7 @@ func getNotFinishedOrders() []Order {
 		AllMatchFinished: false,
 	}
 	var list = make([]Order, 0)
-	mysql.DB.Model(&param).Order("created_at dsc").Find(&list)
+	mysql.DB.Debug().Model(&param).Where("all_match_finished=?", false).Order("created_at desc").Find(&list)
 	return list
 }
 
@@ -358,23 +358,20 @@ func football(c *gin.Context, order *Order) {
 	mysql.DB.AutoMigrate(&Bet{})
 	mysql.DB.AutoMigrate(&FootView{})
 	tx := mysql.DB.Begin()
-	// 校验比赛是否已经有已经开始的了 或者超过时间
-	now := time.Now()
-	ftime := common.GetMatchFinishedTime(order.Matches[0].TimeDate)
-	if now.UnixMicro() > ftime.UnixMicro() {
-		log.Error("比赛已经开始或者已经停售了", "截止时间：", ftime.Format("2006-01-02 15:04:05"))
-		common.FailedReturn(c, "比赛已经开始或者已经停售了")
-		tx.Rollback()
-		return
-	}
-	//回填比赛信息
+
+	//回填比赛信息 以及反填胜率
 	officalMatch := cache.GetOnTimeFootballMatch(order.LotteryUuid)
 	if officalMatch == nil {
 		common.FailedReturn(c, "查公布信息异常， 请联系管理员！")
 		return
 	}
-	fillMatches(*officalMatch, order)
+	fillStatus := fillMatches(*officalMatch, order, c, tx)
+	if fillStatus == nil {
+		return
+	}
+
 	//保存所有组合
+
 	mm, err := order.WayDetail()
 	bonus := make([]float32, 0)
 	if err != nil {
@@ -383,6 +380,7 @@ func football(c *gin.Context, order *Order) {
 		tx.Rollback()
 		return
 	}
+	fmt.Println("======", order.UUID, "======")
 	for s, v := range mm {
 		fmt.Println(s, ":")
 		for _, bet := range v.([]Bet) {
@@ -407,6 +405,7 @@ func football(c *gin.Context, order *Order) {
 				fmt.Printf("%s@%f \n", view.Mode, view.Odd)
 				fmt.Println("----------------------------------")
 			}
+			fmt.Println("倍数：", order.Times)
 			fmt.Println("奖金：", bet.Bonus)
 			fmt.Println("=========================================")
 		}
@@ -421,7 +420,7 @@ func football(c *gin.Context, order *Order) {
 		bonusCout += f
 	}
 	order.LogicWinMaX = bonusCout * float32(order.Times)
-	order.ShouldPay = float32(len(bonus) * order.Times)
+	order.ShouldPay = float32(2 * len(bonus) * order.Times)
 	order.CreatedAt = time.Now()
 	fmt.Println("实际付款：", order.ShouldPay)
 
@@ -431,95 +430,90 @@ func football(c *gin.Context, order *Order) {
 		tx.Rollback()
 		return
 	}
-	//反填胜率  获取实时的
-	data := cache.Get(order.LotteryUuid).(string)
-	var game cache.FootBallGames
-	jerr := json.Unmarshal([]byte(data), &game)
-	if jerr != nil {
-		log.Error(jerr)
-		common.FailedReturn(c, "获取公布信息失败")
-		tx.Rollback()
-		return
-	}
 
-	for _, ele := range order.Matches {
-		ele.OrderId = order.UUID
-		dateStr := fmt.Sprintf("%s %s", ele.MatchDate, ele.MatchTime)
-		timeExpire, err := time.ParseInLocation("2006-01-02 15:04:05", dateStr, time.Local)
-		if err != nil {
-			log.Error("订单： 时间转换失败")
-			log.Error(err)
-			common.FailedReturn(c, "时间转换失败， 请联系店主")
-			tx.Rollback()
-			return
-		}
-		ele.TimeDate = timeExpire
-		if err := tx.Create(&ele).Error; err != nil {
-			log.Error("save match failed", err)
-			common.FailedReturn(c, "创建订单失败， 请联系店主")
-			tx.Rollback()
-			return
-		}
-		if len(ele.Combines) > 0 {
-			for _, combine := range ele.Combines {
-				odd, err := FindOdd(ele.MatchId, &combine, game)
-				if odd == 0 || err != nil {
-					common.FailedReturn(c, "获取赔率失败")
-					tx.Rollback()
-					return
-				}
-				combine.Odds = float32(odd)
-				combine.ParentId = ele.ID
-				if err := tx.Create(&combine).Error; err != nil {
-					log.Error("save lottery detail  failed", err)
-					common.FailedReturn(c, "创建订单失败， 请联系店主")
-					tx.Rollback()
-					return
-				}
-			}
-		}
-	}
-
-	CheckLottery(order.Matches[len(order.Matches)-1].TimeDate)
-	cache.Remove(order.LotteryUuid)
+	CheckLottery(util.AddTwoHToTime(order.Matches[len(order.Matches)-1].TimeDate))
+	//cache.Remove(order.LotteryUuid)
 	tx.Commit()
+	common.SuccessReturn(c, order.UUID)
 }
-func fillMatches(games cache.FootBallGames, order *Order) {
+func fillMatches(games cache.FootBallGames, order *Order, c *gin.Context, tx *gorm.DB) *Order {
 	if len(order.Matches) <= 0 {
-		return
+		return nil
 	}
 	var mapper = games.MatchListToMap()
-	for _, match := range order.Matches {
+	for index, match := range order.Matches {
 		matchMapper, ok := mapper[match.MatchId]
 		if ok {
-			match.MatchDate = matchMapper.MatchDate
-			match.AwayTeamAllName = matchMapper.AwayTeamAllName
-			match.AwayTeamCode = matchMapper.AwayTeamCode
-			match.AwayTeamId = strconv.Itoa(matchMapper.AwayTeamId)
-			match.AwayTeamName = matchMapper.AwayTeamAbbName
-			match.HomeTeamId = strconv.Itoa(matchMapper.HomeTeamId)
-			match.HomeTeamAllName = matchMapper.HomeTeamAllName
-			match.HomeTeamCode = matchMapper.HomeTeamCode
-			match.HomeTeamName = matchMapper.HomeTeamAbbName
-			match.LeagueAllName = matchMapper.LeagueAllName
-			match.LeagueCode = matchMapper.LeagueCode
-			match.LeagueId = strconv.Itoa(matchMapper.LeagueId)
-			match.MatchDate = matchMapper.MatchDate
-			match.MatchTime = matchMapper.MatchTime
-			match.MatchNumStr = matchMapper.MatchNumStr
-			match.MatchNum = strconv.Itoa(matchMapper.MatchNum)
-			date, error := time.Parse("2006-01-02 15:04:05", fmt.Sprintf("%s %s", matchMapper.MatchDate, matchMapper.MatchTime))
+			date, error := time.ParseInLocation("2006-01-02 15:04:05", fmt.Sprintf("%s %s", matchMapper.MatchDate, matchMapper.MatchTime), time.Local)
 			if error == nil {
-				match.TimeDate = date
+				order.Matches[index].TimeDate = date
 			} else {
 				fmt.Println("====== 比赛日期转换失败， 要影响订单统计 order id：=======", order.UUID)
+				log.Error(error)
+				common.FailedReturn(c, "时间转换失败， 请联系店主")
+				tx.Rollback()
+				return nil
 			}
+			// 校验比赛是否已经有已经开始的了 或者超过时间
+			now := time.Now()
+			ftime := common.GetMatchFinishedTime(order.Matches[index].TimeDate)
+			if now.UnixMicro() > ftime.UnixMicro() {
+				log.Error("比赛已经开始或者已经停售了", "截止时间：", ftime.Format("2006-01-02 15:04:05"))
+				common.FailedReturn(c, "比赛已经开始或者已经停售了")
+				tx.Rollback()
+				return nil
+			}
+			order.Matches[index].MatchDate = matchMapper.MatchDate
+			order.Matches[index].AwayTeamAllName = matchMapper.AwayTeamAllName
+			order.Matches[index].AwayTeamCode = matchMapper.AwayTeamCode
+			order.Matches[index].AwayTeamId = strconv.Itoa(matchMapper.AwayTeamId)
+			order.Matches[index].AwayTeamName = matchMapper.AwayTeamAbbName
+			order.Matches[index].HomeTeamId = strconv.Itoa(matchMapper.HomeTeamId)
+			order.Matches[index].HomeTeamAllName = matchMapper.HomeTeamAllName
+			order.Matches[index].HomeTeamCode = matchMapper.HomeTeamCode
+			order.Matches[index].HomeTeamName = matchMapper.HomeTeamAbbName
+			order.Matches[index].LeagueAllName = matchMapper.LeagueAllName
+			order.Matches[index].LeagueCode = matchMapper.LeagueCode
+			order.Matches[index].LeagueId = strconv.Itoa(matchMapper.LeagueId)
+			order.Matches[index].MatchDate = matchMapper.MatchDate
+			order.Matches[index].MatchTime = matchMapper.MatchTime
+			order.Matches[index].MatchNumStr = matchMapper.MatchNumStr
+			order.Matches[index].MatchNum = strconv.Itoa(matchMapper.MatchNum)
+
+			order.Matches[index].OrderId = order.UUID
+			order.Matches[index].TimeDate = date
+			if err := tx.Create(&order.Matches[index]).Error; err != nil {
+				log.Error("save match failed", err)
+				common.FailedReturn(c, "创建订单失败， 请联系店主")
+				tx.Rollback()
+				return nil
+			}
+			if len(match.Combines) > 0 {
+				for in, combine := range order.Matches[index].Combines {
+					odd, err := FindOdd(order.Matches[index].MatchId, &order.Matches[index].Combines[in], mapper)
+					if odd == 0 || err != nil {
+						common.FailedReturn(c, "获取赔率失败")
+						tx.Rollback()
+						return nil
+					}
+					order.Matches[index].Combines[in].Odds = float32(odd)
+					order.Matches[index].Combines[in].ParentId = order.Matches[index].ID
+					if err := tx.Create(&combine).Error; err != nil {
+						log.Error("save lottery detail  failed", err)
+						common.FailedReturn(c, "创建订单失败， 请联系店主")
+						tx.Rollback()
+						return nil
+					}
+				}
+			}
+		} else {
+			return nil
 		}
 	}
+	return order
 }
 
-func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (float64, error) {
-	mapper := game.MatchListToMap()
+func FindOdd(matchId string, lotto *LotteryDetail, mapper map[string]cache.Match) (float64, error) {
 	match, ok := mapper[matchId]
 	if !ok {
 		return 0, errors.New("mapper 解析失败")
@@ -534,7 +528,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 		switch lotto.ScoreVsScore {
 		case "hada":
 			//主负
-			odd, err := strconv.ParseFloat(match.Had.A, 32)
+			odd, err := strconv.ParseFloat(match.Had.A, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -543,7 +537,8 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "hadd":
-			odd, err := strconv.ParseFloat(match.Had.D, 32)
+			//主平
+			odd, err := strconv.ParseFloat(match.Had.D, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -552,7 +547,8 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "hadh":
-			odd, err := strconv.ParseFloat(match.Had.H, 32)
+			//主胜
+			odd, err := strconv.ParseFloat(match.Had.H, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -562,7 +558,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 			}
 		case "hhada":
 			//客负
-			odd, err := strconv.ParseFloat(match.Hhad.A, 32)
+			odd, err := strconv.ParseFloat(match.Hhad.A, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -571,7 +567,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "hhadd":
-			odd, err := strconv.ParseFloat(match.Hhad.D, 32)
+			odd, err := strconv.ParseFloat(match.Hhad.D, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -581,7 +577,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 			}
 		case "hhadh":
 			//客胜
-			odd, err := strconv.ParseFloat(match.Hhad.H, 32)
+			odd, err := strconv.ParseFloat(match.Hhad.H, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -596,7 +592,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 		switch lotto.ScoreVsScore {
 		case "s00s00":
 			//比分 0:0
-			odd, err := strconv.ParseFloat(match.Crs.S00S00, 32)
+			odd, err := strconv.ParseFloat(match.Crs.S00S00, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -604,7 +600,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "s00s01":
-			odd, err := strconv.ParseFloat(match.Crs.S00S01, 32)
+			odd, err := strconv.ParseFloat(match.Crs.S00S01, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -612,7 +608,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "s00s02":
-			odd, err := strconv.ParseFloat(match.Crs.S00S02, 32)
+			odd, err := strconv.ParseFloat(match.Crs.S00S02, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -620,7 +616,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "s00s03":
-			odd, err := strconv.ParseFloat(match.Crs.S00S03, 32)
+			odd, err := strconv.ParseFloat(match.Crs.S00S03, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -628,7 +624,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "s00s04":
-			odd, err := strconv.ParseFloat(match.Crs.S00S04, 32)
+			odd, err := strconv.ParseFloat(match.Crs.S00S04, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -636,7 +632,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "s00s05":
-			odd, err := strconv.ParseFloat(match.Crs.S00S05, 32)
+			odd, err := strconv.ParseFloat(match.Crs.S00S05, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -644,7 +640,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "s01s00":
-			odd, err := strconv.ParseFloat(match.Crs.S01S00, 32)
+			odd, err := strconv.ParseFloat(match.Crs.S01S00, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -652,7 +648,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "s01s01":
-			odd, err := strconv.ParseFloat(match.Crs.S01S01, 32)
+			odd, err := strconv.ParseFloat(match.Crs.S01S01, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -660,7 +656,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "s01s02":
-			odd, err := strconv.ParseFloat(match.Crs.S01S02, 32)
+			odd, err := strconv.ParseFloat(match.Crs.S01S02, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -668,7 +664,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "s01s03":
-			odd, err := strconv.ParseFloat(match.Crs.S01S03, 32)
+			odd, err := strconv.ParseFloat(match.Crs.S01S03, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -676,7 +672,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "s01s04":
-			odd, err := strconv.ParseFloat(match.Crs.S01S04, 32)
+			odd, err := strconv.ParseFloat(match.Crs.S01S04, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -684,7 +680,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "s01s05":
-			odd, err := strconv.ParseFloat(match.Crs.S01S05, 32)
+			odd, err := strconv.ParseFloat(match.Crs.S01S05, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -693,7 +689,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 			}
 		case "s1sa":
 			//负 其它比分 赔率
-			odd, err := strconv.ParseFloat(match.Crs.S1Sa, 32)
+			odd, err := strconv.ParseFloat(match.Crs.S1Sa, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -702,7 +698,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 			}
 		case "s1sd":
 			//平 其它比分 赔率
-			odd, err := strconv.ParseFloat(match.Crs.S1Sd, 32)
+			odd, err := strconv.ParseFloat(match.Crs.S1Sd, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -711,7 +707,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 			}
 		case "s1sh":
 			//胜 其它比分 赔率
-			odd, err := strconv.ParseFloat(match.Crs.S1Sh, 32)
+			odd, err := strconv.ParseFloat(match.Crs.S1Sh, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -719,7 +715,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "s02s00":
-			odd, err := strconv.ParseFloat(match.Crs.S02S00, 32)
+			odd, err := strconv.ParseFloat(match.Crs.S02S00, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -727,7 +723,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "s02s01":
-			odd, err := strconv.ParseFloat(match.Crs.S02S01, 32)
+			odd, err := strconv.ParseFloat(match.Crs.S02S01, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -735,7 +731,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "s02s02":
-			odd, err := strconv.ParseFloat(match.Crs.S02S02, 32)
+			odd, err := strconv.ParseFloat(match.Crs.S02S02, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -743,7 +739,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "s02s03":
-			odd, err := strconv.ParseFloat(match.Crs.S02S03, 32)
+			odd, err := strconv.ParseFloat(match.Crs.S02S03, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -751,7 +747,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "s02s04":
-			odd, err := strconv.ParseFloat(match.Crs.S02S04, 32)
+			odd, err := strconv.ParseFloat(match.Crs.S02S04, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -759,7 +755,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "s02s05":
-			odd, err := strconv.ParseFloat(match.Crs.S02S05, 32)
+			odd, err := strconv.ParseFloat(match.Crs.S02S05, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -767,7 +763,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "s03s00":
-			odd, err := strconv.ParseFloat(match.Crs.S03S00, 32)
+			odd, err := strconv.ParseFloat(match.Crs.S03S00, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -775,7 +771,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "s03s01":
-			odd, err := strconv.ParseFloat(match.Crs.S03S01, 32)
+			odd, err := strconv.ParseFloat(match.Crs.S03S01, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -783,7 +779,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "s03s02":
-			odd, err := strconv.ParseFloat(match.Crs.S03S02, 32)
+			odd, err := strconv.ParseFloat(match.Crs.S03S02, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -791,7 +787,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "s03s03":
-			odd, err := strconv.ParseFloat(match.Crs.S03S03, 32)
+			odd, err := strconv.ParseFloat(match.Crs.S03S03, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -799,7 +795,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "s04s00":
-			odd, err := strconv.ParseFloat(match.Crs.S04S00, 32)
+			odd, err := strconv.ParseFloat(match.Crs.S04S00, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -807,7 +803,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "s04s01":
-			odd, err := strconv.ParseFloat(match.Crs.S04S01, 32)
+			odd, err := strconv.ParseFloat(match.Crs.S04S01, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -815,7 +811,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "s04s02":
-			odd, err := strconv.ParseFloat(match.Crs.S04S02, 32)
+			odd, err := strconv.ParseFloat(match.Crs.S04S02, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -823,7 +819,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "s05s00":
-			odd, err := strconv.ParseFloat(match.Crs.S05S00, 32)
+			odd, err := strconv.ParseFloat(match.Crs.S05S00, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -831,7 +827,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "s05s01":
-			odd, err := strconv.ParseFloat(match.Crs.S05S01, 32)
+			odd, err := strconv.ParseFloat(match.Crs.S05S01, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -839,7 +835,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "s05s02":
-			odd, err := strconv.ParseFloat(match.Crs.S05S02, 32)
+			odd, err := strconv.ParseFloat(match.Crs.S05S02, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -855,7 +851,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 		//总进球
 		switch lotto.ScoreVsScore {
 		case "s0":
-			odd, err := strconv.ParseFloat(match.Ttg.S0, 32)
+			odd, err := strconv.ParseFloat(match.Ttg.S0, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -863,7 +859,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "s1":
-			odd, err := strconv.ParseFloat(match.Ttg.S1, 32)
+			odd, err := strconv.ParseFloat(match.Ttg.S1, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -871,7 +867,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "s2":
-			odd, err := strconv.ParseFloat(match.Ttg.S2, 32)
+			odd, err := strconv.ParseFloat(match.Ttg.S2, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -879,7 +875,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "s3":
-			odd, err := strconv.ParseFloat(match.Ttg.S3, 32)
+			odd, err := strconv.ParseFloat(match.Ttg.S3, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -887,7 +883,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "s4":
-			odd, err := strconv.ParseFloat(match.Ttg.S4, 32)
+			odd, err := strconv.ParseFloat(match.Ttg.S4, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -895,7 +891,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "s5":
-			odd, err := strconv.ParseFloat(match.Ttg.S5, 32)
+			odd, err := strconv.ParseFloat(match.Ttg.S5, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -903,7 +899,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "s6":
-			odd, err := strconv.ParseFloat(match.Ttg.S6, 32)
+			odd, err := strconv.ParseFloat(match.Ttg.S6, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -911,7 +907,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "s7":
-			odd, err := strconv.ParseFloat(match.Ttg.S7, 32)
+			odd, err := strconv.ParseFloat(match.Ttg.S7, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -928,7 +924,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 		switch lotto.ScoreVsScore {
 		case "aa":
 			//负负
-			odd, err := strconv.ParseFloat(match.Hafu.Aa, 32)
+			odd, err := strconv.ParseFloat(match.Hafu.Aa, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -936,7 +932,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "ad":
-			odd, err := strconv.ParseFloat(match.Hafu.Ad, 32)
+			odd, err := strconv.ParseFloat(match.Hafu.Ad, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -945,7 +941,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 			}
 			break
 		case "ah":
-			odd, err := strconv.ParseFloat(match.Hafu.Ah, 32)
+			odd, err := strconv.ParseFloat(match.Hafu.Ah, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -954,7 +950,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 			}
 		case "da":
 			//平负
-			odd, err := strconv.ParseFloat(match.Hafu.Da, 32)
+			odd, err := strconv.ParseFloat(match.Hafu.Da, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -963,7 +959,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 			}
 		case "dd":
 			//平平
-			odd, err := strconv.ParseFloat(match.Hafu.Dd, 32)
+			odd, err := strconv.ParseFloat(match.Hafu.Dd, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -971,7 +967,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "dh":
-			odd, err := strconv.ParseFloat(match.Hafu.Dh, 32)
+			odd, err := strconv.ParseFloat(match.Hafu.Dh, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -980,7 +976,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 			}
 		case "ha":
 			//胜负
-			odd, err := strconv.ParseFloat(match.Hafu.Ha, 32)
+			odd, err := strconv.ParseFloat(match.Hafu.Ha, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -989,7 +985,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 			}
 		case "hd":
 			//胜平
-			odd, err := strconv.ParseFloat(match.Hafu.Hd, 32)
+			odd, err := strconv.ParseFloat(match.Hafu.Hd, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -997,7 +993,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, game cache.FootBallGames) (fl
 				return odd, nil
 			}
 		case "hh":
-			odd, err := strconv.ParseFloat(match.Hafu.Hh, 32)
+			odd, err := strconv.ParseFloat(match.Hafu.Hh, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
 				return 0.0, errors.New("存在赔率无法转换")
@@ -1020,13 +1016,13 @@ func (order *Order) WayDetail() (map[string]interface{}, error) {
 	ways := strings.Split(order.Way, ",")
 	oddCombines := make(map[string]interface{})
 	data := cache.Get(order.LotteryUuid).(string)
-	var game cache.FootBallGames
+	var game cache.LotteryResult
 	jerr := json.Unmarshal([]byte(data), &game)
 	if jerr != nil {
 		log.Error(jerr)
 		return oddCombines, errors.New("缓存解析失败")
 	}
-	poolMap := game.GetSinglePoolMap()
+	poolMap := game.Content.GetSinglePoolMap()
 	for _, way := range ways {
 		switch way {
 		case "1x1":
@@ -1042,7 +1038,7 @@ func (order *Order) WayDetail() (map[string]interface{}, error) {
 							Group: []FootView{{
 								Way:          "过关方式 1x1",
 								Time:         match.MatchNumStr,
-								League:       fmt.Sprintf("主队:%s Vs 客队:%s"),
+								League:       fmt.Sprintf("主队:%s Vs 客队:%s", match.HomeTeamName, match.AwayTeamName),
 								Mode:         GetDesc(combine.Type, combine.ScoreVsScore),
 								Odd:          combine.Odds,
 								Type:         combine.Type,
@@ -1062,6 +1058,7 @@ func (order *Order) WayDetail() (map[string]interface{}, error) {
 				}
 			}
 			oddCombines["1x1"] = Single
+			return oddCombines, nil
 			break
 		case "2x1":
 			if len(order.Matches) < 2 {
@@ -1093,6 +1090,8 @@ func (order *Order) WayDetail() (map[string]interface{}, error) {
 				}
 
 			}
+			oddCombines["2x1"] = bets
+			return oddCombines, nil
 			break
 		case "3x1":
 			if len(order.Matches) < 3 {
@@ -1124,6 +1123,8 @@ func (order *Order) WayDetail() (map[string]interface{}, error) {
 				}
 
 			}
+			oddCombines["3x1"] = bets
+			return oddCombines, nil
 			break
 		case "4x1":
 			if len(order.Matches) < 4 {
@@ -1155,6 +1156,8 @@ func (order *Order) WayDetail() (map[string]interface{}, error) {
 				}
 
 			}
+			oddCombines["4x1"] = bets
+			return oddCombines, nil
 			break
 		case "5x1":
 			if len(order.Matches) < 5 {
@@ -1186,6 +1189,8 @@ func (order *Order) WayDetail() (map[string]interface{}, error) {
 				}
 
 			}
+			oddCombines["5x1"] = bets
+			return oddCombines, nil
 			break
 		case "6x1":
 			if len(order.Matches) < 6 {
@@ -1217,6 +1222,8 @@ func (order *Order) WayDetail() (map[string]interface{}, error) {
 				}
 
 			}
+			oddCombines["6x1"] = bets
+			return oddCombines, nil
 			break
 		case "7x1":
 			if len(order.Matches) < 3 {
@@ -1248,6 +1255,8 @@ func (order *Order) WayDetail() (map[string]interface{}, error) {
 				}
 
 			}
+			oddCombines["7x1"] = bets
+			return oddCombines, nil
 			break
 		case "8x1":
 			if len(order.Matches) < 8 {
@@ -1279,6 +1288,8 @@ func (order *Order) WayDetail() (map[string]interface{}, error) {
 				}
 
 			}
+			oddCombines["8x1"] = bets
+			return oddCombines, nil
 			break
 
 		}
@@ -1294,12 +1305,12 @@ func getBets(list []int, index int, foots *[]FootView, bets *[][]FootView, match
 		*bets = append(*bets, temp)
 		return
 	}
-	match := matches[list[index]]
+	match := matches[list[index]-1]
 	for _, combine := range match.Combines {
 		*foots = append(*foots, FootView{
 			Way:          "过关方式 1x1",
 			Time:         match.MatchNumStr,
-			League:       fmt.Sprintf("主队:%s Vs 客队:%s"),
+			League:       fmt.Sprintf("主队:%s Vs 客队:%s", match.HomeTeamName, match.AwayTeamName),
 			Mode:         GetDesc(combine.Type, combine.ScoreVsScore),
 			Odd:          combine.Odds,
 			MatchNum:     match.MatchNum,

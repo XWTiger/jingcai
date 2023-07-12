@@ -40,6 +40,7 @@ func Validator(c *gin.Context, dest any) {
 					if err == nil {
 						if v.Field(i).Int() < min {
 							common.FailedReturn(c, fmt.Sprintf("%s 必须大于%v", s.Field(i).Name, min))
+							c.Abort()
 							return
 						}
 					}
@@ -50,6 +51,7 @@ func Validator(c *gin.Context, dest any) {
 					if err == nil {
 						if v.Field(i).Int() > max {
 							common.FailedReturn(c, fmt.Sprintf("%s 必须小于%v", s.Field(i).Name, max))
+							c.Abort()
 							return
 						}
 					}
@@ -59,12 +61,14 @@ func Validator(c *gin.Context, dest any) {
 			case reflect.String:
 				if v.Field(i).Len() <= 0 {
 					common.FailedReturn(c, fmt.Sprintf("%s %s", s.Field(i).Name, " 必填"))
+					c.Abort()
 					return
 				}
 				break
 			case reflect.Float32, reflect.Float64:
 				if v.Field(i).Float() <= 0 {
 					common.FailedReturn(c, fmt.Sprintf("%s %s", s.Field(i).Name, " 必填"))
+					c.Abort()
 					return
 				}
 				break
@@ -78,9 +82,11 @@ func Validator(c *gin.Context, dest any) {
 			if err != nil || match == false {
 				if tag.Get(MSG) != "" {
 					common.FailedReturn(c, tag.Get(MSG))
+					c.Abort()
 					return
 				} else {
 					common.FailedReturn(c, fmt.Sprintf("%s %s", s.Field(i).Name, " 校验失败"))
+					c.Abort()
 					return
 				}
 			}

@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/muesli/cache2go"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -68,6 +69,7 @@ func FailedReturn(c *gin.Context, message string) {
 		Code:    0,
 		Message: message,
 	})
+	c.Abort()
 }
 
 func FailedAuthReturn(c *gin.Context, message string) {
@@ -91,17 +93,30 @@ func Salt(c *gin.Context) {
 	CacheJingCai.Add(decodePubKey, SALT_OUT_TIME, privateKey)
 	SuccessReturn(c, decodePubKey)
 }
+func getNum(num int) string {
 
+	if num < 10 {
+		return fmt.Sprintf("0%d", num)
+	} else {
+		return strconv.Itoa(num)
+	}
+
+}
 func GetMatchFinishedTime(time2 time.Time) time.Time {
 	now := time.Now()
 	var dateEnd string
 	if now.Weekday() == 0 || now.Weekday() == 6 {
-		dateEnd = fmt.Sprintf("%d-%d-%d 22:55:00", now.Year(), now.Month(), now.Day())
+		dateEnd = fmt.Sprintf("%d-%s-%s 22:55:00", now.Year(), getNum(int(now.Month())), getNum(int(now.Day())))
+
 	} else {
-		dateEnd = fmt.Sprintf("%d-%d-%d 21:55:00", now.Year(), now.Month(), now.Day())
+		dateEnd = fmt.Sprintf("%d-%s-%s 21:55:00", now.Year(), getNum(int(now.Month())), getNum(int(now.Day())))
 	}
 
-	time, _ := time.ParseInLocation("2006-01-02 15:04:05", dateEnd, time.Local)
+	time, err := time.ParseInLocation("2006-01-02 15:04:05", dateEnd, time.Local)
+
+	if err != nil {
+		fmt.Println(err)
+	}
 	if time.UnixMicro() > time2.UnixMicro() {
 		return time2
 	} else {

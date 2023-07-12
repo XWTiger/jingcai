@@ -42,6 +42,9 @@ type AllWin struct {
 
 	//奖金
 	Bonus float32
+
+	//SHARE(公开) AFTER_END(截至后公开)  JOIN（购买后可见）
+	ShowType string
 }
 type AllWinVO struct {
 	//份数
@@ -59,6 +62,18 @@ type AllWinVO struct {
 	Timeout bool
 	//结束时间
 	FinishedTime time.Time
+
+	//SHARE(公开) AFTER_END(截至后公开)  JOIN（购买后可见）
+	ShowType string
+
+	// 合买红单率
+	WinRate float32
+
+	// 回报率
+	ReturnRate float32
+
+	// 带红人数
+	FollowWinCount int
 }
 type AllWinUser struct {
 	Phone string
@@ -79,6 +94,9 @@ type AllWinUser struct {
 
 	//份数
 	BuyNumber int
+
+	//SHARE(公开) AFTER_END(截至后公开)  JOIN（购买后可见）
+	ShowType string
 }
 
 // 合买对象
@@ -99,8 +117,8 @@ type AllWinCreate struct {
 	//发起人
 	UserId uint
 
-	//合伙人 id,id
-	ParentId uint `validate:"required"`
+	//发起人是0
+	ParentId uint
 
 	//发起成功/失败
 	Status bool
@@ -113,6 +131,9 @@ type AllWinCreate struct {
 
 	//购买份数
 	BuyNumber int `validate:"required"`
+
+	//发起合买时传入该参数，SHARE(公开) AFTER_END(截至后公开)  JOIN（购买后可见）
+	ShowType string
 }
 
 func (a AllWin) GetVO() AllWinVO {
@@ -123,8 +144,8 @@ func (a AllWin) GetVO() AllWinVO {
 			log.Error(err)
 			return vo
 		}
-		order := FindById(a.OrderId)
-		vo.Order = order
+		//order := FindById(a.OrderId)
+		//vo.Order = order
 		var allW = make([]AllWin, 0)
 		var partner = make([]AllWinUser, 0)
 		allW = append(allW, a)
@@ -141,6 +162,36 @@ func (a AllWin) GetVO() AllWinVO {
 		vo.Timeout = a.Timeout
 		vo.FinishedTime = a.FinishedTime
 		vo.Status = a.Status
+		//计算合买带红人数
+		//1.查到这人所有中奖单
+		var allOfThePerson []AllWin
+		if err := mysql.DB.Model(AllWin{}).Where("user_id=?", a.UserId).Where("bonus > 0").Find(&allOfThePerson).Error; err != nil {
+			log.Warn("查询这个用户合买所有发布中奖列表失败")
+			return vo
+		}
+		var orderIds = make([]string, 0)
+		var totalWinMoney float32 = 0.0
+		for _, person := range allOfThePerson {
+			orderIds = append(orderIds, person.OrderId)
+			totalWinMoney += person.Bonus
+		}
+		var count int64
+		mysql.DB.Model(AllWin{}).Where("order_id in (?)", orderIds).Count(&count)
+		vo.FollowWinCount = int(count)
+		//计算合买红单率
+		var totalAllOfPerson []AllWin
+		if err := mysql.DB.Model(AllWin{}).Where("user_id=?", a.UserId).Find(&totalAllOfPerson).Error; err != nil {
+			log.Warn("查询这个用户所有发布合买失败")
+			return vo
+		}
+		vo.WinRate = float32(len(allOfThePerson)) / float32(len(totalAllOfPerson))
+		//计算回报率
+		var wasteMoney float32 = 0.0
+		for _, person := range totalAllOfPerson {
+			wasteMoney += person.ShouldPay
+		}
+		vo.ReturnRate = totalWinMoney / wasteMoney
+
 		return vo
 	} else {
 		return AllWinVO{}
@@ -168,7 +219,7 @@ func GetAllWinUser(u user.User) AllWinUser {
 // @Router /order/all_win [get]
 func AllWinList(c *gin.Context) {
 	var all []AllWin
-	mysql.DB.Model(AllWin{
+	mysql.DB.Model(AllWin{}).Where(&AllWin{
 		Timeout:  false,
 		ParentId: 0,
 	}).Find(&all)
@@ -206,7 +257,7 @@ func AllWinCreateHandler(c *gin.Context) {
 			common.FailedReturn(c, "查询发起人订单失败")
 			return
 		}
-		if order.UserID == body.UserId {
+		if order.UserID == user.ID {
 			//发起合买
 			var initAllWin = AllWin{
 				Timeout:      false,
@@ -218,6 +269,7 @@ func AllWinCreateHandler(c *gin.Context) {
 				BuyNumber:    body.BuyNumber,
 				ShouldPay:    float32(order.ShouldPay/float32(body.Number)) * float32(body.BuyNumber),
 				Bonus:        0,
+				ShowType:     body.ShowType,
 			}
 			tx.Save(&initAllWin)
 			if err := tx.Model(&Order{UUID: order.UUID}).Update("all_win_id", initAllWin.ID).Error; err != nil {
@@ -266,6 +318,7 @@ func AllWinCreateHandler(c *gin.Context) {
 				BuyNumber:    body.BuyNumber,
 				ShouldPay:    userOrder.ShouldPay,
 				Bonus:        0,
+				ShowType:     initAll.ShowType,
 			}
 			tx.Save(&allWin)
 			tx.Model(Order{UUID: userOrder.UUID}).Update("all_win_id", allWin.ID)
@@ -288,7 +341,7 @@ func GetAllWinByParentId(parentId uint) []AllWin {
 		ParentId: parentId,
 	}).Find(&all)
 	var init AllWin
-	mysql.DB.Model(AllWin{Model: gorm.Model{
+	mysql.DB.Debug().Model(AllWin{Model: gorm.Model{
 		ID: parentId,
 	}}).First(&init)
 	all = append(all, init)

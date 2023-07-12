@@ -45,26 +45,26 @@ func getBetByMatchId(matchId string) ([]Bet, error) {
 		MatchId: matchId,
 	}
 	var betResult = make([]Bet, 0)
-	if err := mysql.DB.Model(&params).Find(&betResult).Error; err != nil {
+	if err := mysql.DB.Debug().Model(&params).Where("match_id = ?", matchId).Find(&betResult).Error; err != nil {
 		log.Error("查询bet 失败！")
 		log.Error(err)
 		return nil, err
 	}
-	for _, bet := range betResult {
+	for index, bet := range betResult {
 		var fparam = FootView{
 			BetId: bet.ID,
 		}
 		var footViews = make([]FootView, 0)
-		mysql.DB.Model(&fparam).Find(&footViews)
-		bet.Group = footViews
+		mysql.DB.Model(&fparam).Where("bet_id=?", bet.ID).Find(&footViews)
+		betResult[index].Group = footViews
 	}
 	return betResult, nil
 }
 
 func getBetByOrderId(orderId string) []Bet {
 	var bets = make([]Bet, 0)
-	mysql.DB.Model(&Bet{
+	mysql.DB.Debug().Model(&Bet{
 		OrderId: orderId,
-	}).Find(&bets)
+	}).Where("order_id=?", orderId).Find(&bets)
 	return bets
 }

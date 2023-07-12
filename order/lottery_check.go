@@ -3,8 +3,11 @@ package order
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"io"
+	"jingcai/common"
 	"jingcai/mysql"
+	"jingcai/util"
 	"net/http"
 	"strconv"
 	"strings"
@@ -24,7 +27,7 @@ func CheckLottery(whenStart time.Time) error {
 			time.AddDate(0, 0, 3)
 			dateEnd := time.Format("2006-01-02 15:04:05")
 			end := strings.Split(dateEnd, " ")[0]
-			url := fmt.Sprintf("http://127.0.0.1:8090/lottery/sports/jc/result?matchBeginDate=%s&matchBeginDate=%s&matchEndDate=%s3&pageNo=1&pageSize=299", begin, begin, end)
+			url := fmt.Sprintf("http://127.0.0.1:8090/lottery/sports/jc/result?matchBeginDate=%s&matchEndDate=%s&pageNo=1&pageSize=299", begin, end)
 			resp, err := http.Get(url)
 			if err != nil {
 				fmt.Println(err)
@@ -34,8 +37,8 @@ func CheckLottery(whenStart time.Time) error {
 			body, _ := io.ReadAll(resp.Body)
 			var result LotteryResult
 			err = json.Unmarshal(body, &result)
-			if err != nil {
-				log.Error("转换足彩结果为对象失败")
+			if err != nil || result.Content == nil {
+				log.Error("转换足彩结果为对象失败", err)
 				return
 			}
 			tx := mysql.DB.Begin()
@@ -45,6 +48,9 @@ func CheckLottery(whenStart time.Time) error {
 					continue
 				}
 				bets, err := getBetByMatchId(strconv.Itoa(content.MatchId))
+				if len(bets) <= 0 {
+					continue
+				}
 				if err != nil {
 					log.Error(err)
 					continue
@@ -652,7 +658,7 @@ func CheckLottery(whenStart time.Time) error {
 					}
 					if countCheck == len(bet.Group) {
 						bet.Check = true
-						if countCorrect == len(bet.Group) {
+						if countCorrect == len(bet.Group) && len(bet.Group) > 0 {
 							bet.Win = true
 						} else {
 							bet.Win = false
@@ -714,6 +720,7 @@ func CheckLottery(whenStart time.Time) error {
 		},
 		Param: nil,
 	}
+	fmt.Println("==========比赛对账任务已经启动============")
 	return AddJob(job)
 }
 
@@ -751,4 +758,22 @@ type Content struct {
 	//全场比分
 	SectionsNo999 string `json:"sectionsNo999"`
 	WinFlag       string `json:"winFlag"`
+}
+
+// @Summary 手动触发对账接口
+// @Description 手动触发对账接口
+// @Accept json
+// @Produce json
+// @Success 200 {object} common.BaseResponse
+// @failure 500 {object} common.BaseResponse
+// @param date  query string true "2023-01-01 21:27:00"
+// @Router /super/check/lottery_check [post]
+func AddCheckForManual(c *gin.Context) {
+	date := c.Query("date")
+	startTime, err := util.StrToTime(date)
+	if err != nil {
+		common.FailedReturn(c, "添加手动对账失败")
+		return
+	}
+	CheckLottery(startTime)
 }
