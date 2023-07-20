@@ -2,6 +2,7 @@ package util
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 )
 
@@ -46,4 +47,27 @@ func StrToTime(timeStr string) (time.Time, error) {
 	} else {
 		return date, nil
 	}
+}
+func GetPLWFinishedTime() time.Time {
+	now := time.Now()
+	var dateEnd string
+
+	dateEnd = fmt.Sprintf("%d-%s-%s 21:26:00", now.Year(), getNum(int(now.Month())), getNum(int(now.Day())))
+	time, err := time.ParseInLocation("2006-01-02 15:04:05", dateEnd, time.Local)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return time
+}
+
+func getNum(num int) string {
+
+	if num < 10 {
+		return fmt.Sprintf("0%d", num)
+	} else {
+		return strconv.Itoa(num)
+	}
+
 }

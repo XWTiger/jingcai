@@ -127,7 +127,7 @@ type Order struct {
 	//查询id
 	LotteryUuid string `validate:"required" gorm:"-:all"`
 
-	//数字内容
+	//数字内容 空格分隔 多组用英文逗号,
 	Content string
 
 	//保存类型 TEMP（临时保存） TOMASTER（提交到店）  合买(ALLWIN)
@@ -161,6 +161,9 @@ type Order struct {
 
 	//支付方式 ALI  WECHAT SCORE（积分）
 	PayWay string
+
+	//如果是大乐透 七星彩 排列3 5 需要填期号
+	IssueId string `validate:"required" message："需要期号"`
 }
 type Bet struct {
 	gorm.Model
@@ -245,21 +248,23 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 		common.FailedReturn(c, "订单类型不能为空")
 		return
 	}
+	order.Bonus = 0
 	order.UUID = uuid.NewV4().String()
 	//var user = user.FetUserInfo(c)
 	//order.UserID = user.ID
+	//校验字段
+	validatior.Validator(c, order)
 	switch order.LotteryType {
 
 	case FOOTBALL:
-		validatior.Validator(c, order)
 		football(c, &order)
-
+		return
+	case BASKETBALL:
+		basketball(c, &order)
 		return
 	case P3:
 		return
 	case P5:
-		return
-	case BASKETBALL:
 		return
 	case SUPER_LOTTO:
 		return
@@ -315,25 +320,27 @@ func OrderList(c *gin.Context) {
 	}
 	common.SuccessReturn(c, list)
 }
-func FindById(uuid string) Order {
+func FindById(uuid string, searchMatch bool) Order {
 	var param = Order{
 		UUID: uuid,
 	}
 	var order Order
-	mysql.DB.Model(&param).First(&order)
+	mysql.DB.Model(&param).Where(&param).First(&order)
 	var mathParam = Match{
 		OrderId: order.UUID,
 	}
-	var matchList = make([]Match, 0)
-	mysql.DB.Model(&mathParam).Find(&matchList)
-	order.Matches = matchList
-	for _, match := range matchList {
-		var detailParam = LotteryDetail{
-			ParentId: match.ID,
+	if searchMatch {
+		var matchList = make([]Match, 0)
+		mysql.DB.Model(&mathParam).Where(&mathParam).Find(&matchList)
+		order.Matches = matchList
+		for _, match := range matchList {
+			var detailParam = LotteryDetail{
+				ParentId: match.ID,
+			}
+			var detailList = make([]LotteryDetail, 0)
+			mysql.DB.Model(&detailParam).Where(&detailParam).Find(&detailList)
+			match.Combines = detailList
 		}
-		var detailList = make([]LotteryDetail, 0)
-		mysql.DB.Model(&detailParam).Find(&detailList)
-		match.Combines = detailList
 	}
 	return order
 }
@@ -352,11 +359,6 @@ func football(c *gin.Context, order *Order) {
 		common.FailedReturn(c, "比赛场数不能为空")
 		return
 	}
-	mysql.DB.AutoMigrate(&Order{})
-	mysql.DB.AutoMigrate(&Match{})
-	mysql.DB.AutoMigrate(&LotteryDetail{})
-	mysql.DB.AutoMigrate(&Bet{})
-	mysql.DB.AutoMigrate(&FootView{})
 	tx := mysql.DB.Begin()
 
 	//回填比赛信息 以及反填胜率
@@ -489,7 +491,7 @@ func fillMatches(games cache.FootBallGames, order *Order, c *gin.Context, tx *go
 				return nil
 			}
 			if len(match.Combines) > 0 {
-				for in, combine := range order.Matches[index].Combines {
+				for in, _ := range order.Matches[index].Combines {
 					odd, err := FindOdd(order.Matches[index].MatchId, &order.Matches[index].Combines[in], mapper)
 					if odd == 0 || err != nil {
 						common.FailedReturn(c, "获取赔率失败")
@@ -498,7 +500,7 @@ func fillMatches(games cache.FootBallGames, order *Order, c *gin.Context, tx *go
 					}
 					order.Matches[index].Combines[in].Odds = float32(odd)
 					order.Matches[index].Combines[in].ParentId = order.Matches[index].ID
-					if err := tx.Create(&combine).Error; err != nil {
+					if err := tx.Create(&order.Matches[index].Combines[in]).Error; err != nil {
 						log.Error("save lottery detail  failed", err)
 						common.FailedReturn(c, "创建订单失败， 请联系店主")
 						tx.Rollback()
@@ -1598,7 +1600,7 @@ func FollowOrder(c *gin.Context) {
 	if len(orderId) <= 0 {
 		common.FailedReturn(c, "订单id不能为空")
 	}
-	order := FindById(orderId)
+	order := FindById(orderId, true)
 	order.UUID = ""
 	if len(order.Matches) > 0 {
 		for _, match := range order.Matches {
@@ -1612,4 +1614,13 @@ func FollowOrder(c *gin.Context) {
 		}
 	}
 	orderCreateFunc(c, &order)
+}
+
+func GetOrderByLotteryType(tp string) []Order {
+	var orders []Order
+	if err := mysql.DB.Model(Order{}).Where(&Order{LotteryType: tp}).Find(&orders).Error; err != nil {
+		log.Error(err)
+		return nil
+	}
+	return orders
 }

@@ -150,7 +150,7 @@ func UpdateUser(c *gin.Context) {
 }
 
 func CreateUser(user UserVO) error {
-	var userPo User = User{
+	var userPo = User{
 		Phone:  user.Phone,
 		Secret: user.Secret,
 		Name:   user.Name,
@@ -244,7 +244,7 @@ func Login(c *gin.Context) {
 		c.BindJSON(&userVo)
 		pwd, err := gorsa.PriKeyDecrypt(userVo.Secret, privateKey)
 		var user User
-		if mysql.DB.Model(&User{Phone: userVo.Phone}).Find(&user).Error != nil {
+		if mysql.DB.Model(&User{Phone: userVo.Phone}).Where(&User{Phone: userVo.Phone}).Find(&user).Error != nil {
 			common.FailedReturn(c, "账户错误")
 			return
 		}
@@ -327,6 +327,10 @@ func FetUserInfo(c *gin.Context) User {
 func FindUserById(id uint) User {
 	var user User
 	mysql.DB.Model(&User{
+		Model: gorm.Model{
+			ID: id,
+		},
+	}).Where(&User{
 		Model: gorm.Model{
 			ID: id,
 		},

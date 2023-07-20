@@ -11,6 +11,7 @@ import (
 	ihttp "jingcai/http"
 	alog "jingcai/log"
 	"jingcai/mysql"
+	"jingcai/order"
 	"os"
 	"os/signal"
 	"syscall"
@@ -32,6 +33,7 @@ func main() {
 		clean()
 		os.Exit(1)
 	}
+	initTables()
 	ctx, cancel := context.WithCancel(context.Background())
 	go admin.InitCronForCreep(ctx)
 
@@ -45,4 +47,14 @@ func main() {
 	cancel()
 	clean()
 
+}
+
+func initTables() {
+	log.Info("======== check mysql tables =============")
+	mysql.DB.AutoMigrate(&order.AllWin{})
+	mysql.DB.AutoMigrate(&order.Order{})
+	mysql.DB.AutoMigrate(&order.Match{})
+	mysql.DB.AutoMigrate(&order.LotteryDetail{})
+	mysql.DB.AutoMigrate(&order.Bet{})
+	mysql.DB.AutoMigrate(&order.FootView{})
 }

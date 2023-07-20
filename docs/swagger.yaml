@@ -95,8 +95,11 @@ definitions:
       buyNumber:
         description: 购买份数
         type: integer
+      buyType:
+        description: FOLLOW(跟买)  MASTER(发起)
+        type: string
       finishedTime:
-        description: 结束时间
+        description: 结束时间 2006-01-02T15:04:05+07:00
         type: string
       number:
         description: 份数
@@ -105,19 +108,22 @@ definitions:
         description: 发起合买人订单号
         type: string
       parentId:
-        description: 合伙人 id,id
+        description: 发起人是0
         type: integer
       payWay:
         description: 支付方式 ALI  WECHAT SCORE（积分）
         type: string
       shouldPay:
-        description: 付款金额
+        description: 付款金额(总)
         type: number
+      showType:
+        description: 发起合买时传入该参数，SHARE(公开) AFTER_END(截至后公开)  JOIN（购买后可见）
+        type: string
       status:
-        description: 发起成功/失败
+        description: 前端不用填， 发起成功/失败
         type: boolean
       timeout:
-        description: 已经超时
+        description: 前端你不用填， 已经超时
         type: boolean
       userId:
         description: 发起人
@@ -125,7 +131,6 @@ definitions:
     required:
     - buyNumber
     - orderId
-    - parentId
     - payWay
     type: object
   order.LotteryDetail:
@@ -261,6 +266,9 @@ definitions:
         type: string
       deletedAt:
         $ref: '#/definitions/gorm.DeletedAt'
+      issueId:
+        description: 如果是大乐透 七星彩 排列3 5 需要填期号
+        type: string
       logicWinMaX:
         description: 逻辑最大中奖
         type: number
@@ -309,6 +317,7 @@ definitions:
         description: 是否中奖
         type: boolean
     required:
+    - issueId
     - lotteryUuid
     - times
     type: object
@@ -531,6 +540,57 @@ paths:
           schema:
             $ref: '#/definitions/common.BaseResponse'
       summary: 下载文件/图片
+  /lottery/plw:
+    get:
+      consumes:
+      - application/json
+      description: 排列五
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 排列五
+  /lottery/seven-star:
+    get:
+      consumes:
+      - application/json
+      description: 七星彩
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 七星彩
+  /lottery/super-lottery:
+    get:
+      consumes:
+      - application/json
+      description: 超级大乐透
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 超级大乐透
   /notify:
     get:
       consumes:

@@ -9,6 +9,7 @@ import (
 	"io"
 	"jingcai/common"
 	ilog "jingcai/log"
+	"jingcai/lottery"
 	"net/http"
 	"strings"
 	"time"
@@ -36,6 +37,13 @@ func Set(c *gin.Context) {
 		uuid := uuid.NewV4().String()
 		//log.Info(string(bytes))
 		lotteryCahe.Add(uuid, TOKEN_TIME_OUT, nil)
+		var body map[string]interface{}
+		c.Bind(&body)
+		for k, v := range body {
+			if !lottery.LotteryStatistics.Exists(k) {
+				lottery.LotteryStatistics.Add(k, 4*time.Hour, v)
+			}
+		}
 		common.SuccessReturn(c, uuid)
 
 	} else {

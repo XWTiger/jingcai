@@ -3,12 +3,17 @@ package order
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
+	uuid "github.com/satori/go.uuid"
 	"jingcai/common"
 	"jingcai/mysql"
 	"jingcai/user"
 	"jingcai/validatior"
+	"strings"
 	"time"
 )
+
+const FOLLOW = "FOLLOW"
+const MASTER = "MASTER"
 
 // 合买
 type AllWin struct {
@@ -45,6 +50,9 @@ type AllWin struct {
 
 	//SHARE(公开) AFTER_END(截至后公开)  JOIN（购买后可见）
 	ShowType string
+
+	//备注
+	Comment string
 }
 type AllWinVO struct {
 	//份数
@@ -74,6 +82,9 @@ type AllWinVO struct {
 
 	// 带红人数
 	FollowWinCount int
+
+	//备注
+	Comment string
 }
 type AllWinUser struct {
 	Phone string
@@ -105,7 +116,7 @@ type AllWinCreate struct {
 	//份数
 	Number int
 
-	//付款金额
+	//付款金额(总)
 	ShouldPay float32 `max:"0"`
 
 	//支付方式 ALI  WECHAT SCORE（积分）
@@ -120,13 +131,13 @@ type AllWinCreate struct {
 	//发起人是0
 	ParentId uint
 
-	//发起成功/失败
+	//前端不用填， 发起成功/失败
 	Status bool
 
-	//已经超时
+	//前端你不用填， 已经超时
 	Timeout bool
 
-	//结束时间
+	//结束时间 2006-01-02T15:04:05+07:00
 	FinishedTime time.Time
 
 	//购买份数
@@ -134,18 +145,28 @@ type AllWinCreate struct {
 
 	//发起合买时传入该参数，SHARE(公开) AFTER_END(截至后公开)  JOIN（购买后可见）
 	ShowType string
+	//FOLLOW(跟买)  MASTER(发起)
+	BuyType string
+
+	//备注
+	Comment string
 }
 
 func (a AllWin) GetVO() AllWinVO {
 	if a.ParentId == 0 {
+
 		var all []AllWin
 		var vo = AllWinVO{}
-		if err := mysql.DB.Model(AllWin{OrderId: a.OrderId}).Find(&all).Error; err != nil {
+		if err := mysql.DB.Model(AllWin{OrderId: a.OrderId}).Where(AllWin{OrderId: a.OrderId}).Find(&all).Error; err != nil {
 			log.Error(err)
 			return vo
 		}
-		//order := FindById(a.OrderId)
-		//vo.Order = order
+		//SHARE(公开) AFTER_END(截至后公开)  JOIN（购买后可见）
+		var order Order
+		if strings.Compare(a.ShowType, "SHARE") == 0 {
+			order = FindById(a.OrderId, true)
+		}
+		vo.Order = order
 		var allW = make([]AllWin, 0)
 		var partner = make([]AllWinUser, 0)
 		allW = append(allW, a)
@@ -191,6 +212,7 @@ func (a AllWin) GetVO() AllWinVO {
 			wasteMoney += person.ShouldPay
 		}
 		vo.ReturnRate = totalWinMoney / wasteMoney
+		vo.Comment = a.Comment
 
 		return vo
 	} else {
@@ -242,6 +264,7 @@ func AllWinCreateHandler(c *gin.Context) {
 	var body AllWinCreate
 	err := c.Bind(&body)
 	if err != nil {
+		log.Error(err)
 		common.FailedReturn(c, "参数解释失败！")
 		return
 	}
@@ -257,7 +280,14 @@ func AllWinCreateHandler(c *gin.Context) {
 			common.FailedReturn(c, "查询发起人订单失败")
 			return
 		}
-		if order.UserID == user.ID {
+		var matchs []Match
+		if err := tx.Model(&Match{}).Where(&Match{OrderId: order.UUID}).Find(&matchs).Error; err != nil {
+			log.Error(err)
+			common.FailedReturn(c, "查询发起人订单失败")
+			return
+		}
+		order.Matches = matchs
+		if strings.Compare(body.BuyType, MASTER) == 0 {
 			//发起合买
 			var initAllWin = AllWin{
 				Timeout:      false,
@@ -270,6 +300,7 @@ func AllWinCreateHandler(c *gin.Context) {
 				ShouldPay:    float32(order.ShouldPay/float32(body.Number)) * float32(body.BuyNumber),
 				Bonus:        0,
 				ShowType:     body.ShowType,
+				Comment:      body.Comment,
 			}
 			tx.Save(&initAllWin)
 			if err := tx.Model(&Order{UUID: order.UUID}).Update("all_win_id", initAllWin.ID).Error; err != nil {
@@ -282,14 +313,14 @@ func AllWinCreateHandler(c *gin.Context) {
 		} else {
 			//跟买
 			var initAll AllWin
-			if err := tx.Model(AllWin{Model: gorm.Model{ID: order.AllWinId}}).First(&initAll).Error; err != nil {
+			if err := tx.Model(AllWin{}).Where(&AllWin{Model: gorm.Model{ID: order.AllWinId}}).First(&initAll).Error; err != nil {
 				log.Error("查询发起人合买订单失败", body.OrderId)
 				common.FailedReturn(c, "查询发起人合买订单失败")
 				return
 			}
 			var userOrder = Order{
 				CreatedAt:        time.Now(),
-				UUID:             body.OrderId,
+				UUID:             uuid.NewV4().String(),
 				Times:            order.Times,
 				Way:              order.Way,
 				LotteryType:      order.LotteryType,
@@ -331,6 +362,8 @@ func AllWinCreateHandler(c *gin.Context) {
 		return
 	}
 	tx.Commit()
+	common.SuccessReturn(c, body)
+	return
 
 }
 

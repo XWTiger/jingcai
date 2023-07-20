@@ -171,6 +171,84 @@ const docTemplate = `{
                 }
             }
         },
+        "/lottery/plw": {
+            "get": {
+                "description": "排列五",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "排列五",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/lottery/seven-star": {
+            "get": {
+                "description": "七星彩",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "七星彩",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/lottery/super-lottery": {
+            "get": {
+                "description": "超级大乐透",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "超级大乐透",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/notify": {
             "get": {
                 "description": "查询通告",
@@ -995,7 +1073,6 @@ const docTemplate = `{
             "required": [
                 "buyNumber",
                 "orderId",
-                "parentId",
                 "payWay"
             ],
             "properties": {
@@ -1003,8 +1080,12 @@ const docTemplate = `{
                     "description": "购买份数",
                     "type": "integer"
                 },
+                "buyType": {
+                    "description": "FOLLOW(跟买)  MASTER(发起)",
+                    "type": "string"
+                },
                 "finishedTime": {
-                    "description": "结束时间",
+                    "description": "结束时间 2006-01-02T15:04:05+07:00",
                     "type": "string"
                 },
                 "number": {
@@ -1016,7 +1097,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "parentId": {
-                    "description": "合伙人 id,id",
+                    "description": "发起人是0",
                     "type": "integer"
                 },
                 "payWay": {
@@ -1024,15 +1105,19 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "shouldPay": {
-                    "description": "付款金额",
+                    "description": "付款金额(总)",
                     "type": "number"
                 },
+                "showType": {
+                    "description": "发起合买时传入该参数，SHARE(公开) AFTER_END(截至后公开)  JOIN（购买后可见）",
+                    "type": "string"
+                },
                 "status": {
-                    "description": "发起成功/失败",
+                    "description": "前端不用填， 发起成功/失败",
                     "type": "boolean"
                 },
                 "timeout": {
-                    "description": "已经超时",
+                    "description": "前端你不用填， 已经超时",
                     "type": "boolean"
                 },
                 "userId": {
@@ -1194,6 +1279,7 @@ const docTemplate = `{
         "order.Order": {
             "type": "object",
             "required": [
+                "issueId",
                 "lotteryUuid",
                 "times"
             ],
@@ -1223,6 +1309,10 @@ const docTemplate = `{
                 },
                 "deletedAt": {
                     "$ref": "#/definitions/gorm.DeletedAt"
+                },
+                "issueId": {
+                    "description": "如果是大乐透 七星彩 排列3 5 需要填期号",
+                    "type": "string"
                 },
                 "logicWinMaX": {
                     "description": "逻辑最大中奖",
