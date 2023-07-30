@@ -67,7 +67,7 @@ func CheckLottery(whenStart time.Time) error {
 							case "SFP":
 								//胜负平， 类型SFP hada主负 hadd主平 hadh 主胜
 								switch view.ScoreVsScore {
-								case "hada":
+								case "hada": //不让分
 									//主负
 									if len(content.GoalLine) > 0 {
 										goal, err := strconv.Atoi(content.GoalLine)
@@ -95,7 +95,7 @@ func CheckLottery(whenStart time.Time) error {
 										}
 									}
 									break
-								case "hadd":
+								case "hadd": //让分
 									if len(content.GoalLine) > 0 {
 										goal, err := strconv.Atoi(content.GoalLine)
 										if err != nil {
@@ -776,4 +776,5 @@ func AddCheckForManual(c *gin.Context) {
 		return
 	}
 	CheckLottery(startTime)
+	CheckBasketBallLottery(startTime)
 }

@@ -294,3 +294,164 @@ func (f *FootBallGames) GetSinglePoolMap() map[int]Pool {
 	}
 	return mapper
 }
+
+type BasketMatch struct {
+	MatchNum          int         `json:"matchNum"`
+	HomeTeamCode      interface{} `json:"homeTeamCode"`
+	AwayTeamCode      interface{} `json:"awayTeamCode"`
+	MatchNumStr       string      `json:"matchNumStr"`
+	MatchWeek         string      `json:"matchWeek"`
+	LeagueId          int         `json:"leagueId"`
+	LeagueCode        string      `json:"leagueCode"`
+	LeagueAbbName     string      `json:"leagueAbbName"`
+	LeagueAllName     string      `json:"leagueAllName"`
+	HomeTeamId        int         `json:"homeTeamId"`
+	HomeTeamAbbName   string      `json:"homeTeamAbbName"`
+	HomeTeamAllName   string      `json:"homeTeamAllName"`
+	HomeTeamAbbEnName string      `json:"homeTeamAbbEnName"`
+	AwayTeamId        int         `json:"awayTeamId"`
+	AwayTeamAbbName   string      `json:"awayTeamAbbName"`
+	AwayTeamAllName   string      `json:"awayTeamAllName"`
+	AwayTeamAbbEnName string      `json:"awayTeamAbbEnName"`
+	MatchDate         string      `json:"matchDate"`
+	BusinessDate      string      `json:"businessDate"`
+	MatchTime         string      `json:"matchTime"`
+	MatchId           string      `json:"matchId"`
+	SellStatus        int         `json:"sellStatus"`
+	MatchStatus       string      `json:"matchStatus"`
+	Remark            string      `json:"remark"`
+	IsHot             int         `json:"isHot"`
+	IsHide            int         `json:"isHide"`
+	HomeRank          string      `json:"homeRank"`
+	AwayRank          string      `json:"awayRank"`
+	OddsList          []struct {
+		A          string      `json:"a"`
+		Af         interface{} `json:"af"`
+		Df         interface{} `json:"df"`
+		Hf         interface{} `json:"hf"`
+		D          string      `json:"d"`
+		H          string      `json:"h"`
+		PoolCode   string      `json:"poolCode"`
+		PoolId     string      `json:"poolId"`
+		UpdateDate interface{} `json:"updateDate"`
+		UpdateTime interface{} `json:"updateTime"`
+		GoalLine   string      `json:"goalLine"`
+		Hrate      interface{} `json:"hrate"`
+		Drate      interface{} `json:"drate"`
+		Arate      interface{} `json:"arate"`
+	} `json:"oddsList"`
+	PoolList []Pool `json:"poolList"`
+	Hdc      struct {
+		A          string `json:"a"`
+		Af         string `json:"af"`
+		GoalLine   string `json:"goalLine"`
+		H          string `json:"h"`
+		Hf         string `json:"hf"`
+		UpdateDate string `json:"updateDate"`
+		UpdateTime string `json:"updateTime"`
+	} `json:"hdc"`
+	Hilo struct {
+		L          string `json:"l"`
+		Lf         string `json:"lf"`
+		GoalLine   string `json:"goalLine"`
+		H          string `json:"h"`
+		Hf         string `json:"hf"`
+		UpdateDate string `json:"updateDate"`
+		UpdateTime string `json:"updateTime"`
+	} `json:"hilo"`
+	Mnl struct {
+		A          string `json:"a"`
+		Af         string `json:"af"`
+		GoalLine   string `json:"goalLine"`
+		H          string `json:"h"`
+		Hf         string `json:"hf"`
+		UpdateDate string `json:"updateDate"`
+		UpdateTime string `json:"updateTime"`
+	} `json:"mnl"`
+	Wnm struct {
+		GoalLine   string `json:"goalLine"`
+		L1         string `json:"l1"`
+		L1F        string `json:"l1f"`
+		L2         string `json:"l2"`
+		L2F        string `json:"l2f"`
+		L3         string `json:"l3"`
+		L3F        string `json:"l3f"`
+		L4         string `json:"l4"`
+		L4F        string `json:"l4f"`
+		L5         string `json:"l5"`
+		L5F        string `json:"l5f"`
+		L6         string `json:"l6"`
+		L6F        string `json:"l6f"`
+		W1         string `json:"w1"`
+		W1F        string `json:"w1f"`
+		W2         string `json:"w2"`
+		W2F        string `json:"w2f"`
+		W3         string `json:"w3"`
+		W3F        string `json:"w3f"`
+		W4         string `json:"w4"`
+		W4F        string `json:"w4f"`
+		W5         string `json:"w5"`
+		W5F        string `json:"w5f"`
+		W6         string `json:"w6"`
+		W6F        string `json:"w6f"`
+		UpdateDate string `json:"updateDate"`
+		UpdateTime string `json:"updateTime"`
+	} `json:"wnm"`
+}
+
+type BasketBallGames struct {
+	Content struct {
+		TotalCount     interface{} `json:"totalCount"`
+		LastUpdateTime interface{} `json:"lastUpdateTime"`
+		CacheId        string      `json:"cacheId"`
+		MatchInfoList  []struct {
+			BusinessDate string        `json:"businessDate"`
+			MatchCount   int           `json:"matchCount"`
+			Weekday      string        `json:"weekday"`
+			SubMatchList []BasketMatch `json:"subMatchList"`
+		} `json:"matchInfoList"`
+		MatchDateList []struct {
+			BusinessDate   string `json:"businessDate"`
+			BusinessDateCn string `json:"businessDateCn"`
+		} `json:"matchDateList"`
+		LeagueList []struct {
+			LeagueId       interface{} `json:"leagueId"`
+			LeagueName     interface{} `json:"leagueName"`
+			LeagueNameAbbr interface{} `json:"leagueNameAbbr"`
+		} `json:"leagueList"`
+	} `json:"content"`
+	Resource   interface{} `json:"resource"`
+	StatusCode int         `json:"status_code"`
+	StatusMes  string      `json:"status_mes"`
+}
+
+func (bbg *BasketBallGames) GetBasketMapper() map[string]BasketMatch {
+
+	var mapper = make(map[string]BasketMatch, 0)
+	if len(bbg.Content.MatchInfoList) <= 0 {
+		return nil
+	}
+	for _, s := range bbg.Content.MatchInfoList {
+		for _, match := range s.SubMatchList {
+			mapper[match.MatchId] = match
+		}
+	}
+	return mapper
+}
+
+func (bbg *BasketBallGames) GetSinglePoolMap() map[int]Pool {
+	var mapper = make(map[int]Pool)
+	for _, s := range bbg.Content.MatchInfoList {
+		for _, match := range s.SubMatchList {
+			if len(match.PoolList) > 0 {
+				for _, pool := range match.PoolList {
+					_, ok := mapper[pool.PoolId]
+					if !ok {
+						mapper[pool.PoolId] = pool
+					}
+				}
+			}
+		}
+	}
+	return mapper
+}

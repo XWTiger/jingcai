@@ -2,19 +2,13 @@ package lottery
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/muesli/cache2go"
 	"io"
 	"jingcai/common"
 	alog "jingcai/log"
-	"jingcai/mysql"
-	"jingcai/order"
-	"jingcai/util"
 	"net/http"
-	"strconv"
-	"strings"
 	"time"
 )
 
@@ -27,6 +21,7 @@ const FOOT_BALL_COUNT = "foot_ball_count"
 const SEVEN_STAR_POOL = "seven_star_pool"
 const SEVEN_START_URL = "https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry?gameNo=04&provinceId=0&isVerify=1&termLimits=13"
 const PLW_URL = "https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListPlwV1.qry?gameNo=350133&provinceId=0&isVerify=1&termLimits=5"
+const SUPER_LOTTO_URL = "https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry?gameNo=04&provinceId=0&isVerify=1&termLimits=13"
 
 // 大乐透
 type SuperLottery struct {
@@ -279,8 +274,7 @@ var LotteryStatistics = cache2go.Cache("lottery-statistics")
 // @failure 500 {object} common.BaseResponse
 // @Router /lottery/super-lottery [get]
 func SuperLotteryFun(c *gin.Context) {
-	var url = "https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry?gameNo=04&provinceId=0&isVerify=1&termLimits=13"
-	resp, err := http.Get(url)
+	resp, err := http.Get(SUPER_LOTTO_URL)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -360,154 +354,4 @@ func SevenStarFun(c *gin.Context) {
 		LotteryStatistics.Add(SEVEN_STAR_POOL, 6*time.Hour, result.Value.LastPoolDraw.PoolBalanceAfterdraw)
 	}
 	common.SuccessReturn(c, result)
-}
-
-func CreatePLW(ord *order.Order) error {
-
-	if len(ord.Content) <= 0 {
-		return errors.New("选号不能为空")
-	}
-
-	if len(ord.IssueId) <= 0 {
-		return errors.New("订单期号不能为空")
-	}
-	var tp = 0
-	if strings.Compare(ord.LotteryType, "P3") == 0 {
-		tp = 3
-	}
-
-	if strings.Compare(ord.LotteryType, "P5") == 0 {
-		tp = 5
-	}
-
-	if strings.Contains(ord.Content, ",") {
-		arr := strings.Split(ord.Content, ",")
-		if len(arr) == tp {
-			for _, s := range arr {
-				numArr := strings.Split(s, " ")
-				for _, s2 := range numArr {
-					num, err := strconv.Atoi(s2)
-					if err != nil {
-						log.Error(err)
-						return errors.New("号码存在异常")
-					}
-					if !(0 <= num && num <= 9) {
-						return errors.New("号码存在异常,数字不在0-9 之间")
-					}
-				}
-			}
-		}
-	} else if len(ord.Content) == tp {
-		numArr := strings.Split(ord.Content, " ")
-		for _, s2 := range numArr {
-			num, err := strconv.Atoi(s2)
-			if err != nil {
-				log.Error(err)
-				return errors.New("号码存在异常")
-			}
-			if !(0 <= num && num <= 9) {
-				return errors.New("号码存在异常,数字不在0-9 之间")
-			}
-		}
-
-	} else {
-		return errors.New("参数异常")
-	}
-	if err := mysql.DB.Create(ord).Error; err != nil {
-		log.Error(err)
-		return errors.New("保存订单失败")
-	}
-	if !LotteryStatistics.Exists("plw_check") {
-		LotteryStatistics.Add("plw_check", 8*time.Hour, 1)
-		AddPlwCheck(tp)
-	}
-	return nil
-}
-
-func AddPlwCheck(p int) {
-
-	resp, err := http.Get(PLW_URL)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	defer resp.Body.Close()
-	body, _ := io.ReadAll(resp.Body)
-	var result Plw
-	err = json.Unmarshal(body, &result)
-	if err != nil || &result.Value == nil {
-		log.Error("转换大乐透结果为对象失败", err)
-
-		return
-	}
-	var job order.Job
-	switch p {
-	case 3:
-		job = order.Job{
-			Time:  util.GetPLWFinishedTime(),
-			Param: nil,
-			CallBack: func(param interface{}) {
-				orders := order.GetOrderByLotteryType("P3")
-				tx := mysql.DB.Begin()
-				if len(orders) > 0 {
-					for _, o := range orders {
-						if strings.Compare(result.Value.List[0].LotteryDrawNum, o.IssueId) == 0 {
-							content := getArr(o.Content)
-							releaseNum := result.Value.List[0].LotteryDrawResult[0:4]
-							for _, s := range content {
-								if strings.Compare(s, releaseNum) == 0 {
-									o.Bonus = o.Bonus + 1
-								}
-							}
-						}
-						tx.Save(o)
-					}
-				}
-				tx.Commit()
-
-			},
-		}
-
-		break
-	case 5:
-		job = order.Job{
-			Time:  util.GetPLWFinishedTime(),
-			Param: nil,
-			CallBack: func(param interface{}) {
-				orders := order.GetOrderByLotteryType("P5")
-				tx := mysql.DB.Begin()
-				if len(orders) > 0 {
-					for _, o := range orders {
-						if strings.Compare(result.Value.List[0].LotteryDrawNum, o.IssueId) == 0 {
-							content := getArr(o.Content)
-							releaseNum := result.Value.List[0].LotteryDrawResult
-							for _, s := range content {
-								if strings.Compare(s, releaseNum) == 0 {
-									o.Bonus = o.Bonus + 1
-								}
-							}
-						}
-						tx.Save(o)
-					}
-				}
-				tx.Commit()
-
-			},
-		}
-
-		break
-	}
-	order.AddJob(job)
-
-}
-
-func getArr(content string) []string {
-
-	if strings.Contains(content, ",") {
-		return strings.Split(content, ",")
-	} else {
-		var strs []string
-		strs = append(strs, content)
-		return strs
-	}
 }

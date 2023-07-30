@@ -7,13 +7,16 @@ import (
 	"github.com/gin-gonic/gin"
 	uuid "github.com/satori/go.uuid"
 	"gorm.io/gorm"
+	"io"
 	"jingcai/cache"
 	"jingcai/common"
 	ilog "jingcai/log"
+	"jingcai/lottery"
 	"jingcai/mysql"
 	"jingcai/user"
 	"jingcai/util"
 	"jingcai/validatior"
+	"net/http"
 	"sort"
 	"strconv"
 	"strings"
@@ -86,7 +89,8 @@ type Match struct {
 
 type LotteryDetail struct {
 	gorm.Model
-	//类型 枚举：SFP（胜负平）、BF（比分）、ZJQ(总进球)、BQSFP（半全场胜负平）
+	//足球类型 枚举：SFP（胜负平）、BF（比分）、ZJQ(总进球)、BQSFP（半全场胜负平）
+	//篮球类型 枚举：HDC （胜负）、 HILO（大小分）、 MNL（让分胜负）、 WNM（胜分差）
 	Type string `validate:"required"`
 	//赔率
 	Odds float32
@@ -94,12 +98,18 @@ type LotteryDetail struct {
 	PoolCode string `validate:"required"`
 	PoolId   string `json:"poolId" validate:"required"`
 
+	//=================足球=========================
 	//比分， 类型BF才有 s00s00 s05s02
 	//半全场胜平负， 类型BQSFP  aa hh
 	//总进球数， 类型ZJQ s0 - s7
 	//胜负平， 类型SFP hada主负 hadd主平 hadh 主胜  hhada客负 hhadd客平 hhadh 客胜
+	//=================篮球=========================
+	//让分胜负， 类型HDC a 负，  h 胜
+	//大小分，类型HILO l 小， h 大
+	//胜负，类型MNL a 主负， h 主胜
+	//胜分差，类型WNM l1 客胜1-5分  l2 6-10分 ... l6 26+分， w1 主胜1-5分 ... w6 26+分
 	ScoreVsScore string `validate:"required"`
-	//让球 胜平负才有
+	//让球 胜平负才有，篮球就是让分
 	GoalLine string
 	ParentId uint
 }
@@ -131,7 +141,7 @@ type Order struct {
 	Content string
 
 	//保存类型 TEMP（临时保存） TOMASTER（提交到店）  合买(ALLWIN)
-	SaveType string
+	SaveType string `validate:"required"`
 
 	//是否让人跟单
 	Share bool
@@ -199,12 +209,19 @@ type FootView struct {
 	MatchNum string
 	MatchId  string
 
-	//类型 枚举：SFP（胜负平）、BF（比分）、ZJQ(总进球)、BQSFP（半全场胜负平）
+	//足球类型 枚举：SFP（胜负平）、BF（比分）、ZJQ(总进球)、BQSFP（半全场胜负平）
+	//篮球类型 枚举：HDC （胜负）、 HILO（大小分）、 MNL（让分胜负）、 WNM（胜分差）
 	Type string
+	///=================足球=========================
 	//比分， 类型BF才有 s00s00 s05s02
 	//半全场胜平负， 类型BQSFP  aa hh
 	//总进球数， 类型ZJQ s0 - s7
 	//胜负平， 类型SFP hada主负 hadd主平 hadh 主胜  hhada客负 hhadd客平 hhadh 客胜
+	//=================篮球=========================
+	//让分胜负， 类型HDC a 负，  h 胜
+	//大小分，类型HILO l 小， h 大
+	//胜负，类型MNL a 主负， h 主胜
+	//胜分差，类型WNM l1 客胜1-5分  l2 6-10分 ... l6 26+分， w1 主胜1-5分 ... w6 26+分
 	ScoreVsScore string
 	//让球 胜平负才有
 	GoalLine string
@@ -263,18 +280,119 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 		basketball(c, &order)
 		return
 	case P3:
+		err := CreatePLW(&order)
+		if err != nil {
+			log.Error(err)
+			common.FailedReturn(c, err.Error())
+		}
 		return
 	case P5:
+		err := CreatePLW(&order)
+		if err != nil {
+			log.Error(err)
+			common.FailedReturn(c, err.Error())
+		}
 		return
 	case SUPER_LOTTO:
+		//大乐透
+		err := checkSuperLotto(&order)
+		if err != nil {
+			log.Error(err)
+			common.FailedReturn(c, err.Error())
+		}
 		return
 	case SEVEN_STAR:
+		checkSevenStar(&order)
 		return
 	default:
 		common.FailedReturn(c, "购买类型不正确")
 		return
 	}
 	//TODO 扣款逻辑/扣积分逻辑
+}
+
+func checkSuperLotto(ord *Order) error {
+	if len(ord.Content) <= 0 {
+		return errors.New("选号不能为空")
+	}
+
+	if len(ord.IssueId) <= 0 {
+		return errors.New("订单期号不能为空")
+	}
+
+	nums := getArr(ord.Content)
+	if nil == nums || len(nums) <= 0 {
+		return errors.New("参数异常")
+	}
+	for _, num := range nums {
+		numbers := strings.Split(num, " ")
+		for i, number := range numbers {
+			numb, err := strconv.Atoi(number)
+			if err != nil {
+				log.Error(err)
+				return errors.New("选号存在问题")
+			}
+			if i <= 5 {
+				if numb < 1 || numb > 35 {
+					return errors.New("大乐透前五位只能在01—35之间")
+				}
+			}
+
+			if i >= 6 {
+				if numb < 1 || numb > 12 {
+					return errors.New("大乐透后2位只能在01—12之间")
+				}
+			}
+		}
+	}
+
+	if !lottery.LotteryStatistics.Exists("super_lotto_check") {
+		lottery.LotteryStatistics.Add("super_lotto_check", 8*time.Hour, 1)
+		AddSuperLottoCheck()
+	}
+	return nil
+}
+
+func checkSevenStar(ord *Order) error {
+	if len(ord.Content) <= 0 {
+		return errors.New("选号不能为空")
+	}
+
+	if len(ord.IssueId) <= 0 {
+		return errors.New("订单期号不能为空")
+	}
+
+	nums := getArr(ord.Content)
+	if nil == nums || len(nums) <= 0 {
+		return errors.New("参数异常")
+	}
+	for _, num := range nums {
+		numbers := strings.Split(num, " ")
+		for i, number := range numbers {
+			numb, err := strconv.Atoi(number)
+			if err != nil {
+				log.Error(err)
+				return errors.New("选号存在问题")
+			}
+			if i <= 6 {
+				if numb < 0 || numb > 9 {
+					return errors.New("七星彩前六位只能在000000-999999之间")
+				}
+			}
+
+			if i > 6 {
+				if numb < 0 || numb > 14 {
+					return errors.New("七星彩后1位只能在0—14之间")
+				}
+			}
+		}
+	}
+
+	if !lottery.LotteryStatistics.Exists("seven_star_check") {
+		lottery.LotteryStatistics.Add("seven_star_check", 8*time.Hour, 1)
+		AddSevenStarCheck()
+	}
+	return nil
 }
 
 // @Summary 订单查询接口
@@ -408,8 +526,8 @@ func football(c *gin.Context, order *Order) {
 				fmt.Println("----------------------------------")
 			}
 			fmt.Println("倍数：", order.Times)
-			fmt.Println("奖金：", bet.Bonus)
-			fmt.Println("=========================================")
+			fmt.Println("单个组合奖金：", bet.Bonus)
+
 		}
 	}
 	sort.Slice(bonus, func(i, j int) bool {
@@ -421,7 +539,11 @@ func football(c *gin.Context, order *Order) {
 	for _, f := range bonus {
 		bonusCout += f
 	}
-	order.LogicWinMaX = bonusCout * float32(order.Times)
+	var logicCount = bonusCout * float32(order.Times)
+	if order.LogicWinMaX != logicCount {
+		log.Warn("逻辑奖金和后台算出对不上", order.LogicWinMaX, logicCount)
+	}
+	order.LogicWinMaX = logicCount
 	order.ShouldPay = float32(2 * len(bonus) * order.Times)
 	order.CreatedAt = time.Now()
 	fmt.Println("实际付款：", order.ShouldPay)
@@ -432,6 +554,9 @@ func football(c *gin.Context, order *Order) {
 		tx.Rollback()
 		return
 	}
+
+	fmt.Println("逻辑总奖金: ", order.LogicWinMaX)
+	fmt.Println("=========================================")
 
 	CheckLottery(util.AddTwoHToTime(order.Matches[len(order.Matches)-1].TimeDate))
 	//cache.Remove(order.LotteryUuid)
@@ -515,6 +640,83 @@ func fillMatches(games cache.FootBallGames, order *Order, c *gin.Context, tx *go
 	return order
 }
 
+// 回填比赛信息和赔率
+func fillBasketBallMatches(games cache.BasketBallGames, order *Order, c *gin.Context, tx *gorm.DB) *Order {
+	if len(order.Matches) <= 0 {
+		return nil
+	}
+	var mapper = games.GetBasketMapper()
+	for index, match := range order.Matches {
+		matchMapper, ok := mapper[match.MatchId]
+		if ok {
+			date, error := time.ParseInLocation("2006-01-02 15:04:05", fmt.Sprintf("%s %s", matchMapper.MatchDate, matchMapper.MatchTime), time.Local)
+			if error == nil {
+				order.Matches[index].TimeDate = date
+			} else {
+				fmt.Println("====== 比赛日期转换失败， 要影响订单统计 order id：=======", order.UUID)
+				log.Error(error)
+				common.FailedReturn(c, "时间转换失败， 请联系店主")
+				tx.Rollback()
+				return nil
+			}
+			// 校验比赛是否已经有已经开始的了 或者超过时间
+			now := time.Now()
+			ftime := common.GetMatchFinishedTime(order.Matches[index].TimeDate)
+			if now.UnixMicro() > ftime.UnixMicro() {
+				log.Error("比赛已经开始或者已经停售了", "截止时间：", ftime.Format("2006-01-02 15:04:05"))
+				common.FailedReturn(c, "比赛已经开始或者已经停售了")
+				tx.Rollback()
+				return nil
+			}
+			order.Matches[index].MatchDate = matchMapper.MatchDate
+			order.Matches[index].AwayTeamAllName = matchMapper.AwayTeamAllName
+			order.Matches[index].AwayTeamId = strconv.Itoa(matchMapper.AwayTeamId)
+			order.Matches[index].AwayTeamName = matchMapper.AwayTeamAbbName
+			order.Matches[index].HomeTeamId = strconv.Itoa(matchMapper.HomeTeamId)
+			order.Matches[index].HomeTeamAllName = matchMapper.HomeTeamAllName
+
+			order.Matches[index].HomeTeamName = matchMapper.HomeTeamAbbName
+			order.Matches[index].LeagueAllName = matchMapper.LeagueAllName
+			order.Matches[index].LeagueCode = matchMapper.LeagueCode
+			order.Matches[index].LeagueId = strconv.Itoa(matchMapper.LeagueId)
+			order.Matches[index].MatchDate = matchMapper.MatchDate
+			order.Matches[index].MatchTime = matchMapper.MatchTime
+			order.Matches[index].MatchNumStr = matchMapper.MatchNumStr
+			order.Matches[index].MatchNum = strconv.Itoa(matchMapper.MatchNum)
+
+			order.Matches[index].OrderId = order.UUID
+			order.Matches[index].TimeDate = date
+			if err := tx.Create(&order.Matches[index]).Error; err != nil {
+				log.Error("save match failed", err)
+				common.FailedReturn(c, "创建订单失败， 请联系店主")
+				tx.Rollback()
+				return nil
+			}
+			if len(match.Combines) > 0 {
+				for in, _ := range order.Matches[index].Combines {
+					odd, err := FindBasketBallOdd(order.Matches[index].MatchId, &order.Matches[index].Combines[in], mapper)
+					if odd == 0 || err != nil {
+						common.FailedReturn(c, "获取赔率失败")
+						tx.Rollback()
+						return nil
+					}
+					order.Matches[index].Combines[in].Odds = float32(odd)
+					order.Matches[index].Combines[in].ParentId = order.Matches[index].ID
+					if err := tx.Create(&order.Matches[index].Combines[in]).Error; err != nil {
+						log.Error("save lottery detail  failed", err)
+						common.FailedReturn(c, "创建订单失败， 请联系店主")
+						tx.Rollback()
+						return nil
+					}
+				}
+			}
+		} else {
+			return nil
+		}
+	}
+	return order
+}
+
 func FindOdd(matchId string, lotto *LotteryDetail, mapper map[string]cache.Match) (float64, error) {
 	match, ok := mapper[matchId]
 	if !ok {
@@ -527,6 +729,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, mapper map[string]cache.Match
 	switch lotto.Type {
 	case "SFP":
 		//胜负平， 类型SFP hada主负 hadd主平 hadh 主胜  hhada客负 hhadd客平 hhadh 客胜
+		lotto.GoalLine = match.Had.GoalLine
 		switch lotto.ScoreVsScore {
 		case "hada":
 			//主负
@@ -560,6 +763,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, mapper map[string]cache.Match
 			}
 		case "hhada":
 			//客负
+			lotto.GoalLine = match.Hhad.GoalLine
 			odd, err := strconv.ParseFloat(match.Hhad.A, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
@@ -569,6 +773,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, mapper map[string]cache.Match
 				return odd, nil
 			}
 		case "hhadd":
+			lotto.GoalLine = match.Hhad.GoalLine
 			odd, err := strconv.ParseFloat(match.Hhad.D, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
@@ -579,6 +784,7 @@ func FindOdd(matchId string, lotto *LotteryDetail, mapper map[string]cache.Match
 			}
 		case "hhadh":
 			//客胜
+			lotto.GoalLine = match.Hhad.GoalLine
 			odd, err := strconv.ParseFloat(match.Hhad.H, 8)
 			if err != nil {
 				log.Error("存在赔率无法转换")
@@ -851,7 +1057,9 @@ func FindOdd(matchId string, lotto *LotteryDetail, mapper map[string]cache.Match
 		break
 	case "ZJQ":
 		//总进球
+		lotto.GoalLine = match.Ttg.GoalLine
 		switch lotto.ScoreVsScore {
+
 		case "s0":
 			odd, err := strconv.ParseFloat(match.Ttg.S0, 8)
 			if err != nil {
@@ -1013,18 +1221,209 @@ func FindOdd(matchId string, lotto *LotteryDetail, mapper map[string]cache.Match
 	return 0, errors.New("类型不存在")
 }
 
+func FindBasketBallOdd(matchId string, lotto *LotteryDetail, mapper map[string]cache.BasketMatch) (float64, error) {
+	//篮球类型 枚举：HDC （胜负）、 HILO（大小分）、 MNL（让分胜负）、 WNM（胜分差）
+	match := mapper[matchId]
+	switch lotto.Type {
+	case "HDC":
+		//胜负
+		if strings.Compare(lotto.ScoreVsScore, "a") == 0 {
+			odd, err := strconv.ParseFloat(match.Hdc.A, 8)
+			if err != nil {
+				log.Error("存在赔率无法转换")
+				return 0.0, errors.New("存在赔率无法转换")
+			} else {
+				return odd, nil
+			}
+		}
+		if strings.Compare(lotto.ScoreVsScore, "h") == 0 {
+			odd, err := strconv.ParseFloat(match.Hdc.H, 8)
+			if err != nil {
+				log.Error("存在赔率无法转换")
+				return 0.0, errors.New("存在赔率无法转换")
+			} else {
+				return odd, nil
+			}
+		}
+		break
+	case "HILO":
+		//大小分
+		lotto.GoalLine = match.Hilo.GoalLine
+		switch lotto.ScoreVsScore {
+		case "l":
+			odd, err := strconv.ParseFloat(match.Hilo.L, 8)
+			if err != nil {
+				log.Error("存在赔率无法转换")
+				return 0.0, errors.New("存在赔率无法转换")
+			} else {
+				return odd, nil
+			}
+		case "h":
+			odd, err := strconv.ParseFloat(match.Hilo.H, 8)
+			if err != nil {
+				log.Error("存在赔率无法转换")
+				return 0.0, errors.New("存在赔率无法转换")
+			} else {
+				return odd, nil
+			}
+		}
+		break
+	case "MNL":
+		//让分胜负
+		lotto.GoalLine = match.Mnl.GoalLine
+		if strings.Compare(lotto.ScoreVsScore, "a") == 0 {
+			odd, err := strconv.ParseFloat(match.Mnl.A, 8)
+			if err != nil {
+				log.Error("存在赔率无法转换")
+				return 0.0, errors.New("存在赔率无法转换")
+			} else {
+				return odd, nil
+			}
+		}
+		if strings.Compare(lotto.ScoreVsScore, "h") == 0 {
+			odd, err := strconv.ParseFloat(match.Hdc.H, 8)
+			if err != nil {
+				log.Error("存在赔率无法转换")
+				return 0.0, errors.New("存在赔率无法转换")
+			} else {
+				return odd, nil
+			}
+		}
+		break
+	case "WNM":
+		//胜分差
+		switch lotto.ScoreVsScore {
+		case "l1":
+			odd, err := strconv.ParseFloat(match.Wnm.L1, 8)
+			if err != nil {
+				log.Error("存在赔率无法转换")
+				return 0.0, errors.New("存在赔率无法转换")
+			} else {
+				return odd, nil
+			}
+
+		case "l2":
+			odd, err := strconv.ParseFloat(match.Wnm.L2, 8)
+			if err != nil {
+				log.Error("存在赔率无法转换")
+				return 0.0, errors.New("存在赔率无法转换")
+			} else {
+				return odd, nil
+			}
+		case "l3":
+			odd, err := strconv.ParseFloat(match.Wnm.L3, 8)
+			if err != nil {
+				log.Error("存在赔率无法转换")
+				return 0.0, errors.New("存在赔率无法转换")
+			} else {
+				return odd, nil
+			}
+		case "l4":
+			odd, err := strconv.ParseFloat(match.Wnm.L4, 8)
+			if err != nil {
+				log.Error("存在赔率无法转换")
+				return 0.0, errors.New("存在赔率无法转换")
+			} else {
+				return odd, nil
+			}
+		case "l5":
+			odd, err := strconv.ParseFloat(match.Wnm.L5, 8)
+			if err != nil {
+				log.Error("存在赔率无法转换")
+				return 0.0, errors.New("存在赔率无法转换")
+			} else {
+				return odd, nil
+			}
+		case "l6":
+			odd, err := strconv.ParseFloat(match.Wnm.L6, 8)
+			if err != nil {
+				log.Error("存在赔率无法转换")
+				return 0.0, errors.New("存在赔率无法转换")
+			} else {
+				return odd, nil
+			}
+		case "w1":
+			odd, err := strconv.ParseFloat(match.Wnm.W1, 8)
+			if err != nil {
+				log.Error("存在赔率无法转换")
+				return 0.0, errors.New("存在赔率无法转换")
+			} else {
+				return odd, nil
+			}
+		case "w2":
+			odd, err := strconv.ParseFloat(match.Wnm.W2, 8)
+			if err != nil {
+				log.Error("存在赔率无法转换")
+				return 0.0, errors.New("存在赔率无法转换")
+			} else {
+				return odd, nil
+			}
+		case "w3":
+			odd, err := strconv.ParseFloat(match.Wnm.W3, 8)
+			if err != nil {
+				log.Error("存在赔率无法转换")
+				return 0.0, errors.New("存在赔率无法转换")
+			} else {
+				return odd, nil
+			}
+		case "w4":
+			odd, err := strconv.ParseFloat(match.Wnm.W4, 8)
+			if err != nil {
+				log.Error("存在赔率无法转换")
+				return 0.0, errors.New("存在赔率无法转换")
+			} else {
+				return odd, nil
+			}
+		case "w5":
+			odd, err := strconv.ParseFloat(match.Wnm.W5, 8)
+			if err != nil {
+				log.Error("存在赔率无法转换")
+				return 0.0, errors.New("存在赔率无法转换")
+			} else {
+				return odd, nil
+			}
+		case "w6":
+			odd, err := strconv.ParseFloat(match.Wnm.W6, 8)
+			if err != nil {
+				log.Error("存在赔率无法转换")
+				return 0.0, errors.New("存在赔率无法转换")
+			} else {
+				return odd, nil
+			}
+		}
+		break
+	default:
+		return 0, errors.New("类型不存在")
+
+	}
+	return 0, errors.New("类型不存在")
+}
+
 func (order *Order) WayDetail() (map[string]interface{}, error) {
 
 	ways := strings.Split(order.Way, ",")
 	oddCombines := make(map[string]interface{})
 	data := cache.Get(order.LotteryUuid).(string)
-	var game cache.LotteryResult
-	jerr := json.Unmarshal([]byte(data), &game)
-	if jerr != nil {
-		log.Error(jerr)
-		return oddCombines, errors.New("缓存解析失败")
+	var poolMap map[int]cache.Pool
+	if strings.Compare(order.LotteryType, "BASKETBALL") == 0 {
+		var game cache.BasketBallGames
+		jerr := json.Unmarshal([]byte(data), &game)
+		if jerr != nil {
+			log.Error(jerr)
+			return oddCombines, errors.New("缓存解析失败")
+		}
+		poolMap = game.GetSinglePoolMap()
+
+	} else {
+		var game cache.LotteryResult
+		jerr := json.Unmarshal([]byte(data), &game)
+		if jerr != nil {
+			log.Error(jerr)
+			return oddCombines, errors.New("缓存解析失败")
+		}
+		poolMap = game.Content.GetSinglePoolMap()
 	}
-	poolMap := game.Content.GetSinglePoolMap()
+
 	for _, way := range ways {
 		switch way {
 		case "1x1":
@@ -1432,8 +1831,65 @@ func TigerDragonList(c *gin.Context) {
 
 // t 类型
 func GetDesc(t string, scoreVsScore string) string {
-	//SFP（胜负平）、BF（比分）、ZJQ(总进球)、BQSFP（半全场胜负平）
+	//足球类型 枚举：SFP（胜负平）、BF（比分）、ZJQ(总进球)、BQSFP（半全场胜负平）
+	//篮球类型 枚举：HDC （胜负）、 HILO（大小分）、 MNL（让分胜负）、 WNM（胜分差）
+
 	switch t {
+	case "HDC":
+		switch scoreVsScore {
+		case "a":
+			return "让分主胜"
+		case "h":
+			return "让分客胜"
+		}
+
+		break
+	case "HILO":
+		switch scoreVsScore {
+		case "l":
+			return "小"
+		case "h":
+			return "大"
+		}
+		break
+	case "MNL":
+		switch scoreVsScore {
+		case "a":
+			return "主负"
+		case "h":
+			return "主胜"
+		}
+
+		break
+	case "WNM":
+		switch scoreVsScore {
+		case "l1":
+			return "(客胜 1-5 分差)"
+		case "l2":
+			return "(客胜 6-10 分差)"
+		case "l3":
+			return "(客胜 10-15 分差)"
+		case "l4":
+			return "(客胜 6-20 分差)"
+		case "l5":
+			return "(客胜 21-25 分差)"
+		case "l6":
+			return "(客胜 26+ 分差)"
+		case "w1":
+			return "(主胜 1-5 分差)"
+		case "w2":
+			return "(主胜 6-10 分差)"
+		case "w3":
+			return "(主胜 11-15 分差)"
+		case "w4":
+			return "(主胜 16-20 分差)"
+		case "w5":
+			return "(主胜 21-25 分差)"
+		case "w6":
+			return "(主胜 26+ 分差)"
+		}
+		break
+
 	case "SFP":
 		//胜负平， 类型SFP hada主负 hadd主平 hadh 主胜  hhada客负 hhadd客平 hhadh 客胜
 		switch scoreVsScore {
@@ -1623,4 +2079,380 @@ func GetOrderByLotteryType(tp string) []Order {
 		return nil
 	}
 	return orders
+}
+
+func CreatePLW(ord *Order) error {
+
+	if len(ord.Content) <= 0 {
+		return errors.New("选号不能为空")
+	}
+
+	if len(ord.IssueId) <= 0 {
+		return errors.New("订单期号不能为空")
+	}
+	var tp = 0
+	if strings.Compare(ord.LotteryType, "P3") == 0 {
+		tp = 3
+	}
+
+	if strings.Compare(ord.LotteryType, "P5") == 0 {
+		tp = 5
+	}
+
+	if strings.Contains(ord.Content, ",") {
+		arr := strings.Split(ord.Content, ",")
+		if len(arr) == tp {
+			for _, s := range arr {
+				numArr := strings.Split(s, " ")
+				for _, s2 := range numArr {
+					num, err := strconv.Atoi(s2)
+					if err != nil {
+						log.Error(err)
+						return errors.New("号码存在异常")
+					}
+					if !(0 <= num && num <= 9) {
+						return errors.New("号码存在异常,数字不在0-9 之间")
+					}
+				}
+			}
+		}
+	} else if len(ord.Content) == tp {
+		numArr := strings.Split(ord.Content, " ")
+		for _, s2 := range numArr {
+			num, err := strconv.Atoi(s2)
+			if err != nil {
+				log.Error(err)
+				return errors.New("号码存在异常")
+			}
+			if !(0 <= num && num <= 9) {
+				return errors.New("号码存在异常,数字不在0-9 之间")
+			}
+		}
+
+	} else {
+		return errors.New("参数异常")
+	}
+	if err := mysql.DB.Create(ord).Error; err != nil {
+		log.Error(err)
+		return errors.New("保存订单失败")
+	}
+	if !lottery.LotteryStatistics.Exists("plw_check") {
+		lottery.LotteryStatistics.Add("plw_check", 8*time.Hour, 1)
+		AddPlwCheck(tp)
+	}
+	return nil
+}
+
+func AddPlwCheck(p int) {
+	resp, err := http.Get(lottery.PLW_URL)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	var result lottery.Plw
+	err = json.Unmarshal(body, &result)
+	if err != nil || &result.Value == nil {
+		log.Error("转换排列5结果为对象失败", err)
+
+		return
+	}
+	var job Job
+	switch p {
+	case 3:
+		job = Job{
+			Time:  util.GetPLWFinishedTime(),
+			Param: nil,
+			CallBack: func(param interface{}) {
+				orders := GetOrderByLotteryType("P3")
+				tx := mysql.DB.Begin()
+				if len(orders) > 0 {
+					for _, o := range orders {
+						if strings.Compare(result.Value.List[0].LotteryDrawNum, o.IssueId) == 0 {
+							content := getArr(o.Content)
+							releaseNum := result.Value.List[0].LotteryDrawResult[0:4]
+							for _, s := range content {
+								if strings.Compare(s, releaseNum) == 0 {
+									o.Bonus = o.Bonus + 1
+									o.Win = true
+								}
+							}
+							o.AllMatchFinished = true
+						}
+						tx.Save(o)
+					}
+				}
+				tx.Commit()
+
+			},
+		}
+
+		break
+	case 5:
+		job = Job{
+			Time:  util.GetPLWFinishedTime(),
+			Param: nil,
+			CallBack: func(param interface{}) {
+				orders := GetOrderByLotteryType("P5")
+				tx := mysql.DB.Begin()
+				if len(orders) > 0 {
+					for _, o := range orders {
+						if strings.Compare(result.Value.List[0].LotteryDrawNum, o.IssueId) == 0 {
+							content := getArr(o.Content)
+							releaseNum := result.Value.List[0].LotteryDrawResult
+							for _, s := range content {
+								if strings.Compare(s, releaseNum) == 0 {
+									o.Bonus = o.Bonus + 1
+									o.Win = true
+								}
+							}
+							o.AllMatchFinished = true
+
+						}
+						tx.Save(o)
+					}
+				}
+				tx.Commit()
+
+			},
+		}
+		break
+	}
+	AddJob(job)
+
+}
+
+func AddSuperLottoCheck() {
+	resp, err := http.Get(lottery.SUPER_LOTTO_URL)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	var result lottery.SuperLottery
+	err = json.Unmarshal(body, &result)
+	if err != nil || &result.Value == nil {
+		log.Error("转换大乐透结果为对象失败", err)
+
+		return
+	}
+	var job Job
+
+	job = Job{
+		Time:  util.GetPLWFinishedTime(),
+		Param: nil,
+		CallBack: func(param interface{}) {
+			week := time.Now().Weekday()
+			if !(week == 1 || week == 3 || week == 6) {
+				log.Info("========== 不是 1 3 6 不检测大乐透============")
+				return
+			}
+			orders := GetOrderByLotteryType("SUPER_LOTTO")
+			tx := mysql.DB.Begin()
+			if len(orders) > 0 {
+				for _, o := range orders {
+					if strings.Compare(result.Value.LastPoolDraw.LotteryDrawNum, o.IssueId) == 0 {
+						content := getArr(o.Content)
+						releaseNum := result.Value.LastPoolDraw.LotteryDrawResult
+						for _, s := range content {
+							if strings.Compare(s, releaseNum) == 0 {
+								//一等奖
+								o.Bonus = o.Bonus + 1
+								o.Win = true
+								o.Way = "一等奖"
+								continue
+							}
+							if strings.Compare(s[0:4], releaseNum[0:4]) == 0 && (strings.Compare(s[5:5], releaseNum[5:5]) == 0 || strings.Compare(s[6:6], releaseNum[6:6]) == 0) {
+								//前5相同 后面两个任意一个相同
+								o.Bonus = o.Bonus + 1
+								o.Win = true
+								o.Way = fmt.Sprintf("%s + %s", o.Way, "二等奖")
+								continue
+							}
+							if strings.Compare(s[0:4], releaseNum[0:4]) == 0 {
+								//五个前区号码相同
+								o.Bonus = o.Bonus + 1
+								o.Win = true
+								o.Way = fmt.Sprintf("%s + %s", o.Way, "三等奖")
+								continue
+							}
+							//任意四个前区号码及两个后区号码相同
+							yes, count := randomNumBeforeDirect(5, 4, s, releaseNum)
+							if yes && strings.Compare(s[5:5], releaseNum[5:5]) == 0 && strings.Compare(s[6:6], releaseNum[6:6]) == 0 {
+								o.Bonus = o.Bonus + 1
+								o.Win = true
+								o.Way = fmt.Sprintf("%s + %s", o.Way, "四等奖")
+								continue
+							}
+
+							if yes && (strings.Compare(s[5:5], releaseNum[5:5]) == 0 || strings.Compare(s[6:6], releaseNum[6:6]) == 0) {
+								o.Bonus = o.Bonus + 1
+								o.Win = true
+								o.Way = fmt.Sprintf("%s + %s", o.Way, "五等奖")
+								continue
+							}
+
+							if 3 == count && strings.Compare(s[5:5], releaseNum[5:5]) == 0 && strings.Compare(s[6:6], releaseNum[6:6]) == 0 {
+								o.Bonus = o.Bonus + 1
+								o.Win = true
+								o.Way = fmt.Sprintf("%s + %s", o.Way, "六等奖")
+								continue
+							}
+
+							if 4 == count {
+								o.Bonus = o.Bonus + 1
+								o.Win = true
+								o.Way = fmt.Sprintf("%s + %s", o.Way, "七等奖")
+								continue
+							}
+
+							if 3 == count && (strings.Compare(s[5:5], releaseNum[5:5]) == 0 || strings.Compare(s[6:6], releaseNum[6:6]) == 0) {
+								o.Bonus = o.Bonus + 1
+								o.Win = true
+								o.Way = fmt.Sprintf("%s + %s", o.Way, "八等奖")
+								continue
+							}
+
+							if 3 == count || (count == 2 && (strings.Compare(s[5:5], releaseNum[5:5]) == 0 || strings.Compare(s[6:6], releaseNum[6:6]) == 0)) || (count == 1 && (strings.Compare(s[5:5], releaseNum[5:5]) == 0 && strings.Compare(s[6:6], releaseNum[6:6]) == 0)) ||
+								strings.Compare(s[5:5], releaseNum[5:5]) == 0 && strings.Compare(s[6:6], releaseNum[6:6]) == 0 {
+								o.Bonus = o.Bonus + 1
+								o.Win = true
+								o.Way = fmt.Sprintf("%s + %s", o.Way, "九等奖")
+								continue
+							}
+							o.Win = false
+						}
+					}
+					o.AllMatchFinished = true
+					tx.Save(o)
+				}
+			}
+			tx.Commit()
+
+		},
+	}
+
+	AddJob(job)
+
+}
+
+func AddSevenStarCheck() {
+	resp, err := http.Get(lottery.SEVEN_START_URL)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	var result lottery.SevenStar
+	err = json.Unmarshal(body, &result)
+	if err != nil || &result.Value == nil {
+		log.Error("转换大乐透结果为对象失败", err)
+
+		return
+	}
+	var job Job
+
+	job = Job{
+		Time:  util.GetPLWFinishedTime(),
+		Param: nil,
+		CallBack: func(param interface{}) {
+			week := time.Now().Weekday()
+			if !(week == 0 || week == 2 || week == 5) {
+				log.Info("========== 不是 0 25 不检测七星彩============")
+				return
+			}
+			orders := GetOrderByLotteryType("SEVEN_STAR")
+			tx := mysql.DB.Begin()
+			if len(orders) > 0 {
+				for _, o := range orders {
+					if strings.Compare(result.Value.LastPoolDraw.LotteryDrawNum, o.IssueId) == 0 {
+						content := getArr(o.Content)
+						releaseNum := result.Value.LastPoolDraw.LotteryDrawResult
+						for _, s := range content {
+							if strings.Compare(s, releaseNum) == 0 {
+								//一等奖
+								o.Bonus = o.Bonus + 1
+								o.Win = true
+								o.Way = "一等奖"
+								continue
+							}
+							if strings.Compare(s[0:5], releaseNum[0:5]) == 0 {
+								//前5相同 后面两个任意一个相同
+								o.Bonus = o.Bonus + 1
+								o.Win = true
+								o.Way = fmt.Sprintf("%s + %s", o.Way, "二等奖")
+								continue
+							}
+
+							//投注号码前6位中的任意5个数字与开奖号码对应位置数字相同且最后一个数字与开奖号码对应位置数字相同，即中奖
+							yes, count := randomNumBeforeDirect(6, 5, s, releaseNum)
+							if yes && strings.Compare(s[6:6], releaseNum[6:6]) == 0 {
+								o.Bonus = o.Bonus + 1
+								o.Win = true
+								o.Way = fmt.Sprintf("%s + %s", o.Way, "三等奖")
+								continue
+							}
+							y, count := randomNumBeforeDirect(7, 5, s, releaseNum)
+							if y {
+								o.Bonus = o.Bonus + 1
+								o.Win = true
+								o.Way = fmt.Sprintf("%s + %s", o.Way, "四等奖")
+								continue
+							}
+
+							if 4 == count {
+								o.Bonus = o.Bonus + 1
+								o.Win = true
+								o.Way = fmt.Sprintf("%s + %s", o.Way, "五等奖")
+								continue
+							}
+
+							if 3 == count || (count == 1 && strings.Compare(s[6:6], releaseNum[6:6]) == 0) || (strings.Compare(s[6:6], releaseNum[6:6]) == 0) {
+								o.Bonus = o.Bonus + 1
+								o.Win = true
+								o.Way = fmt.Sprintf("%s + %s", o.Way, "六等奖")
+								continue
+							}
+							o.Win = false
+						}
+					}
+					o.AllMatchFinished = true
+					tx.Save(o)
+				}
+			}
+			tx.Commit()
+
+		},
+	}
+
+	AddJob(job)
+
+}
+
+func randomNumBeforeDirect(length int, num int, userNum string, releaseNum string) (bool, int) {
+	//前5任意数量的数值相同
+	var count = 0
+	for i := 0; i < length; i++ {
+		if strings.Compare(userNum[i:i], releaseNum[i:i]) == 0 {
+			count += 1
+		}
+	}
+	if count >= num {
+		return true, count
+	}
+	return false, count
+}
+
+func getArr(content string) []string {
+
+	if strings.Contains(content, ",") {
+		return strings.Split(content, ",")
+	} else {
+		var strs []string
+		strs = append(strs, content)
+		return strs
+	}
 }

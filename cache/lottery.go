@@ -87,3 +87,25 @@ func GetOnTimeFootballMatch(uuid string) *FootBallGames {
 	lotteryCahe.Add(uuid, 10*time.Minute, string(body))
 	return &result.Content
 }
+
+func GetOnTimeBasketBallMatch(uuid string) *BasketBallGames {
+	if !lotteryCahe.Exists(uuid) {
+		return nil
+	}
+	var url = "http://127.0.0.1:8090/lottery/sports/basketball/jc/mixed"
+	resp, err := http.Get(url)
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	var result BasketBallGames
+	err = json.Unmarshal(body, &result)
+	if err != nil {
+		log.Error("转换足彩后台查询实时对象失败")
+		return nil
+	}
+	lotteryCahe.Add(uuid, 10*time.Minute, string(body))
+	return &result
+}

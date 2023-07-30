@@ -1084,6 +1084,10 @@ const docTemplate = `{
                     "description": "FOLLOW(跟买)  MASTER(发起)",
                     "type": "string"
                 },
+                "comment": {
+                    "description": "备注",
+                    "type": "string"
+                },
                 "finishedTime": {
                     "description": "结束时间 2006-01-02T15:04:05+07:00",
                     "type": "string"
@@ -1281,6 +1285,7 @@ const docTemplate = `{
             "required": [
                 "issueId",
                 "lotteryUuid",
+                "saveType",
                 "times"
             ],
             "properties": {
@@ -1301,7 +1306,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "content": {
-                    "description": "数字内容",
+                    "description": "数字内容 空格分隔 多组用英文逗号,",
                     "type": "string"
                 },
                 "createdAt": {

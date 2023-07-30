@@ -17,6 +17,7 @@ import (
 	"jingcai/order"
 	"jingcai/user"
 	"net/http"
+	"strconv"
 )
 
 // @title           黑马推荐接口
@@ -94,6 +95,8 @@ func BindRouters(r *gin.Engine) {
 // @Success 200 {object} string
 // @Router /ping [get]
 func pong(c *gin.Context) {
+	num, _ := strconv.Atoi("01")
+	fmt.Println(num)
 	pwd, _ := common.DePwdCode("rBhpl45Z3NpBxYhMuAuIqA==", []byte("c5b55acf-b0d4-43"))
 	fmt.Println(string(pwd))
 	var user2 user.User

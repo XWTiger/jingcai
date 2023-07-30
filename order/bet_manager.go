@@ -41,22 +41,35 @@ func GetBetByOrder(c *gin.Context) {
 }
 
 func getBetByMatchId(matchId string) ([]Bet, error) {
-	var params = Bet{
-		MatchId: matchId,
+
+	var footViews = make([]FootView, 0)
+	if err := mysql.DB.Model(&FootView{}).Where("match_id=?", matchId).Find(&footViews).Error; err != nil {
+		log.Error("根据比赛id 查比赛详情失败")
+		return nil, err
 	}
+	var mapper = make(map[uint][]FootView)
+	var ids = make([]uint, 0)
+	for i := 0; i < len(footViews); i++ {
+		_, ok := mapper[footViews[i].BetId]
+		if ok {
+			mapper[footViews[i].BetId] = append(mapper[footViews[i].BetId], footViews[i])
+		} else {
+			var list = make([]FootView, 0)
+			list = append(list, footViews[i])
+			mapper[footViews[i].BetId] = list
+		}
+		ids = append(ids, footViews[i].BetId)
+	}
+
 	var betResult = make([]Bet, 0)
-	if err := mysql.DB.Debug().Model(&params).Where("match_id = ?", matchId).Find(&betResult).Error; err != nil {
+	if err := mysql.DB.Debug().Model(Bet{}).Where("id In ?", ids).Find(&betResult).Error; err != nil {
 		log.Error("查询bet 失败！")
 		log.Error(err)
 		return nil, err
 	}
+
 	for index, bet := range betResult {
-		var fparam = FootView{
-			BetId: bet.ID,
-		}
-		var footViews = make([]FootView, 0)
-		mysql.DB.Model(&fparam).Where("bet_id=?", bet.ID).Find(&footViews)
-		betResult[index].Group = footViews
+		betResult[index].Group = mapper[bet.ID]
 	}
 	return betResult, nil
 }
