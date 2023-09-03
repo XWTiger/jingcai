@@ -1,12 +1,14 @@
 package order
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/gorm"
 	uuid "github.com/satori/go.uuid"
+	"gorm.io/gorm"
 	"jingcai/common"
 	"jingcai/mysql"
 	"jingcai/user"
+	"jingcai/util"
 	"jingcai/validatior"
 	"strings"
 	"time"
@@ -29,6 +31,8 @@ type AllWin struct {
 
 	//合伙人 id,id
 	ParentId uint
+
+	ParentOrderId string
 
 	//发起成功/失败
 	Status bool
@@ -53,6 +57,9 @@ type AllWin struct {
 
 	//备注
 	Comment string
+
+	//保底份数
+	LeastTimes int
 }
 type AllWinVO struct {
 	//份数
@@ -85,6 +92,9 @@ type AllWinVO struct {
 
 	//备注
 	Comment string
+
+	//保底份数
+	LeastTimes int
 }
 type AllWinUser struct {
 	Phone string
@@ -137,7 +147,7 @@ type AllWinCreate struct {
 	//前端你不用填， 已经超时
 	Timeout bool
 
-	//结束时间 2006-01-02T15:04:05+07:00
+	//结束时间 2006-01-02T15:04:05+07:00 2023-08-12T21:20+08:00
 	FinishedTime time.Time
 
 	//购买份数
@@ -150,6 +160,9 @@ type AllWinCreate struct {
 
 	//备注
 	Comment string
+
+	//出票保底份数
+	LeastTimes int
 }
 
 func (a AllWin) GetVO() AllWinVO {
@@ -183,6 +196,7 @@ func (a AllWin) GetVO() AllWinVO {
 		vo.Timeout = a.Timeout
 		vo.FinishedTime = a.FinishedTime
 		vo.Status = a.Status
+		vo.LeastTimes = a.LeastTimes
 		//计算合买带红人数
 		//1.查到这人所有中奖单
 		var allOfThePerson []AllWin
@@ -269,7 +283,7 @@ func AllWinCreateHandler(c *gin.Context) {
 		return
 	}
 	validatior.Validator(c, body)
-	var user = user.FetUserInfo(c)
+	var userInfo = user.FetUserInfo(c)
 	tx := mysql.DB.Begin()
 	if len(body.OrderId) > 0 {
 		//合买
@@ -280,18 +294,21 @@ func AllWinCreateHandler(c *gin.Context) {
 			common.FailedReturn(c, "查询发起人订单失败")
 			return
 		}
-		var matchs []Match
-		if err := tx.Model(&Match{}).Where(&Match{OrderId: order.UUID}).Find(&matchs).Error; err != nil {
-			log.Error(err)
-			common.FailedReturn(c, "查询发起人订单失败")
-			return
+		if strings.Compare(order.LotteryType, FOOTBALL) == 0 || strings.Compare(order.LotteryType, BASKETBALL) == 0 {
+			var matchs []Match
+			if err := tx.Model(&Match{}).Where(&Match{OrderId: order.UUID}).Find(&matchs).Error; err != nil {
+				log.Error(err)
+				common.FailedReturn(c, "查询发起人订单失败")
+				return
+			}
+			order.Matches = matchs
 		}
-		order.Matches = matchs
+
 		if strings.Compare(body.BuyType, MASTER) == 0 {
 			//发起合买
 			var initAllWin = AllWin{
 				Timeout:      false,
-				FinishedTime: common.GetMatchFinishedTime(order.Matches[0].TimeDate),
+				FinishedTime: getFinishedTime(order),
 				ParentId:     0,
 				UserId:       order.UserID,
 				OrderId:      order.UUID,
@@ -301,21 +318,58 @@ func AllWinCreateHandler(c *gin.Context) {
 				Bonus:        0,
 				ShowType:     body.ShowType,
 				Comment:      body.Comment,
+				LeastTimes:   body.LeastTimes,
+			}
+			if initAllWin.BuyNumber > initAllWin.LeastTimes {
+				common.FailedReturn(c, "保底份数不能小于认购份数")
+				return
+			}
+			var shouldPay = float32(order.ShouldPay/float32(body.Number)) * float32(initAllWin.LeastTimes)
+			leastErr := user.CheckScoreOrDoBill(initAllWin.UserId, shouldPay, false)
+			if leastErr != nil {
+				common.FailedReturn(c, "积分不够付款保底份数")
+				return
+			}
+			payErr := user.CheckScoreOrDoBill(initAllWin.UserId, initAllWin.ShouldPay, true)
+			if payErr != nil {
+				log.Error("all win id: ", initAllWin.ID, "扣款失败")
+				common.FailedReturn(c, payErr.Error())
+				return
 			}
 			tx.Save(&initAllWin)
-			if err := tx.Model(&Order{UUID: order.UUID}).Update("all_win_id", initAllWin.ID).Error; err != nil {
+			if err := tx.Model(&Order{UUID: order.UUID}).Where(&Order{UUID: order.UUID}).Update("all_win_id", initAllWin.ID).Error; err != nil {
 				log.Error(err)
 				log.Error("合买，更新订单的合买id 失败")
 				common.FailedReturn(c, "合买，更新订单的合买id 失败")
 				tx.Rollback()
 				return
 			}
+			jobTime := initAllWin.FinishedTime
+			AllWinCheck(jobTime)
 		} else {
 			//跟买
+			if body.BuyNumber <= 0 {
+				log.Error("合买份数不能小于0", body.OrderId)
+				common.FailedReturn(c, "合买份数不能小于0")
+				return
+			}
 			var initAll AllWin
 			if err := tx.Model(AllWin{}).Where(&AllWin{Model: gorm.Model{ID: order.AllWinId}}).First(&initAll).Error; err != nil {
 				log.Error("查询发起人合买订单失败", body.OrderId)
 				common.FailedReturn(c, "查询发起人合买订单失败")
+				return
+			}
+			//校验是否还能合买，如果自己认购 + 别人认购 < 总数可以购买
+			var allOrder = make([]AllWin, 0)
+			tx.Model(AllWin{}).Where(&AllWin{ParentId: initAll.ParentId}).Find(&allOrder)
+			var count = 0
+			for _, win := range allOrder {
+				count += win.BuyNumber
+			}
+			times := count + initAll.BuyNumber + body.BuyNumber
+			if times > initAll.Number {
+				log.Error("合买份数总和不能大于", initAll.Number)
+				common.FailedReturn(c, fmt.Sprintf("合买份数不能大于%d", initAll.Number-count-initAll.BuyNumber))
 				return
 			}
 			var userOrder = Order{
@@ -331,28 +385,48 @@ func AllWinCreateHandler(c *gin.Context) {
 				SaveType:         order.SaveType,
 				Share:            false,
 				AllWinId:         0,
-				UserID:           user.ID,
+				UserID:           userInfo.ID,
 				ShouldPay:        float32(order.ShouldPay/float32(initAll.Number)) * float32(body.BuyNumber),
 				Bonus:            order.Bonus,
 				PayWay:           body.PayWay,
 				AllMatchFinished: order.AllMatchFinished,
 			}
-
+			payErr := user.CheckScoreOrDoBill(userInfo.ID, userOrder.ShouldPay, true)
+			if payErr != nil {
+				log.Error("user id: ", userInfo.ID, "扣款失败")
+				common.FailedReturn(c, payErr.Error())
+				return
+			}
 			tx.Save(&userOrder)
 			var allWin = AllWin{
-				Timeout:      false,
-				FinishedTime: common.GetMatchFinishedTime(order.Matches[0].TimeDate),
-				ParentId:     initAll.ID,
-				UserId:       order.UserID,
-				OrderId:      userOrder.UUID,
-				Number:       initAll.Number,
-				BuyNumber:    body.BuyNumber,
-				ShouldPay:    userOrder.ShouldPay,
-				Bonus:        0,
-				ShowType:     initAll.ShowType,
+				Timeout:       false,
+				FinishedTime:  common.GetMatchFinishedTime(order.Matches[0].TimeDate),
+				ParentId:      initAll.ID,
+				UserId:        order.UserID,
+				OrderId:       userOrder.UUID,
+				Number:        initAll.Number,
+				BuyNumber:     body.BuyNumber,
+				ShouldPay:     userOrder.ShouldPay,
+				Bonus:         0,
+				ShowType:      initAll.ShowType,
+				ParentOrderId: order.UUID,
+			}
+			if count+initAll.LeastTimes >= initAll.Number {
+				allWin.Status = true
+				for i := 0; i < len(allOrder); i++ {
+					allOrder[i].Status = true
+				}
+				initAll.Status = true
+				allWin.Status = true
+				tx.Save(initAll)
+				tx.Save(allOrder)
 			}
 			tx.Save(&allWin)
-			tx.Model(Order{UUID: userOrder.UUID}).Update("all_win_id", allWin.ID)
+			if initAll.Status {
+				tx.Model(Order{UUID: userOrder.UUID}).Where(&Order{UUID: userOrder.UUID}).Update("pay_status", true).Update("all_win_id", allWin.ID)
+			} else {
+				tx.Model(Order{UUID: userOrder.UUID}).Where(&Order{UUID: userOrder.UUID}).Update("all_win_id", allWin.ID)
+			}
 		}
 	} else {
 		//发起合买
@@ -379,4 +453,101 @@ func GetAllWinByParentId(parentId uint) []AllWin {
 	}}).First(&init)
 	all = append(all, init)
 	return all
+}
+
+func getFinishedTime(order Order) time.Time {
+	switch order.LotteryType {
+
+	case FOOTBALL:
+	case BASKETBALL:
+		return common.GetMatchFinishedTime(order.Matches[0].TimeDate)
+	case P3:
+	case P5:
+		return util.GetPLWFinishedTime()
+	case SUPER_LOTTO:
+
+		now := time.Now()
+		time := util.GetPLWFinishedTime()
+		if now.Weekday() == 1 || now.Weekday() == 3 || now.Weekday() == 6 {
+			return util.GetPLWFinishedTime()
+		} else {
+			return time.AddDate(0, 0, 1)
+		}
+
+	case SEVEN_STAR:
+		now := time.Now()
+		time := util.GetPLWFinishedTime()
+		if now.Weekday() == 2 || now.Weekday() == 5 || now.Weekday() == 0 {
+			return util.GetPLWFinishedTime()
+		} else {
+			return time.AddDate(0, 0, 1)
+		}
+
+	default:
+		log.Error("获取合买结束时间失败！返回当前时间")
+		return time.Now()
+	}
+	return time.Now()
+}
+
+//  合买是否保底校验校验, 如果其他人购买数 + 自己认购 不等于 总份数 并且已经超时
+
+func AllWinCheck(when time.Time) {
+
+	job := Job{
+		Time: when,
+		CallBack: func(param interface{}) {
+			var allWinOrders = make([]AllWin, 0)
+			mysql.DB.Model(AllWin{}).Where(AllWin{Timeout: false, Status: false, ParentId: 0}).Find(&allWinOrders)
+			if len(allWinOrders) > 0 {
+				for i := 0; i < len(allWinOrders); i++ {
+					var allWin = allWinOrders[i]
+
+					var partners = make([]AllWin, 0)
+					mysql.DB.Model(AllWin{}).Where(&AllWin{ParentId: allWin.ID}).Find(partners)
+					if len(partners) > 0 {
+						var count = 0
+						for _, partner := range partners {
+							count += partner.BuyNumber
+						}
+						if allWin.FinishedTime.Second()-time.Now().Second() < 0 {
+							allWin.Timeout = true
+						}
+						var number = allWin.Number - (count + allWin.BuyNumber)
+						if allWin.LeastTimes > number && number > 0 && allWin.FinishedTime.Second()-time.Now().Second() < 0 {
+							//到期，需要保底 退换多扣的
+							shouldReturn := float32(allWin.LeastTimes-number) * float32(allWin.ShouldPay/float32(allWin.Number))
+							returnErr := user.ReturnScore(allWin.UserId, shouldReturn)
+							if returnErr != nil {
+								log.Error("user id: ", allWin.UserId, "退还失败, 金额：", shouldReturn, "订单号：", allWin.ParentOrderId)
+								continue
+							}
+							allWin.Status = true
+						}
+						if number == 0 {
+							//发起成功
+							allWin.Status = true
+						}
+						if allWin.Status == true {
+							for _, partner := range partners {
+								partner.Status = true
+								mysql.DB.Model(AllWin{}).Save(partner)
+							}
+						}
+					} else {
+						if allWin.FinishedTime.Second()-time.Now().Second() < 0 {
+							allWin.Timeout = true
+						}
+					}
+					if err := mysql.DB.Model(AllWin{}).Save(allWin).Error; err != nil {
+						log.Error(err, "更新发起者状态失败")
+						continue
+					}
+
+				}
+
+			}
+		},
+	}
+	AddJob(job)
 }

@@ -8,6 +8,8 @@ import (
 	"jingcai/cache"
 	"jingcai/common"
 	"jingcai/mysql"
+	"jingcai/user"
+	"jingcai/util"
 	"math"
 	"net/http"
 	"sort"
@@ -159,7 +161,15 @@ func basketball(c *gin.Context, order *Order) {
 	order.ShouldPay = float32(2 * len(bonus) * order.Times)
 	order.CreatedAt = time.Now()
 	fmt.Println("实际付款：", order.ShouldPay)
-
+	if order.AllWinId == 0 {
+		billErr := user.CheckScoreOrDoBill(order.UserID, order.ShouldPay, true)
+		if billErr != nil {
+			log.Error("扣款失败， 无法提交订单")
+			common.FailedReturn(c, billErr.Error())
+			return
+		}
+		order.PayStatus = true
+	}
 	if err := tx.Create(order).Error; err != nil {
 		log.Error("创建订单失败 ", err)
 		common.FailedReturn(c, "创建订单失败， 请联系店主")
@@ -167,7 +177,7 @@ func basketball(c *gin.Context, order *Order) {
 		return
 	}
 
-	//TODO CheckLottery(util.AddTwoHToTime(order.Matches[len(order.Matches)-1].TimeDate))
+	CheckLottery(util.AddTwoHToTime(order.Matches[len(order.Matches)-1].TimeDate))
 
 	tx.Commit()
 

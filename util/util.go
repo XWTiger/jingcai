@@ -52,7 +52,7 @@ func GetPLWFinishedTime() time.Time {
 	now := time.Now()
 	var dateEnd string
 
-	dateEnd = fmt.Sprintf("%d-%s-%s 21:26:00", now.Year(), getNum(int(now.Month())), getNum(int(now.Day())))
+	dateEnd = fmt.Sprintf("%d-%s-%s 21:20:00", now.Year(), getNum(int(now.Month())), getNum(int(now.Day())))
 	time, err := time.ParseInLocation("2006-01-02 15:04:05", dateEnd, time.Local)
 
 	if err != nil {

@@ -27,6 +27,7 @@ func Validator(c *gin.Context, dest any) {
 		fmt.Println(s.Field(i).Tag)
 		tag := s.Field(i).Tag
 		t := s.Field(i).Type
+		fmt.Println("name: ", t.Name(), "kind: ", t.Kind(), "str: ", t.String(), " value: ", v.Field(i).String())
 		//必填校验
 		if tag.Get(MUST) != "" {
 			switch t.Kind() {
@@ -59,7 +60,7 @@ func Validator(c *gin.Context, dest any) {
 
 				break
 			case reflect.String:
-				if v.Field(i).Len() <= 0 {
+				if v.Field(i).Len() <= 0 || v.Field(i).String() == "" {
 					common.FailedReturn(c, fmt.Sprintf("%s %s", s.Field(i).Name, " 必填"))
 					c.Abort()
 					return
@@ -92,7 +93,6 @@ func Validator(c *gin.Context, dest any) {
 			}
 		}
 
-		fmt.Println("name: ", t.Name(), "kind: ", t.Kind(), "str: ", t.String())
 		if strings.Compare(t.Kind().String(), "struct") == 0 {
 			Validator(c, v.Field(i).Interface())
 		}

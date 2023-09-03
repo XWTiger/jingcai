@@ -25,6 +25,7 @@ Server:
   # http server idle timeout, unit: s
   # the default value is 120
   IdleTimeout: 120
+  ImagePrefix: /download/
 Log:
   # configure the path where the logs are written
   # the default is /var/log/dbagent/proxy.log

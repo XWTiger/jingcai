@@ -16,6 +16,7 @@ import (
 	"jingcai/mysql"
 	"jingcai/order"
 	"jingcai/user"
+	"jingcai/websocket"
 	"net/http"
 	"strconv"
 )
@@ -49,6 +50,7 @@ func BindRouters(r *gin.Engine) {
 		lott.GET("/super-lottery", lottery.SevenStarFun)
 	}
 
+	r.GET("/ws", websocket.OrderWebSocket)
 	userGroup := r.Group("/user")
 	{
 		userGroup.POST("", user.UserCreateHandler)
@@ -71,6 +73,9 @@ func BindRouters(r *gin.Engine) {
 	{
 		bbsGroup.GET("/list", bbs.ListHandler)
 		bbsGroup.POST("/commit", bbs.CommitHandler)
+		bbsGroup.POST("/response", bbs.ResponseHandler)
+		bbsGroup.POST("/comment", bbs.CommentHandler)
+		bbsGroup.GET("/comment/list", bbs.ListComment)
 	}
 	//订单
 	orderGroup := r.Group("/order")
@@ -81,6 +86,12 @@ func BindRouters(r *gin.Engine) {
 		orderGroup.GET("/all_win", order.AllWinList)
 		orderGroup.POST("/all_win", order.AllWinCreateHandler)
 		orderGroup.POST("/follow", order.FollowOrder)
+	}
+	adminGroup := r.Group("/admin")
+	{
+		adminGroup.GET("/order", order.AdminOrderList)
+		adminGroup.POST("/bets", order.UploadBets)
+
 	}
 
 	//文件上传下载

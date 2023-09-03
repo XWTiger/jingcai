@@ -25,6 +25,7 @@ import (
 
 var log = ilog.Logger
 
+// 兑奖状态 NO_BONUS(未中奖) READY(已发放) NO_PAY(未发放)
 const (
 	FOOTBALL    = "FOOTBALL"
 	SUPER_LOTTO = "SUPER_LOTTO"
@@ -34,6 +35,16 @@ const (
 	SEVEN_STAR  = "SEVEN_STAR"
 	TOP         = 4 //前4
 	S_TOP       = 1 //连胜 1
+	ALL_WIN     = "ALLWIN"
+	NO_BONUS    = "NO_BONUS"
+	READY       = "READY"
+	NO_PAY      = "NO_PAY"
+	PL_SIGNAL   = "SIGNAL"
+	PL_C3       = "C3"
+	PL_C6       = "C6"
+	TOMASTER    = "TOMASTER"
+
+	TEMP = "TEMP"
 )
 
 type Match struct {
@@ -113,7 +124,14 @@ type LotteryDetail struct {
 	GoalLine string
 	ParentId uint
 }
-
+type OrderVO struct {
+	//订单
+	Order *Order
+	//图片
+	Images []OrderImage
+	//如果是合买
+	AllWin []AllWin
+}
 type Order struct {
 	CreatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`
@@ -140,7 +158,7 @@ type Order struct {
 	//数字内容 空格分隔 多组用英文逗号,
 	Content string
 
-	//保存类型 TEMP（临时保存） TOMASTER（提交到店）  合买(ALLWIN)
+	//保存类型 TEMP（临时保存） TOMASTER（提交到店）  合买(ALLWIN 舍弃)
 	SaveType string `validate:"required"`
 
 	//是否让人跟单
@@ -174,7 +192,13 @@ type Order struct {
 
 	//如果是大乐透 七星彩 排列3 5 需要填期号
 	IssueId string `validate:"required" message："需要期号"`
+	//SIGNAL（单注）   C6 （组合6） C3 （组合3）
+	PL3Way string
+
+	//是否已经出票？
+	BetUpload bool
 }
+
 type Bet struct {
 	gorm.Model
 	OrderId  string
@@ -267,6 +291,7 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 	}
 	order.Bonus = 0
 	order.UUID = uuid.NewV4().String()
+	order.BetUpload = false
 	//var user = user.FetUserInfo(c)
 	//order.UserID = user.ID
 	//校验字段
@@ -285,6 +310,14 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 			log.Error(err)
 			common.FailedReturn(c, err.Error())
 		}
+		fmt.Println("=================排列3===================", order.UUID)
+		fmt.Sprintf("逻辑总奖金: %s", order.LogicWinMaX)
+		fmt.Println("期号: ", order.IssueId)
+		fmt.Println("号码: ", order.Content)
+		fmt.Println("倍数: ", order.Times)
+		fmt.Println("实际付款: ", order.ShouldPay)
+		fmt.Println("=========================================")
+		common.SuccessReturn(c, order.UUID)
 		return
 	case P5:
 		err := CreatePLW(&order)
@@ -292,6 +325,15 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 			log.Error(err)
 			common.FailedReturn(c, err.Error())
 		}
+
+		fmt.Println("=================排列5===================", order.UUID)
+		fmt.Sprintf("逻辑总奖金: %s", order.LogicWinMaX)
+		fmt.Println("期号: ", order.IssueId)
+		fmt.Println("号码: ", order.Content)
+		fmt.Println("倍数: ", order.Times)
+		fmt.Println("实际付款: ", order.ShouldPay)
+		fmt.Println("=========================================")
+		common.SuccessReturn(c, order.UUID)
 		return
 	case SUPER_LOTTO:
 		//大乐透
@@ -300,9 +342,56 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 			log.Error(err)
 			common.FailedReturn(c, err.Error())
 		}
+
+		if order.AllWinId == 0 {
+			billErr := user.CheckScoreOrDoBill(order.UserID, order.ShouldPay, true)
+			if billErr != nil {
+				log.Error("扣款失败， 无法提交订单")
+				common.FailedReturn(c, billErr.Error())
+				return
+			}
+			order.PayStatus = true
+		}
+		if err := mysql.DB.Model(&Order{}).Create(&order).Error; err != nil {
+			log.Error("创建订单失败 ", err)
+			common.FailedReturn(c, "创建订单失败， 请联系店主")
+
+			return
+		}
+		fmt.Println("=================大乐透===================", order.UUID)
+		fmt.Sprintf("逻辑总奖金: %s", order.LogicWinMaX)
+		fmt.Println("期号: ", order.IssueId)
+		fmt.Println("号码: ", order.Content)
+		fmt.Println("倍数: ", order.Times)
+		fmt.Println("实际付款: ", order.ShouldPay)
+		fmt.Println("=========================================")
+		common.SuccessReturn(c, order.UUID)
 		return
 	case SEVEN_STAR:
 		checkSevenStar(&order)
+		if order.AllWinId == 0 {
+			billErr := user.CheckScoreOrDoBill(order.UserID, order.ShouldPay, true)
+			if billErr != nil {
+				log.Error("扣款失败， 无法提交订单")
+				common.FailedReturn(c, billErr.Error())
+				return
+			}
+			order.PayStatus = true
+		}
+		if err := mysql.DB.Model(&Order{}).Create(&order).Error; err != nil {
+			log.Error("创建订单失败 ", err)
+			common.FailedReturn(c, "创建订单失败， 请联系店主")
+
+			return
+		}
+		fmt.Println("=================七星彩===================", order.UUID)
+		fmt.Sprintf("逻辑总奖金: %s", order.LogicWinMaX)
+		fmt.Println("期号: ", order.IssueId)
+		fmt.Println("号码: ", order.Content)
+		fmt.Println("倍数: ", order.Times)
+		fmt.Println("实际付款: ", order.ShouldPay)
+		fmt.Println("=========================================")
+		common.SuccessReturn(c, order.UUID)
 		return
 	default:
 		common.FailedReturn(c, "购买类型不正确")
@@ -321,6 +410,7 @@ func checkSuperLotto(ord *Order) error {
 	}
 
 	nums := getArr(ord.Content)
+	ord.ShouldPay = float32(len(nums) * 2 * ord.Times)
 	if nil == nums || len(nums) <= 0 {
 		return errors.New("参数异常")
 	}
@@ -350,6 +440,7 @@ func checkSuperLotto(ord *Order) error {
 		lottery.LotteryStatistics.Add("super_lotto_check", 8*time.Hour, 1)
 		AddSuperLottoCheck()
 	}
+
 	return nil
 }
 
@@ -363,6 +454,7 @@ func checkSevenStar(ord *Order) error {
 	}
 
 	nums := getArr(ord.Content)
+	ord.ShouldPay = float32(len(nums) * 2 * ord.Times)
 	if nil == nums || len(nums) <= 0 {
 		return errors.New("参数异常")
 	}
@@ -399,7 +491,7 @@ func checkSevenStar(ord *Order) error {
 // @Description 订单查询接口
 // @Accept json
 // @Produce json
-// @Success 200 {object} common.BaseResponse
+// @Success 200 {object} OrderVO
 // @failure 500 {object} common.BaseResponse
 // @param saveType  query string false "保存类型 TEMP（临时保存） TOMASTER（提交到店）  ALLWIN（合买）"
 // @param lotteryType  query string false "足彩（FOOTBALL） 大乐透（SUPER_LOTTO）  排列三（P3） 篮球(BASKETBALL) 七星彩（SEVEN_STAR） 排列五（P5）"
@@ -419,24 +511,46 @@ func OrderList(c *gin.Context) {
 		UserID:      user.ID,
 	}
 	var list = make([]Order, 0)
-	mysql.DB.Model(&param).Order("created_at dsc").Offset(page * pageSize).Limit(pageSize).Find(&list)
-	for _, order := range list {
+	var resultList = make([]OrderVO, 0)
+	mysql.DB.Model(&param).Where(&param).Order("created_at desc").Offset(page * pageSize).Limit(pageSize).Find(&list)
+
+	for index, order := range list {
 		var mathParam = Match{
-			OrderId: order.UUID,
+			OrderId: list[index].UUID,
 		}
 		var matchList = make([]Match, 0)
-		mysql.DB.Model(&mathParam).Find(&matchList)
-		order.Matches = matchList
+		mysql.DB.Model(&mathParam).Where(&mathParam).Find(&matchList)
+		list[index].Matches = matchList
 		for _, match := range matchList {
 			var detailParam = LotteryDetail{
 				ParentId: match.ID,
 			}
 			var detailList = make([]LotteryDetail, 0)
-			mysql.DB.Model(&detailParam).Find(&detailList)
+			mysql.DB.Model(&detailParam).Where(&detailParam).Find(&detailList)
 			match.Combines = detailList
 		}
+		var uuid string
+		if strings.Compare(order.SaveType, ALL_WIN) == 0 {
+			var initAllWin AllWin
+			mysql.DB.Model(AllWin{}).Where(&AllWin{
+				Model: gorm.Model{
+					ID: list[index].AllWinId,
+				},
+			}).First(&initAllWin)
+			if initAllWin.ParentId == 0 {
+				uuid = initAllWin.OrderId
+			} else {
+				uuid = initAllWin.ParentOrderId
+			}
+
+		}
+		images := getImageByOrderId(uuid)
+		resultList = append(resultList, OrderVO{
+			Order:  &list[index],
+			Images: images,
+		})
 	}
-	common.SuccessReturn(c, list)
+	common.SuccessReturn(c, resultList)
 }
 func FindById(uuid string, searchMatch bool) Order {
 	var param = Order{
@@ -547,6 +661,15 @@ func football(c *gin.Context, order *Order) {
 	order.ShouldPay = float32(2 * len(bonus) * order.Times)
 	order.CreatedAt = time.Now()
 	fmt.Println("实际付款：", order.ShouldPay)
+	if order.AllWinId == 0 {
+		billErr := user.CheckScoreOrDoBill(order.UserID, order.ShouldPay, true)
+		if err != nil {
+			log.Error("扣款失败， 无法提交订单")
+			common.FailedReturn(c, billErr.Error())
+			return
+		}
+		order.PayStatus = true
+	}
 
 	if err := tx.Create(order).Error; err != nil {
 		log.Error("创建订单失败 ", err)
@@ -2101,6 +2224,7 @@ func CreatePLW(ord *Order) error {
 
 	if strings.Contains(ord.Content, ",") {
 		arr := strings.Split(ord.Content, ",")
+		ord.ShouldPay = float32(len(arr) * 2 * ord.Times)
 		if len(arr) == tp {
 			for _, s := range arr {
 				numArr := strings.Split(s, " ")
@@ -2128,9 +2252,18 @@ func CreatePLW(ord *Order) error {
 				return errors.New("号码存在异常,数字不在0-9 之间")
 			}
 		}
+		ord.ShouldPay = float32(1 * 2 * ord.Times)
 
 	} else {
 		return errors.New("参数异常")
+	}
+	if ord.AllWinId == 0 {
+		billErr := user.CheckScoreOrDoBill(ord.UserID, ord.ShouldPay, true)
+		if billErr != nil {
+			log.Error("扣款失败， 无法提交订单")
+			return billErr
+		}
+		ord.PayStatus = true
 	}
 	if err := mysql.DB.Create(ord).Error; err != nil {
 		log.Error(err)
@@ -2171,14 +2304,28 @@ func AddPlwCheck(p int) {
 					for _, o := range orders {
 						if strings.Compare(result.Value.List[0].LotteryDrawNum, o.IssueId) == 0 {
 							content := getArr(o.Content)
-							releaseNum := result.Value.List[0].LotteryDrawResult[0:4]
+							releaseNum := result.Value.List[0].LotteryDrawResult[0:3]
 							for _, s := range content {
 								if strings.Compare(s, releaseNum) == 0 {
-									o.Bonus = o.Bonus + 1
+									if strings.Compare(o.PL3Way, PL_SIGNAL) == 0 {
+										o.Bonus = o.Bonus + 1040
+									}
+									if strings.Compare(o.PL3Way, PL_C3) == 0 {
+										o.Bonus = o.Bonus + 346
+									}
+									if strings.Compare(o.PL3Way, PL_C6) == 0 {
+										o.Bonus = o.Bonus + 173
+									}
 									o.Win = true
 								}
 							}
 							o.AllMatchFinished = true
+						}
+						if o.Win == true {
+							o.BonusStatus = NO_PAY
+							o.Bonus = o.Bonus * float32(o.Times)
+						} else {
+							o.BonusStatus = NO_BONUS
 						}
 						tx.Save(o)
 					}
@@ -2203,11 +2350,17 @@ func AddPlwCheck(p int) {
 							releaseNum := result.Value.List[0].LotteryDrawResult
 							for _, s := range content {
 								if strings.Compare(s, releaseNum) == 0 {
-									o.Bonus = o.Bonus + 1
+									o.Bonus = o.Bonus + 100000
 									o.Win = true
 								}
 							}
 							o.AllMatchFinished = true
+							if o.Win == true {
+								o.BonusStatus = NO_PAY
+								o.Bonus = o.Bonus * float32(o.Times)
+							} else {
+								o.BonusStatus = NO_BONUS
+							}
 
 						}
 						tx.Save(o)
@@ -2259,21 +2412,21 @@ func AddSuperLottoCheck() {
 						for _, s := range content {
 							if strings.Compare(s, releaseNum) == 0 {
 								//一等奖
-								o.Bonus = o.Bonus + 1
+								o.Bonus = o.Bonus + 5000000
 								o.Win = true
 								o.Way = "一等奖"
 								continue
 							}
 							if strings.Compare(s[0:4], releaseNum[0:4]) == 0 && (strings.Compare(s[5:5], releaseNum[5:5]) == 0 || strings.Compare(s[6:6], releaseNum[6:6]) == 0) {
 								//前5相同 后面两个任意一个相同
-								o.Bonus = o.Bonus + 1
+								o.Bonus = o.Bonus + 2000000
 								o.Win = true
 								o.Way = fmt.Sprintf("%s + %s", o.Way, "二等奖")
 								continue
 							}
 							if strings.Compare(s[0:4], releaseNum[0:4]) == 0 {
 								//五个前区号码相同
-								o.Bonus = o.Bonus + 1
+								o.Bonus = o.Bonus + 10000
 								o.Win = true
 								o.Way = fmt.Sprintf("%s + %s", o.Way, "三等奖")
 								continue
@@ -2281,35 +2434,35 @@ func AddSuperLottoCheck() {
 							//任意四个前区号码及两个后区号码相同
 							yes, count := randomNumBeforeDirect(5, 4, s, releaseNum)
 							if yes && strings.Compare(s[5:5], releaseNum[5:5]) == 0 && strings.Compare(s[6:6], releaseNum[6:6]) == 0 {
-								o.Bonus = o.Bonus + 1
+								o.Bonus = o.Bonus + 3000
 								o.Win = true
 								o.Way = fmt.Sprintf("%s + %s", o.Way, "四等奖")
 								continue
 							}
 
 							if yes && (strings.Compare(s[5:5], releaseNum[5:5]) == 0 || strings.Compare(s[6:6], releaseNum[6:6]) == 0) {
-								o.Bonus = o.Bonus + 1
+								o.Bonus = o.Bonus + 300
 								o.Win = true
 								o.Way = fmt.Sprintf("%s + %s", o.Way, "五等奖")
 								continue
 							}
 
 							if 3 == count && strings.Compare(s[5:5], releaseNum[5:5]) == 0 && strings.Compare(s[6:6], releaseNum[6:6]) == 0 {
-								o.Bonus = o.Bonus + 1
+								o.Bonus = o.Bonus + 200
 								o.Win = true
 								o.Way = fmt.Sprintf("%s + %s", o.Way, "六等奖")
 								continue
 							}
 
 							if 4 == count {
-								o.Bonus = o.Bonus + 1
+								o.Bonus = o.Bonus + 100
 								o.Win = true
 								o.Way = fmt.Sprintf("%s + %s", o.Way, "七等奖")
 								continue
 							}
 
 							if 3 == count && (strings.Compare(s[5:5], releaseNum[5:5]) == 0 || strings.Compare(s[6:6], releaseNum[6:6]) == 0) {
-								o.Bonus = o.Bonus + 1
+								o.Bonus = o.Bonus + 15
 								o.Win = true
 								o.Way = fmt.Sprintf("%s + %s", o.Way, "八等奖")
 								continue
@@ -2317,7 +2470,7 @@ func AddSuperLottoCheck() {
 
 							if 3 == count || (count == 2 && (strings.Compare(s[5:5], releaseNum[5:5]) == 0 || strings.Compare(s[6:6], releaseNum[6:6]) == 0)) || (count == 1 && (strings.Compare(s[5:5], releaseNum[5:5]) == 0 && strings.Compare(s[6:6], releaseNum[6:6]) == 0)) ||
 								strings.Compare(s[5:5], releaseNum[5:5]) == 0 && strings.Compare(s[6:6], releaseNum[6:6]) == 0 {
-								o.Bonus = o.Bonus + 1
+								o.Bonus = o.Bonus + 5
 								o.Win = true
 								o.Way = fmt.Sprintf("%s + %s", o.Way, "九等奖")
 								continue
@@ -2326,6 +2479,13 @@ func AddSuperLottoCheck() {
 						}
 					}
 					o.AllMatchFinished = true
+					if o.Win == true {
+						o.BonusStatus = NO_PAY
+						o.Bonus = o.Bonus * float32(o.Times)
+					} else {
+						o.BonusStatus = NO_BONUS
+					}
+
 					tx.Save(o)
 				}
 			}
@@ -2374,14 +2534,14 @@ func AddSevenStarCheck() {
 						for _, s := range content {
 							if strings.Compare(s, releaseNum) == 0 {
 								//一等奖
-								o.Bonus = o.Bonus + 1
+								o.Bonus = o.Bonus + 5000000
 								o.Win = true
 								o.Way = "一等奖"
 								continue
 							}
 							if strings.Compare(s[0:5], releaseNum[0:5]) == 0 {
 								//前5相同 后面两个任意一个相同
-								o.Bonus = o.Bonus + 1
+								o.Bonus = o.Bonus + 2000000
 								o.Win = true
 								o.Way = fmt.Sprintf("%s + %s", o.Way, "二等奖")
 								continue
@@ -2390,28 +2550,28 @@ func AddSevenStarCheck() {
 							//投注号码前6位中的任意5个数字与开奖号码对应位置数字相同且最后一个数字与开奖号码对应位置数字相同，即中奖
 							yes, count := randomNumBeforeDirect(6, 5, s, releaseNum)
 							if yes && strings.Compare(s[6:6], releaseNum[6:6]) == 0 {
-								o.Bonus = o.Bonus + 1
+								o.Bonus = o.Bonus + 3000
 								o.Win = true
 								o.Way = fmt.Sprintf("%s + %s", o.Way, "三等奖")
 								continue
 							}
 							y, count := randomNumBeforeDirect(7, 5, s, releaseNum)
 							if y {
-								o.Bonus = o.Bonus + 1
+								o.Bonus = o.Bonus + 500
 								o.Win = true
 								o.Way = fmt.Sprintf("%s + %s", o.Way, "四等奖")
 								continue
 							}
 
 							if 4 == count {
-								o.Bonus = o.Bonus + 1
+								o.Bonus = o.Bonus + 30
 								o.Win = true
 								o.Way = fmt.Sprintf("%s + %s", o.Way, "五等奖")
 								continue
 							}
 
 							if 3 == count || (count == 1 && strings.Compare(s[6:6], releaseNum[6:6]) == 0) || (strings.Compare(s[6:6], releaseNum[6:6]) == 0) {
-								o.Bonus = o.Bonus + 1
+								o.Bonus = o.Bonus + 5
 								o.Win = true
 								o.Way = fmt.Sprintf("%s + %s", o.Way, "六等奖")
 								continue
@@ -2420,6 +2580,12 @@ func AddSevenStarCheck() {
 						}
 					}
 					o.AllMatchFinished = true
+					if o.Win == true {
+						o.BonusStatus = NO_PAY
+						o.Bonus = o.Bonus * float32(o.Times)
+					} else {
+						o.BonusStatus = NO_BONUS
+					}
 					tx.Save(o)
 				}
 			}

@@ -4,12 +4,14 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
+	"errors"
 	gorsa "github.com/Lyafei/go-rsa"
 	"github.com/gin-gonic/gin"
 	"github.com/muesli/cache2go"
 	"github.com/pascaldekloe/jwt"
 	uuid "github.com/satori/go.uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"jingcai/common"
 	ilog "jingcai/log"
 	"jingcai/mysql"
@@ -22,6 +24,9 @@ var log = ilog.Logger
 var userCahe = cache2go.Cache("user")
 
 const TOKEN_TIME_OUT = 4 * time.Hour
+const ADMIN = "Admin"
+const USER = "User"
+const LOCK_TIMES = 5
 
 type User struct {
 	gorm.Model
@@ -50,6 +55,8 @@ type UserVO struct {
 	Name string `minLength:"4" maxLength:"16"`
 	//密码
 	Secret string `minLength:"6" maxLength:"16"`
+	//头像
+	Avatar string
 }
 
 // token 对象
@@ -248,14 +255,25 @@ func Login(c *gin.Context) {
 			common.FailedReturn(c, "账户错误")
 			return
 		}
+		if checkLock(user.Phone) {
+			common.FailedReturn(c, "用户已经锁定")
+		}
 		real, errDePwd := common.DePwdCode(user.Secret, []byte(user.Salt))
 		if errDePwd != nil || err != nil {
 			log.Error("decode user password failed")
-			common.FailedReturn(c, "解析密码失败")
+			if checkLock(user.Phone) {
+				common.FailedReturn(c, "用户已经锁定")
+			} else {
+				common.FailedReturn(c, "解析密码失败, 错误5次将会锁30分钟")
+			}
 			return
 		}
 		if strings.Compare(pwd, string(real)) != 0 {
-			common.FailedReturn(c, "账户或者密码错误")
+			if checkLock(user.Phone) {
+				common.FailedReturn(c, "用户已经锁定")
+			} else {
+				common.FailedReturn(c, "账户或者密码错误, 错误5次将会锁30分钟")
+			}
 			return
 		}
 		//生成token
@@ -276,6 +294,22 @@ func Login(c *gin.Context) {
 		userCahe.Add(base64.StdEncoding.EncodeToString(token), TOKEN_TIME_OUT, user)
 		common.SuccessReturn(c, token)
 	}
+}
+
+func checkLock(account string) bool {
+	var count int = 0
+	if userCahe.Exists(account) {
+		item, _ := userCahe.Value(account)
+		var data = item.Data()
+		if data.(int) > LOCK_TIMES {
+			return true
+		}
+		count = count + data.(int)
+		userCahe.Add(account, 30*time.Minute, count)
+	} else {
+		userCahe.Add(account, 30*time.Minute, count)
+	}
+	return false
 }
 
 // 投诉对象
@@ -337,6 +371,43 @@ func FindUserById(id uint) User {
 	}).First(&user)
 	return user
 }
+func FindUserVOById(id uint) UserVO {
+	var user User
+	mysql.DB.Model(&User{
+		Model: gorm.Model{
+			ID: id,
+		},
+	}).Where(&User{
+		Model: gorm.Model{
+			ID: id,
+		},
+	}).First(&user)
+
+	return UserVO{
+		Phone:  user.Phone,
+		Name:   user.Name,
+		Avatar: user.HeaderImageUrl,
+	}
+}
+
+func FindUsserMapById(id []uint) map[uint]UserVO {
+	var user []User
+	mysql.DB.Model(&User{
+		Model: gorm.Model{},
+	}).Where("id in (?)", id).Find(&user)
+	var mapp = make(map[uint]UserVO, 0)
+	if len(user) > 0 {
+		for _, u := range user {
+			mapp[u.ID] = UserVO{
+				Phone:  u.Phone,
+				Name:   u.Name,
+				Avatar: u.HeaderImageUrl,
+			}
+		}
+		return mapp
+	}
+	return mapp
+}
 
 // @Summary 投诉
 // @Description 投诉
@@ -355,4 +426,39 @@ func UserComplain(c *gin.Context) {
 	mysql.DB.AutoMigrate(&complain)
 	mysql.DB.Create(&complain)
 	common.SuccessReturn(c, "提交成功")
+}
+
+func CheckScoreOrDoBill(userId uint, score float32, doBill bool) error {
+	var user User
+	tx := mysql.DB.Begin()
+	if err := tx.Model(User{}).Where(&User{Model: gorm.Model{ID: userId}}).Clauses(clause.Locking{Strength: "UPDATE"}).First(&user).Error; err != nil {
+		return errors.New("用户查询失败")
+	}
+	if score > user.Score {
+		return errors.New("积分不足，无法进行后续操作")
+	}
+	if doBill {
+		user.Score = user.Score - score
+
+		tx.Model(&user).Update("score", user.Score)
+
+	}
+	tx.Commit()
+	return nil
+}
+
+func ReturnScore(userId uint, score float32) error {
+	var user User
+	tx := mysql.DB.Begin()
+	if err := tx.Model(User{}).Where(&User{Model: gorm.Model{ID: userId}}).Clauses(clause.Locking{Strength: "UPDATE"}).First(&user).Error; err != nil {
+		return errors.New("用户查询失败")
+	}
+	if score > user.Score {
+		return errors.New("积分不足，无法进行后续操作")
+	}
+	user.Score = user.Score + score
+	tx.Model(&user).Update("score", user.Score)
+
+	tx.Commit()
+	return nil
 }

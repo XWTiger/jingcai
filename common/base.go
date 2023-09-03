@@ -112,15 +112,16 @@ func GetMatchFinishedTime(time2 time.Time) time.Time {
 		dateEnd = fmt.Sprintf("%d-%s-%s 21:55:00", now.Year(), getNum(int(now.Month())), getNum(int(now.Day())))
 	}
 
-	time, err := time.ParseInLocation("2006-01-02 15:04:05", dateEnd, time.Local)
+	time1, err := time.ParseInLocation("2006-01-02 15:04:05", dateEnd, time.Local)
 
 	if err != nil {
 		fmt.Println(err)
 	}
-	if time.UnixMicro() > time2.UnixMicro() {
-		return time2
+	if time1.UnixMicro() > time2.UnixMicro() {
+		timeBefore := time2.Second() - 300
+		return time.Unix(int64(timeBefore), 0)
 	} else {
-		return time
+		return time1
 	}
 
 }

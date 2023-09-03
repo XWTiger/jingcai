@@ -6,6 +6,7 @@ import (
 	"github.com/jinzhu/gorm"
 	uuid "github.com/satori/go.uuid"
 	"jingcai/common"
+	"jingcai/config"
 	ilog "jingcai/log"
 	"jingcai/mysql"
 	"net/url"
@@ -19,10 +20,16 @@ var log = ilog.Logger
 const PATH_LINUX = "/opt/jingcai/"
 const PATH_WINDOW = "D:\\opt\\jingcai\\"
 
+var ImageUrl string
+
 type FileStore struct {
 	gorm.Model
 	FilePath string
 	From     string //BBS,USER,HEADER
+}
+
+func Init(c *config.Config) {
+	ImageUrl = c.HttpConf.ImagePrefix
 }
 
 // @Summary 上传文件或者图片
@@ -65,7 +72,7 @@ func Upload(c *gin.Context) {
 		}
 		filestores = append(filestores, FileStore{
 			From:     typeFile,
-			FilePath: fmt.Sprintf("%s_%s", uuid.NewV4().String(), file.Filename),
+			FilePath: fmt.Sprintf("%s%s_%s", ImageUrl, uuid.NewV4().String(), file.Filename),
 		})
 	}
 	log.Info("=== upload ok %d files ===", len(files))

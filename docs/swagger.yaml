@@ -28,6 +28,56 @@ definitions:
         - $ref: '#/definitions/user.User'
         description: 用户信息
     type: object
+  bbs.Comment:
+    properties:
+      content:
+        description: 评论内容
+        type: string
+      contentID:
+        description: 帖子id
+        type: integer
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      id:
+        type: integer
+      showStatus:
+        description: 是否审核通过
+        type: boolean
+      updatedAt:
+        type: string
+      userId:
+        description: 用户id （系统自动填）
+        type: integer
+    required:
+    - content
+    - contentID
+    type: object
+  bbs.Response:
+    properties:
+      commentId:
+        type: integer
+      content:
+        type: string
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      id:
+        type: integer
+      showStatus:
+        description: 是否审核通过
+        type: boolean
+      updatedAt:
+        type: string
+      userId:
+        description: 用户id （系统自动填）
+        type: integer
+    required:
+    - commentId
+    - content
+    type: object
   common.BaseResponse:
     properties:
       code:
@@ -90,6 +140,58 @@ definitions:
         description: Valid is true if Time is not NULL
         type: boolean
     type: object
+  order.AllWin:
+    properties:
+      bonus:
+        description: 奖金
+        type: number
+      buyNumber:
+        description: 购买份数
+        type: integer
+      comment:
+        description: 备注
+        type: string
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      finishedTime:
+        description: 结束时间
+        type: string
+      id:
+        type: integer
+      leastTimes:
+        description: 保底份数
+        type: integer
+      number:
+        description: 份数
+        type: integer
+      orderId:
+        description: 关联Order id
+        type: string
+      parentId:
+        description: 合伙人 id,id
+        type: integer
+      parentOrderId:
+        type: string
+      shouldPay:
+        description: 应付
+        type: number
+      showType:
+        description: SHARE(公开) AFTER_END(截至后公开)  JOIN（购买后可见）
+        type: string
+      status:
+        description: 发起成功/失败
+        type: boolean
+      timeout:
+        description: 已经超时
+        type: boolean
+      updatedAt:
+        type: string
+      userId:
+        description: 发起人
+        type: integer
+    type: object
   order.AllWinCreate:
     properties:
       buyNumber:
@@ -102,8 +204,11 @@ definitions:
         description: 备注
         type: string
       finishedTime:
-        description: 结束时间 2006-01-02T15:04:05+07:00
+        description: 结束时间 2006-01-02T15:04:05+07:00 2023-08-12T21:20+08:00
         type: string
+      leastTimes:
+        description: 出票保底份数
+        type: integer
       number:
         description: 份数
         type: integer
@@ -143,7 +248,7 @@ definitions:
       deletedAt:
         $ref: '#/definitions/gorm.DeletedAt'
       goalLine:
-        description: 让球 胜平负才有
+        description: 让球 胜平负才有，篮球就是让分
         type: string
       id:
         type: integer
@@ -158,13 +263,21 @@ definitions:
         type: string
       scoreVsScore:
         description: |-
+          =================足球=========================
           比分， 类型BF才有 s00s00 s05s02
           半全场胜平负， 类型BQSFP  aa hh
           总进球数， 类型ZJQ s0 - s7
           胜负平， 类型SFP hada主负 hadd主平 hadh 主胜  hhada客负 hhadd客平 hhadh 客胜
+          =================篮球=========================
+          让分胜负， 类型HDC a 负，  h 胜
+          大小分，类型HILO l 小， h 大
+          胜负，类型MNL a 主负， h 主胜
+          胜分差，类型WNM l1 客胜1-5分  l2 6-10分 ... l6 26+分， w1 主胜1-5分 ... w6 26+分
         type: string
       type:
-        description: 类型 枚举：SFP（胜负平）、BF（比分）、ZJQ(总进球)、BQSFP（半全场胜负平）
+        description: |-
+          足球类型 枚举：SFP（胜负平）、BF（比分）、ZJQ(总进球)、BQSFP（半全场胜负平）
+          篮球类型 枚举：HDC （胜负）、 HILO（大小分）、 MNL（让分胜负）、 WNM（胜分差）
         type: string
       updatedAt:
         type: string
@@ -256,6 +369,9 @@ definitions:
       allWinId:
         description: 合买id
         type: integer
+      betUpload:
+        description: 是否已经出票？
+        type: boolean
       bonus:
         description: 奖金
         type: number
@@ -297,7 +413,7 @@ definitions:
         description: 支付方式 ALI  WECHAT SCORE（积分）
         type: string
       saveType:
-        description: 保存类型 TEMP（临时保存） TOMASTER（提交到店）  合买(ALLWIN)
+        description: 保存类型 TEMP（临时保存） TOMASTER（提交到店）  合买(ALLWIN 舍弃)
         type: string
       share:
         description: 是否让人跟单
@@ -324,6 +440,42 @@ definitions:
     - lotteryUuid
     - saveType
     - times
+    type: object
+  order.OrderImage:
+    properties:
+      createdAt:
+        type: string
+      delete:
+        description: 是否删除
+        type: boolean
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      id:
+        type: integer
+      parentId:
+        type: string
+      updatedAt:
+        type: string
+      url:
+        description: 访问地址
+        type: string
+    type: object
+  order.OrderVO:
+    properties:
+      allWin:
+        description: 如果是合买
+        items:
+          $ref: '#/definitions/order.AllWin'
+        type: array
+      images:
+        description: 图片
+        items:
+          $ref: '#/definitions/order.OrderImage'
+        type: array
+      order:
+        allOf:
+        - $ref: '#/definitions/order.Order'
+        description: 订单
     type: object
   user.Complain:
     properties:
@@ -425,6 +577,9 @@ definitions:
     type: object
   user.UserVO:
     properties:
+      avatar:
+        description: 头像
+        type: string
       name:
         description: 昵称
         maxLength: 16
@@ -443,6 +598,100 @@ definitions:
 info:
   contact: {}
 paths:
+  /admin/order:
+    get:
+      consumes:
+      - application/json
+      description: 订单查询接口
+      parameters:
+      - description: 保存类型 TEMP（临时保存） TOMASTER（提交到店）  ALLWIN（合买）
+        in: query
+        name: saveType
+        type: string
+      - description: 足彩（FOOTBALL） 大乐透（SUPER_LOTTO）  排列三（P3） 篮球(BASKETBALL) 七星彩（SEVEN_STAR）
+          排列五（P5）
+        in: query
+        name: lotteryType
+        type: string
+      - description: 页码
+        in: query
+        name: pageNo
+        required: true
+        type: integer
+      - description: 每页大小
+        in: query
+        name: pageSize
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 管理员订单查询接口
+  /bbs/comment:
+    post:
+      consumes:
+      - application/json
+      description: 评论帖子
+      parameters:
+      - description: 评论内容
+        in: body
+        name: comment
+        required: true
+        schema:
+          $ref: '#/definitions/bbs.Comment'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 评论帖子
+  /bbs/comment/list:
+    get:
+      consumes:
+      - application/json
+      description: 通过帖子id 查询回复和评论
+      parameters:
+      - description: 页码
+        in: query
+        name: pageNo
+        required: true
+        type: integer
+      - description: 每页条数
+        in: query
+        name: pageSize
+        required: true
+        type: integer
+      - description: 每页条数
+        in: query
+        name: bbsId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 查询回复和评论
   /bbs/commit:
     post:
       consumes:
@@ -498,6 +747,30 @@ paths:
           schema:
             $ref: '#/definitions/common.BaseResponse'
       summary: 查询全部贴子
+  /bbs/response:
+    post:
+      consumes:
+      - application/json
+      description: 回复评论
+      parameters:
+      - description: 回复内容
+        in: body
+        name: comment
+        required: true
+        schema:
+          $ref: '#/definitions/bbs.Response'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 回复评论
   /cache:
     post:
       consumes:
@@ -643,7 +916,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/common.BaseResponse'
+            $ref: '#/definitions/order.OrderVO'
         "500":
           description: Internal Server Error
           schema:

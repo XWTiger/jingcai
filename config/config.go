@@ -21,6 +21,7 @@ type HttpConfig struct {
 	TargetHost      string `yaml:"TargetHost"`
 	TargetPort      int    `yaml:"TargetPort"`
 	TargetScheme    string `yaml:"TargetScheme"`
+	ImagePrefix     string `yaml:"ImagePrefix"`
 }
 
 type Config struct {

@@ -38,7 +38,9 @@ func CommitHandler(c *gin.Context) {
 	if err == nil {
 		log.Info("commit ====> ", commit)
 		//TODO save user info
-		commit.BbsContent.UserID = 0
+		user := getUserInfo(c)
+		commit.UserInfo = user
+		commit.BbsContent.UserID = user.ID
 		commit.BbsContent.CreatedAt = time.Now()
 		commit.BbsContent.UpdatedAt = time.Now()
 
@@ -53,6 +55,15 @@ func CommitHandler(c *gin.Context) {
 		})
 	}
 
+}
+func getUserInfo(c *gin.Context) user.User {
+	userInfo, exist := c.Get("userInfo")
+	if exist == false {
+		log.Error("bbs 帖子提交，用户信息不存在")
+		common.FailedReturn(c, "获取用户信息失败")
+		return user.User{}
+	}
+	return userInfo.(user.User)
 }
 
 // @Summary 查询全部贴子
@@ -100,13 +111,19 @@ func ListHandler(c *gin.Context) {
 			var total int64
 			mysql.DB.Model(&creeper.Content{}).Where("created_at BETWEEN ? AND ? ", dateStart, dateEnd).Count(&total)
 			var resultList []creeper.Content
-			mysql.DB.Model(&creeper.Content{}).Where("created_at BETWEEN ? AND ? ", dateStart, dateEnd).Offset((pageN - 1) * pageS).Limit(pageS).Find(&resultList)
+			if total <= 0 {
+				mysql.DB.Model(&creeper.Content{}).Order("created_at desc").Offset((pageN - 1) * pageS).Limit(pageS).Find(&resultList)
+			} else {
+				mysql.DB.Model(&creeper.Content{}).Where("created_at BETWEEN ? AND ? ", dateStart, dateEnd).Order("created_at desc").Offset((pageN - 1) * pageS).Limit(pageS).Find(&resultList)
+			}
+
 			c.JSON(http.StatusOK, common.Success(common.PageCL{
 				PageNo:   pageN,
 				PageSize: pageS,
 				Total:    int(total),
 				Content:  resultList,
 			}))
+
 		}
 
 	} else {
