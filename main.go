@@ -32,7 +32,7 @@ func main() {
 	files.Init(conf)
 	//connect mysql
 	sc := make(chan os.Signal, 1)
-	if myErr := mysql.InitDB(); myErr != nil {
+	if myErr := mysql.InitDB(conf); myErr != nil {
 		log.Error("======== mysql connect failed =============")
 		clean()
 		os.Exit(1)
