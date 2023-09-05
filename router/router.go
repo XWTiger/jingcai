@@ -16,7 +16,6 @@ import (
 	"jingcai/mysql"
 	"jingcai/order"
 	"jingcai/user"
-	"jingcai/websocket"
 	"net/http"
 	"strconv"
 )
@@ -50,7 +49,7 @@ func BindRouters(r *gin.Engine) {
 		lott.GET("/super-lottery", lottery.SevenStarFun)
 	}
 
-	r.GET("/ws", websocket.OrderWebSocket)
+	//r.GET("/ws", websocket.OrderWebSocket)
 	userGroup := r.Group("/user")
 	{
 		userGroup.POST("", user.UserCreateHandler)

@@ -22,6 +22,9 @@ type HttpConfig struct {
 	TargetPort      int    `yaml:"TargetPort"`
 	TargetScheme    string `yaml:"TargetScheme"`
 	ImagePrefix     string `yaml:"ImagePrefix"`
+	DbAddress       string `yaml:"DbAddress"`
+	DbUser          string `yaml:"DbUser"`
+	DbSpecial       string `yaml:"DbSpecial"`
 }
 
 type Config struct {

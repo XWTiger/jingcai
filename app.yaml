@@ -26,6 +26,9 @@ Server:
   # the default value is 120
   IdleTimeout: 120
   ImagePrefix: /download/
+  DbAddress: 127.0.0.1
+  DbUser:  root
+  DbSpecial: 123456
 Log:
   # configure the path where the logs are written
   # the default is /var/log/dbagent/proxy.log
