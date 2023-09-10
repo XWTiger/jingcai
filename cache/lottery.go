@@ -30,7 +30,7 @@ var log = ilog.Logger
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
 // @param param body interface{} false "提交对象"
-// @Router /cache [post]
+// @Router /api/cache [post]
 func Set(c *gin.Context) {
 	log.Info("remote ip: ", c.Request.RemoteAddr)
 	if strings.HasPrefix(c.Request.RemoteAddr, BIND) || strings.HasPrefix(c.Request.RemoteAddr, Local) {

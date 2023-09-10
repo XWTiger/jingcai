@@ -52,6 +52,7 @@ func Init() *Config {
 				DbAddress:       "127.0.0.1",
 				DbUser:          "root",
 				DbSpecial:       "123456",
+				CreeperSwitch:   true,
 			},
 			LogConf: &alog.Config{
 				Path:        "/var/log/jingcai/jingcai.log",

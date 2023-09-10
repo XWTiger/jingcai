@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/pem"
 	"errors"
+	"fmt"
 	gorsa "github.com/Lyafei/go-rsa"
 	"github.com/gin-gonic/gin"
 	"github.com/muesli/cache2go"
@@ -100,7 +101,7 @@ func (u User) GetDTO() UserDTO {
 // @Produce json
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
-// @Router /user/info [get]
+// @Router /api/user/info [get]
 func GetUserInfo(c *gin.Context) {
 	var user = getUserInfo(c)
 	var userPO User
@@ -128,7 +129,7 @@ func GetUserInfo(c *gin.Context) {
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
 // @param param body UserDTO true "用户对象, socre 可以不传"
-// @Router /user/info [post]
+// @Router /api/user/info [post]
 func UpdateUser(c *gin.Context) {
 	var user = getUserInfo(c)
 	var userDTO UserDTO
@@ -189,7 +190,7 @@ func (u User) ChangePass(user UserVO) error {
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
 // @param param body UserVO true "用户对象"
-// @Router /user [post]
+// @Router /api/user [post]
 func UserCreateHandler(c *gin.Context) {
 	var user UserVO
 	c.Header("Content-Type", "application/json; charset=utf-8")
@@ -233,7 +234,7 @@ func UserCreateHandler(c *gin.Context) {
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
 // @param param body UserVO true "用户对象"
-// @Router /user/login [post]
+// @Router /api/user/login [post]
 func Login(c *gin.Context) {
 	var userVo UserVO
 	salt := c.GetHeader("salt")
@@ -338,7 +339,7 @@ type Complain struct {
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
 // @param param body TokenVO true "token对象"
-// @Router /user/logout [post]
+// @Router /api/user/logout [post]
 func Logout(c *gin.Context) {
 	var tokenVO TokenVO
 	c.BindJSON(&tokenVO)
@@ -399,7 +400,7 @@ func FindUsserMapById(id []uint) map[uint]UserVO {
 	if len(user) > 0 {
 		for _, u := range user {
 			mapp[u.ID] = UserVO{
-				Phone:  u.Phone,
+				Phone:  fmt.Sprintf("%s****%s", u.Phone[0:3], u.Phone[8:11]),
 				Name:   u.Name,
 				Avatar: u.HeaderImageUrl,
 			}
@@ -416,7 +417,7 @@ func FindUsserMapById(id []uint) map[uint]UserVO {
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
 // @param param body Complain true "投诉对象"
-// @Router /user/complain [post]
+// @Router /api/user/complain [post]
 func UserComplain(c *gin.Context) {
 	var user = getUserInfo(c)
 	var complain Complain

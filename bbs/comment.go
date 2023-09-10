@@ -81,7 +81,7 @@ type Comment struct {
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
 // @param comment body Comment  true  "评论内容"
-// @Router /bbs/comment [post]
+// @Router /api/bbs/comment [post]
 func CommentHandler(c *gin.Context) {
 	var comment Comment
 	err := c.BindJSON(&comment)
@@ -108,7 +108,7 @@ func CommentHandler(c *gin.Context) {
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
 // @param comment body Response  true  "回复内容"
-// @Router /bbs/response [post]
+// @Router /api/bbs/response [post]
 func ResponseHandler(c *gin.Context) {
 	var response Response
 	err := c.BindJSON(&response)
@@ -137,7 +137,7 @@ func ResponseHandler(c *gin.Context) {
 // @param pageNo query int   true  "页码"
 // @param pageSize query int  true  "每页条数"
 // @param bbsId query int  true  "每页条数"
-// @Router /bbs/comment/list [get]
+// @Router /api/bbs/comment/list [get]
 func ListComment(c *gin.Context) {
 	c.Header("Content-Type", "application/json; charset=utf-8")
 	pageNo := c.Query("pageNo")
@@ -148,6 +148,8 @@ func ListComment(c *gin.Context) {
 		pageN, _ := strconv.Atoi(pageNo)
 		pageS, _ := strconv.Atoi(pageSize)
 		contentId, _ := strconv.Atoi(id)
+		var count int64
+		mysql.DB.Model(Comment{}).Where(&Comment{ContentID: uint(contentId)}).Count(&count)
 		mysql.DB.Model(Comment{}).Where(&Comment{ContentID: uint(contentId)}).Offset((pageN - 1) * pageS).Limit(pageS).Find(&comments)
 		if len(comments) == 0 {
 			common.SuccessReturn(c, comments)
@@ -190,7 +192,13 @@ func ListComment(c *gin.Context) {
 					commentVOs[i].Responses = resVO
 				}
 			}
-			common.SuccessReturn(c, commentVOs)
+
+			common.SuccessReturn(c, common.PageCL{
+				PageNo:   pageN,
+				PageSize: pageS,
+				Total:    int(count),
+				Content:  commentVOs,
+			})
 			return
 		}
 	} else {
@@ -207,7 +215,7 @@ func ListComment(c *gin.Context) {
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
 // @param commentId query int  true  "评论id"
-// @Router /bbs/comment/response [get]
+// @Router /api/bbs/comment/response [get]
 func GetResponseByCommentId(c *gin.Context) {
 	c.Header("Content-Type", "application/json; charset=utf-8")
 
@@ -225,31 +233,35 @@ func GetResponseByCommentId(c *gin.Context) {
 	}
 	var res []Response
 	mysql.DB.Model(Response{}).Where(&Response{CommentId: uint(commentId)}).Find(&res)
-	if len(res) > 0 {
-		var resVO []ResponseVO
-		var resPonseUseIds []uint
-		for _, re := range res {
-			resPonseUseIds = append(resPonseUseIds, re.UserId)
-		}
-		resPonseUseIds = append(resPonseUseIds, comment.UserId)
-		userRespMap := user.FindUsserMapById(resPonseUseIds)
-		for _, re := range res {
-			respVo := re.getVO()
-			if respVo.ResponseId > 0 {
-				result := getResponseById(respVo.ResponseId, res)
-				if result != nil {
-					respVo.ResponseName = userRespMap[result.UserId].Name
-				}
 
+	var resVO []ResponseVO
+	var resPonseUseIds []uint
+	for _, re := range res {
+		resPonseUseIds = append(resPonseUseIds, re.UserId)
+	}
+	resPonseUseIds = append(resPonseUseIds, comment.UserId)
+	userRespMap := user.FindUsserMapById(resPonseUseIds)
+	for _, re := range res {
+		respVo := re.getVO()
+		if respVo.ResponseId > 0 {
+			result := getResponseById(respVo.ResponseId, res)
+			if result != nil {
+				respVo.ResponseName = userRespMap[result.UserId].Name
 			}
 
-			respVo.UserVO = userRespMap[re.UserId]
-			resVO = append(resVO, respVo)
 		}
-		comVO := comment.getCommentVO()
-		comVO.Responses = resVO
-		common.SuccessReturn(c, comVO)
+
+		respVo.UserVO = userRespMap[re.UserId]
+		resVO = append(resVO, respVo)
 	}
+	comVO := comment.getCommentVO()
+	comUser := userRespMap[comment.UserId]
+	comVO.Name = comUser.Name
+	comVO.Phone = comUser.Phone
+	comVO.Avatar = comUser.Avatar
+	comVO.Responses = resVO
+	common.SuccessReturn(c, comVO)
+
 }
 
 func getResponseById(id uint, list []Response) *Response {

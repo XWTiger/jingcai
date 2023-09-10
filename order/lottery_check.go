@@ -767,7 +767,7 @@ type Content struct {
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
 // @param date  query string true "2023-01-01 21:27:00"
-// @Router /super/check/lottery_check [post]
+// @Router /api/super/check/lottery_check [post]
 func AddCheckForManual(c *gin.Context) {
 	date := c.Query("date")
 	startTime, err := util.StrToTime(date)

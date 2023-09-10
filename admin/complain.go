@@ -16,7 +16,7 @@ import (
 // @failure 500 {object} common.BaseResponse
 // @param pageNo query int   true  "页码"
 // @param pageSize query int  true  "每页条数"
-// @Router /super/complains [get]
+// @Router /api/super/complains [get]
 func ListComplain(c *gin.Context) {
 	pageNo := c.Query("pageNo")
 	pageSize := c.Query("pageSize")

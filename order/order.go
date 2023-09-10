@@ -263,7 +263,7 @@ type FootView struct {
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
 // @param param body Order false "订单对象"
-// @Router /order [post]
+// @Router /api/order [post]
 func OrderCreate(c *gin.Context) {
 	orderCreateFunc(c, nil)
 }
@@ -497,7 +497,7 @@ func checkSevenStar(ord *Order) error {
 // @param lotteryType  query string false "足彩（FOOTBALL） 大乐透（SUPER_LOTTO）  排列三（P3） 篮球(BASKETBALL) 七星彩（SEVEN_STAR） 排列五（P5）"
 // @param pageNo  query int true "页码"
 // @param pageSize  query int true "每页大小"
-// @Router /order [get]
+// @Router /api/order [get]
 func OrderList(c *gin.Context) {
 	var user = user.FetUserInfo(c)
 	saveType := c.Query("saveType")
@@ -1875,7 +1875,7 @@ type WinSer struct {
 // @failure 500 {object} common.BaseResponse
 // @param start query   uint true "时间戳 unix time"
 // @param end query   uint true "时间戳 unix time"
-// @Router /tiger-dragon-list [get]
+// @Router /api/tiger-dragon-list [get]
 func TigerDragonList(c *gin.Context) {
 	//默认前4名中奖 以及 连红
 	//TODO 校验开通
@@ -2173,7 +2173,7 @@ func GetDesc(t string, scoreVsScore string) string {
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
 // @param order_id query string true "跟单对象id"
-// @Router /order/follow [post]
+// @Router /api/order/follow [post]
 func FollowOrder(c *gin.Context) {
 	orderId := c.Param("order_id")
 	if len(orderId) <= 0 {

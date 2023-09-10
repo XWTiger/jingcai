@@ -35,18 +35,19 @@ import (
 // @BasePath  /api/v1
 
 // @securityDefinitions.basic  BasicAuth
-func BindRouters(r *gin.Engine) {
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-	r.GET("/ping", pong)
+func BindRouters(g *gin.Engine) {
+	g.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	g.GET("/ping", pong)
+	r := g.Group("/api")
 	r.GET("/salt", common.Salt)
 	r.GET("/notify", advise.Query)
 	r.GET("/tiger-dragon-list", order.TigerDragonList)
 	r.POST("/cache", cache.Set)
-	lott := r.Group("/lottery")
+	lott := g.Group("/lottery-api")
 	{
 		lott.GET("/seven-star", lottery.SevenStarFun)
 		lott.GET("/plw", lottery.PlwFun)
-		lott.GET("/super-lottery", lottery.SevenStarFun)
+		lott.GET("/super-lottery", lottery.SuperLotteryFun)
 	}
 
 	//r.GET("/ws", websocket.OrderWebSocket)

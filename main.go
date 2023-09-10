@@ -39,8 +39,9 @@ func main() {
 	}
 	initTables()
 	ctx, cancel := context.WithCancel(context.Background())
-	go admin.InitCronForCreep(ctx)
-
+	if conf.HttpConf.CreeperSwitch {
+		go admin.InitCronForCreep(ctx)
+	}
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	for {
 		sig := <-sc

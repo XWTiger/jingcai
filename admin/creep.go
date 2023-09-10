@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/robfig/cron"
 	"golang.org/x/net/context"
+	"jingcai/config"
 	"jingcai/creeper"
 	"jingcai/mysql"
 	"math/rand"
@@ -14,6 +15,7 @@ import (
 import ilog "jingcai/log"
 
 var log = ilog.Logger
+var creeperSwitch = true
 
 type CreepCenterInterface interface {
 	registry() error
@@ -38,6 +40,11 @@ func initTables() {
 	mysql.DB.AutoMigrate(&creeper.Content{})
 	mysql.DB.AutoMigrate(&creeper.Condition{})
 }
+
+func Init(conf config.Config) {
+	creeperSwitch = conf.HttpConf.CreeperSwitch
+}
+
 func (cc *CreepCenter) Doing() error {
 	initTables()
 	tx := mysql.DB.Begin()
@@ -66,9 +73,13 @@ func (cc *CreepCenter) Doing() error {
 // @Accept json
 // @Produce json
 // @Success 200 {object} string
-// @Router /super/creep [get]
+// @Router /api/super/creep [get]
 func CreepHandler(c *gin.Context) {
 
+	if !creeperSwitch {
+		log.Warn("======= 该服务并没有开启爬虫功能 ============")
+		return
+	}
 	rand.Seed(time.Now().UnixNano())
 	num := rand.Intn(100)
 	time.Sleep(time.Second * time.Duration(num))

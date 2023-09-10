@@ -272,7 +272,7 @@ var LotteryStatistics = cache2go.Cache("lottery-statistics")
 // @Produce json
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
-// @Router /lottery/super-lottery [get]
+// @Router /lottery-api/super-lottery [get]
 func SuperLotteryFun(c *gin.Context) {
 	resp, err := http.Get(SUPER_LOTTO_URL)
 	if err != nil {
@@ -301,7 +301,7 @@ func SuperLotteryFun(c *gin.Context) {
 // @Produce json
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
-// @Router /lottery/plw [get]
+// @Router /lottery-api/plw [get]
 func PlwFun(c *gin.Context) {
 	var url = "https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListPlwV1.qry?gameNo=350133&provinceId=0&isVerify=1&termLimits=5"
 	resp, err := http.Get(url)
@@ -338,7 +338,7 @@ func PlwFun(c *gin.Context) {
 // @Produce json
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
-// @Router /lottery/seven-star [get]
+// @Router /lottery-api/seven-star [get]
 func SevenStarFun(c *gin.Context) {
 
 	resp, err := http.Get(SEVEN_START_URL)

@@ -252,7 +252,7 @@ func GetAllWinUser(u user.User) AllWinUser {
 // @Produce json
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
-// @Router /order/all_win [get]
+// @Router /api/order/all_win [get]
 func AllWinList(c *gin.Context) {
 	var all []AllWin
 	mysql.DB.Model(AllWin{}).Where(&AllWin{
@@ -273,7 +273,7 @@ func AllWinList(c *gin.Context) {
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
 // @Param param body AllWinCreate true "购买对象"
-// @Router /order/all_win [post]
+// @Router /api/order/all_win [post]
 func AllWinCreateHandler(c *gin.Context) {
 	var body AllWinCreate
 	err := c.Bind(&body)

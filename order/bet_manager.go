@@ -14,7 +14,7 @@ import (
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
 // @param orderId  query string false "订单号"
-// @Router /order [get]
+// @Router /api/order [get]
 func GetBetByOrder(c *gin.Context) {
 
 	var user = user.FetUserInfo(c)

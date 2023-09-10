@@ -30,7 +30,7 @@ var log = ilog.Logger
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
 // @param param body bbs.BBS false "提交对象"
-// @Router /bbs/commit [post]
+// @Router /api/bbs/commit [post]
 func CommitHandler(c *gin.Context) {
 	var commit BBS
 	c.Header("Content-Type", "application/json; charset=utf-8")
@@ -75,7 +75,7 @@ func getUserInfo(c *gin.Context) user.User {
 // @param date query   uint false "日期 unix time"
 // @param pageNo query int   true  "页码"
 // @param pageSize query int  true  "每页条数"
-// @Router /bbs/list [get]
+// @Router /api/bbs/list [get]
 func ListHandler(c *gin.Context) {
 	c.Header("Content-Type", "application/json; charset=utf-8")
 	pageNo := c.Query("pageNo")

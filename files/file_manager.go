@@ -40,7 +40,7 @@ func Init(c *config.Config) {
 // @failure 500 {object} common.BaseResponse
 // @param type query string false "BBS,USER,HEADER 或则null"
 // @Param files formData file true "文件"
-// @Router /upload [post]
+// @Router /api/upload [post]
 func Upload(c *gin.Context) {
 	form, err := c.MultipartForm()
 	if err != nil {
@@ -92,7 +92,7 @@ func Upload(c *gin.Context) {
 // @Success 200 {object}  common.BaseResponse
 // @failure 500 {object} common.BaseResponse
 // @param file query string true "文件名称"
-// @Router /download [get]
+// @Router /api/download [get]
 func DownLoad(c *gin.Context) {
 	file := c.Query("file")
 	if file == "" {

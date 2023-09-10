@@ -68,7 +68,7 @@ type MatchOdd struct {
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
 // @param bets  body UploadBet true "管理员提交票对象"
-// @Router /admin/bets [post]
+// @Router /api/admin/bets [post]
 func UploadBets(c *gin.Context) {
 	var userInfo = user.FetUserInfo(c)
 	if strings.Compare(userInfo.Role, user.ADMIN) != 0 {
@@ -160,7 +160,7 @@ func UploadBets(c *gin.Context) {
 // @param lotteryType  query string false "足彩（FOOTBALL） 大乐透（SUPER_LOTTO）  排列三（P3） 篮球(BASKETBALL) 七星彩（SEVEN_STAR） 排列五（P5）"
 // @param pageNo  query int true "页码"
 // @param pageSize  query int true "每页大小"
-// @Router /admin/order [get]
+// @Router /api/admin/order [get]
 func AdminOrderList(c *gin.Context) {
 	//var userInfo = user.FetUserInfo(c)
 	saveType := c.Query("saveType")

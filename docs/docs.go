@@ -16,7 +16,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/admin/bets": {
+        "/api/admin/bets": {
             "post": {
                 "description": "票提交接口",
                 "consumes": [
@@ -53,7 +53,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/admin/order": {
+        "/api/admin/order": {
             "get": {
                 "description": "订单查询接口",
                 "consumes": [
@@ -107,7 +107,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/bbs/comment": {
+        "/api/bbs/comment": {
             "post": {
                 "description": "评论帖子",
                 "consumes": [
@@ -144,7 +144,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/bbs/comment/list": {
+        "/api/bbs/comment/list": {
             "get": {
                 "description": "通过帖子id 查询回复和评论",
                 "consumes": [
@@ -193,7 +193,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/bbs/comment/response": {
+        "/api/bbs/comment/response": {
             "get": {
                 "description": "通过帖子id 查询回复和评论",
                 "consumes": [
@@ -202,7 +202,7 @@ const docTemplate = `{
                 "produces": [
                     "application/json"
                 ],
-                "summary": "通过",
+                "summary": "通过评论id查回复",
                 "parameters": [
                     {
                         "type": "integer",
@@ -228,7 +228,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/bbs/commit": {
+        "/api/bbs/commit": {
             "post": {
                 "description": "提交论坛的帖子",
                 "consumes": [
@@ -264,7 +264,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/bbs/list": {
+        "/api/bbs/list": {
             "get": {
                 "description": "提交论坛的帖子",
                 "consumes": [
@@ -312,7 +312,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/bbs/response": {
+        "/api/bbs/response": {
             "post": {
                 "description": "回复评论",
                 "consumes": [
@@ -349,7 +349,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/cache": {
+        "/api/cache": {
             "post": {
                 "description": "内部缓存使用接口",
                 "consumes": [
@@ -385,7 +385,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/download": {
+        "/api/download": {
             "get": {
                 "description": "下载文件/图片",
                 "consumes": [
@@ -420,85 +420,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/lottery/plw": {
-            "get": {
-                "description": "排列五",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "summary": "排列五",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/common.BaseResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/common.BaseResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/lottery/seven-star": {
-            "get": {
-                "description": "七星彩",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "summary": "七星彩",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/common.BaseResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/common.BaseResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/lottery/super-lottery": {
-            "get": {
-                "description": "超级大乐透",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "summary": "超级大乐透",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/common.BaseResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/common.BaseResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/notify": {
+        "/api/notify": {
             "get": {
                 "description": "查询通告",
                 "consumes": [
@@ -524,7 +446,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/order": {
+        "/api/order": {
             "get": {
                 "description": "订单查询接口",
                 "consumes": [
@@ -612,7 +534,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/order/all_win": {
+        "/api/order/all_win": {
             "get": {
                 "description": "合买列表",
                 "consumes": [
@@ -673,7 +595,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/order/follow": {
+        "/api/order/follow": {
             "post": {
                 "description": "跟单订单",
                 "consumes": [
@@ -708,26 +630,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/ping": {
-            "get": {
-                "description": "状态检测",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/salt": {
+        "/api/salt": {
             "get": {
                 "description": "公钥 默认10分钟过期",
                 "consumes": [
@@ -753,7 +656,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/super/check/lottery_check": {
+        "/api/super/check/lottery_check": {
             "post": {
                 "description": "手动触发对账接口",
                 "consumes": [
@@ -788,7 +691,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/super/complains": {
+        "/api/super/complains": {
             "get": {
                 "description": "查看投诉",
                 "consumes": [
@@ -830,7 +733,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/super/creep": {
+        "/api/super/creep": {
             "get": {
                 "description": "爬虫接口",
                 "consumes": [
@@ -850,7 +753,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/super/notify": {
+        "/api/super/notify": {
             "post": {
                 "description": "创建通告",
                 "consumes": [
@@ -886,7 +789,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/tiger-dragon-list": {
+        "/api/tiger-dragon-list": {
             "get": {
                 "description": "龙虎榜",
                 "consumes": [
@@ -928,7 +831,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/upload": {
+        "/api/upload": {
             "post": {
                 "description": "上传文件或者图片",
                 "consumes": [
@@ -969,7 +872,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/user": {
+        "/api/user": {
             "post": {
                 "description": "创建用户",
                 "consumes": [
@@ -1006,7 +909,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/user/complain": {
+        "/api/user/complain": {
             "post": {
                 "description": "投诉",
                 "consumes": [
@@ -1043,7 +946,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/user/info": {
+        "/api/user/info": {
             "get": {
                 "description": "查询用户信息",
                 "consumes": [
@@ -1104,7 +1007,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/user/login": {
+        "/api/user/login": {
             "post": {
                 "description": "公钥放在头里 salt， 密码：需要和公钥rsa 加密 账号为手机号",
                 "consumes": [
@@ -1141,7 +1044,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/user/logout": {
+        "/api/user/logout": {
             "post": {
                 "description": "注销当前用户",
                 "consumes": [
@@ -1173,6 +1076,103 @@ const docTemplate = `{
                         "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/lottery-api/plw": {
+            "get": {
+                "description": "排列五",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "排列五",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/lottery-api/seven-star": {
+            "get": {
+                "description": "七星彩",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "七星彩",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/lottery-api/super-lottery": {
+            "get": {
+                "description": "超级大乐透",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "超级大乐透",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/ping": {
+            "get": {
+                "description": "状态检测",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 }

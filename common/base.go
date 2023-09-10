@@ -86,7 +86,7 @@ func FailedAuthReturn(c *gin.Context, message string) {
 // @Produce json
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
-// @Router /salt [get]
+// @Router /api/salt [get]
 func Salt(c *gin.Context) {
 	privateKey, pubKey := GenRsaKey()
 	decodePubKey := base64.StdEncoding.EncodeToString([]byte(pubKey))

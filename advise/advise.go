@@ -36,7 +36,7 @@ type Notification struct {
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
 // @param param body Notification false "通告对象"
-// @Router /super/notify [post]
+// @Router /api/super/notify [post]
 func Create(c *gin.Context) {
 
 	var notify Notification
@@ -56,7 +56,7 @@ func Create(c *gin.Context) {
 // @Produce json
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
-// @Router /notify [get]
+// @Router /api/notify [get]
 func Query(c *gin.Context) {
 	time := time.Now()
 	date := time.Format("2006-01-02 15:04:05")
