@@ -23,17 +23,20 @@ type CommentVO struct {
 type ResponseVO struct {
 	gorm.Model
 	user.UserVO
-	CommentId uint
-	Content   string
+	CommentId    uint
+	Content      string
+	ResponseId   uint
+	ResponseName string
 }
 
 // 回复
 type Response struct {
 	gorm.Model
 	//用户id （系统自动填）
-	UserId    uint
-	CommentId uint   `validate:"required"`
-	Content   string `validate:"required"`
+	UserId     uint
+	ResponseId uint
+	CommentId  uint   `validate:"required"`
+	Content    string `validate:"required"`
 	//是否审核通过
 	ShowStatus bool
 }
@@ -41,9 +44,10 @@ type Response struct {
 func (res Response) getVO() ResponseVO {
 
 	var vo = ResponseVO{
-		Model:     res.Model,
-		Content:   res.Content,
-		CommentId: res.CommentId,
+		Model:      res.Model,
+		Content:    res.Content,
+		CommentId:  res.CommentId,
+		ResponseId: res.ResponseId,
 	}
 	return vo
 }
@@ -94,7 +98,7 @@ func CommentHandler(c *gin.Context) {
 		common.FailedReturn(c, "评论失败")
 		return
 	}
-	common.SuccessReturn(c, "评论成功")
+	common.SuccessReturn(c, comment.ID)
 }
 
 // @Summary 回复评论
@@ -172,6 +176,14 @@ func ListComment(c *gin.Context) {
 					userRespMap := user.FindUsserMapById(resPonseUseIds)
 					for _, re := range res {
 						respVo := re.getVO()
+						if respVo.ResponseId > 0 {
+							result := getResponseById(respVo.ResponseId, res)
+							if result != nil {
+								respVo.ResponseName = userRespMap[result.UserId].Name
+							}
+
+						}
+
 						respVo.UserVO = userRespMap[re.UserId]
 						resVO = append(resVO, respVo)
 					}
@@ -185,4 +197,66 @@ func ListComment(c *gin.Context) {
 		common.FailedReturn(c, "参数错误")
 		return
 	}
+
+}
+
+// @Summary  通过评论id查回复
+// @Description 通过帖子id 查询回复和评论
+// @Accept json
+// @Produce json
+// @Success 200 {object} common.BaseResponse
+// @failure 500 {object} common.BaseResponse
+// @param commentId query int  true  "评论id"
+// @Router /bbs/comment/response [get]
+func GetResponseByCommentId(c *gin.Context) {
+	c.Header("Content-Type", "application/json; charset=utf-8")
+
+	id := c.Query("commentId")
+	commentId, err := strconv.Atoi(id)
+	if err != nil {
+		log.Error(err)
+		common.FailedReturn(c, "参数异常")
+		return
+	}
+	var comment Comment
+	if err := mysql.DB.Model(Comment{}).Where(&Comment{Model: gorm.Model{ID: uint(commentId)}}).First(&comment).Error; err != nil {
+		common.FailedReturn(c, "评论不存在")
+		return
+	}
+	var res []Response
+	mysql.DB.Model(Response{}).Where(&Response{CommentId: uint(commentId)}).Find(&res)
+	if len(res) > 0 {
+		var resVO []ResponseVO
+		var resPonseUseIds []uint
+		for _, re := range res {
+			resPonseUseIds = append(resPonseUseIds, re.UserId)
+		}
+		resPonseUseIds = append(resPonseUseIds, comment.UserId)
+		userRespMap := user.FindUsserMapById(resPonseUseIds)
+		for _, re := range res {
+			respVo := re.getVO()
+			if respVo.ResponseId > 0 {
+				result := getResponseById(respVo.ResponseId, res)
+				if result != nil {
+					respVo.ResponseName = userRespMap[result.UserId].Name
+				}
+
+			}
+
+			respVo.UserVO = userRespMap[re.UserId]
+			resVO = append(resVO, respVo)
+		}
+		comVO := comment.getCommentVO()
+		comVO.Responses = resVO
+		common.SuccessReturn(c, comVO)
+	}
+}
+
+func getResponseById(id uint, list []Response) *Response {
+	for _, response := range list {
+		if response.ID == id {
+			return &response
+		}
+	}
+	return nil
 }

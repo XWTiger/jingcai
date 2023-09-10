@@ -75,6 +75,7 @@ func BindRouters(r *gin.Engine) {
 		bbsGroup.POST("/response", bbs.ResponseHandler)
 		bbsGroup.POST("/comment", bbs.CommentHandler)
 		bbsGroup.GET("/comment/list", bbs.ListComment)
+		bbsGroup.GET("/comment/response", bbs.GetResponseByCommentId)
 	}
 	//订单
 	orderGroup := r.Group("/order")

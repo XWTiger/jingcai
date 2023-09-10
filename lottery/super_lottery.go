@@ -310,7 +310,13 @@ func PlwFun(c *gin.Context) {
 		return
 	}
 	defer resp.Body.Close()
-	body, _ := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
+	fmt.Println(body)
+	if err != nil {
+		log.Error("请求大乐透列表失败: ", err)
+		return
+	}
+
 	var result Plw
 	err = json.Unmarshal(body, &result)
 	if err != nil || &result.Value == nil {

@@ -7,7 +7,9 @@ import (
 	"golang.org/x/net/context"
 	"jingcai/creeper"
 	"jingcai/mysql"
+	"math/rand"
 	"net/http"
+	"time"
 )
 import ilog "jingcai/log"
 
@@ -67,6 +69,9 @@ func (cc *CreepCenter) Doing() error {
 // @Router /super/creep [get]
 func CreepHandler(c *gin.Context) {
 
+	rand.Seed(time.Now().UnixNano())
+	num := rand.Intn(100)
+	time.Sleep(time.Second * time.Duration(num))
 	tianIns := creeper.NewTianInstance()
 	CreepRegistry.registry(tianIns)
 	Leisu := creeper.NewInstance()

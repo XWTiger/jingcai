@@ -67,7 +67,7 @@ type MatchOdd struct {
 // @Produce json
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
-// @param bets  body UploadBet true ""
+// @param bets  body UploadBet true "管理员提交票对象"
 // @Router /admin/bets [post]
 func UploadBets(c *gin.Context) {
 	var userInfo = user.FetUserInfo(c)

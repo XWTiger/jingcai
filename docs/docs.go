@@ -16,6 +16,43 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/admin/bets": {
+            "post": {
+                "description": "票提交接口",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "票提交接口",
+                "parameters": [
+                    {
+                        "description": "管理员提交票对象",
+                        "name": "bets",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/order.UploadBet"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/admin/order": {
             "get": {
                 "description": "订单查询接口",
@@ -136,6 +173,41 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "每页条数",
                         "name": "bbsId",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/bbs/comment/response": {
+            "get": {
+                "description": "通过帖子id 查询回复和评论",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "通过",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "评论id",
+                        "name": "commentId",
                         "in": "query",
                         "required": true
                     }
@@ -1214,6 +1286,9 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
+                "responseId": {
+                    "type": "integer"
+                },
                 "showStatus": {
                     "description": "是否审核通过",
                     "type": "boolean"
@@ -1605,6 +1680,30 @@ const docTemplate = `{
                 }
             }
         },
+        "order.MatchOdd": {
+            "type": "object",
+            "required": [
+                "matchId",
+                "type"
+            ],
+            "properties": {
+                "goalLine": {
+                    "description": "让球 胜平负才有，篮球就是让分",
+                    "type": "string"
+                },
+                "matchId": {
+                    "type": "string"
+                },
+                "odds": {
+                    "description": "赔率",
+                    "type": "number"
+                },
+                "type": {
+                    "description": "足球类型 枚举：SFP（胜负平）、BF（比分）、ZJQ(总进球)、BQSFP（半全场胜负平）\n篮球类型 枚举：HDC （胜负）、 HILO（大小分）、 MNL（让分胜负）、 WNM（胜分差）",
+                    "type": "string"
+                }
+            }
+        },
         "order.Order": {
             "type": "object",
             "required": [
@@ -1679,6 +1778,10 @@ const docTemplate = `{
                     "description": "支付方式 ALI  WECHAT SCORE（积分）",
                     "type": "string"
                 },
+                "pl3Way": {
+                    "description": "SIGNAL（单注）   C6 （组合6） C3 （组合3）",
+                    "type": "string"
+                },
                 "saveType": {
                     "description": "保存类型 TEMP（临时保存） TOMASTER（提交到店）  合买(ALLWIN 舍弃)",
                     "type": "string"
@@ -1729,6 +1832,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "parentId": {
+                    "description": "order uuid",
                     "type": "string"
                 },
                 "updatedAt": {
@@ -1764,6 +1868,42 @@ const docTemplate = `{
                             "$ref": "#/definitions/order.Order"
                         }
                     ]
+                }
+            }
+        },
+        "order.UploadBet": {
+            "type": "object",
+            "required": [
+                "lotteryUuid",
+                "orderId",
+                "url"
+            ],
+            "properties": {
+                "lotteryUuid": {
+                    "description": "查询id",
+                    "type": "string"
+                },
+                "matchOdds": {
+                    "description": "如果OddChange 为true 才传该对象",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/order.MatchOdd"
+                    }
+                },
+                "oddChange": {
+                    "description": "赔率是否和购买赔率不一致， 不一致就",
+                    "type": "boolean"
+                },
+                "orderId": {
+                    "description": "订单id",
+                    "type": "string"
+                },
+                "url": {
+                    "description": "图片地址",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },

@@ -22,9 +22,10 @@ type HttpConfig struct {
 	TargetPort      int    `yaml:"TargetPort"`
 	TargetScheme    string `yaml:"TargetScheme"`
 	ImagePrefix     string `yaml:"ImagePrefix"`
-	DbAddress       string `yaml:"DbAddress"`
-	DbUser          string `yaml:"DbUser"`
-	DbSpecial       string `yaml:"DbSpecial"`
+	DbAddress       string `yaml:"DbAddress"`     //数据库
+	DbUser          string `yaml:"DbUser"`        //用户
+	DbSpecial       string `yaml:"DbSpecial"`     // 数据库密码
+	CreeperSwitch   bool   `yaml:"CreeperSwitch"` // 爬虫开关
 }
 
 type Config struct {
@@ -48,6 +49,9 @@ func Init() *Config {
 				TargetHost:      "127.0.0.1",
 				TargetPort:      8888,
 				TargetScheme:    "http",
+				DbAddress:       "127.0.0.1",
+				DbUser:          "root",
+				DbSpecial:       "123456",
 			},
 			LogConf: &alog.Config{
 				Path:        "/var/log/jingcai/jingcai.log",
@@ -73,6 +77,7 @@ func Init() *Config {
 				TargetHost:      "127.0.0.1",
 				TargetPort:      8080,
 				TargetScheme:    "http",
+				CreeperSwitch:   true,
 			},
 			LogConf: &alog.Config{
 				Path:        "/var/log/jingcai/jingcai.log",
