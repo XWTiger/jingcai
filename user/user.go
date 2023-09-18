@@ -112,12 +112,13 @@ func GetUserInfo(c *gin.Context) {
 		common.FailedReturn(c, "查询信息失败")
 	}
 	var userDTO = UserDTO{
-		Phone:  userPO.Phone,
-		Name:   userPO.Name,
-		Role:   userPO.Role,
-		Wechat: userPO.Wechat,
-		Ali:    userPO.Ali,
-		Score:  userPO.Score,
+		Phone:          userPO.Phone,
+		Name:           userPO.Name,
+		Role:           userPO.Role,
+		Wechat:         userPO.Wechat,
+		Ali:            userPO.Ali,
+		Score:          userPO.Score,
+		HeaderImageUrl: userPO.HeaderImageUrl,
 	}
 	common.SuccessReturn(c, userDTO)
 }
@@ -151,6 +152,7 @@ func UpdateUser(c *gin.Context) {
 		Wechat:         userDTO.Wechat,
 		Ali:            userDTO.Ali,
 		HeaderImageUrl: userDTO.HeaderImageUrl,
+		Secret:         realUsr.Secret,
 	}
 	if mysql.DB.Model(param).First(&realUsr).Error != nil {
 		common.FailedReturn(c, "查不到当前用户")
