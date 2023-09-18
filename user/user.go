@@ -142,11 +142,12 @@ func UpdateUser(c *gin.Context) {
 	var realUsr User
 	c.BindJSON(&userDTO)
 	var update = User{
-		Phone:  userDTO.Phone,
-		Name:   userDTO.Name,
-		Role:   userDTO.Role,
-		Wechat: userDTO.Wechat,
-		Ali:    userDTO.Ali,
+		Phone:          userDTO.Phone,
+		Name:           userDTO.Name,
+		Role:           userDTO.Role,
+		Wechat:         userDTO.Wechat,
+		Ali:            userDTO.Ali,
+		HeaderImageUrl: userDTO.HeaderImageUrl,
 	}
 	if mysql.DB.Model(param).First(&realUsr).Error != nil {
 		common.FailedReturn(c, "查不到当前用户")
