@@ -151,10 +151,12 @@ func UpdateUser(c *gin.Context) {
 	if mysql.DB.Model(param).First(&realUsr).Error != nil {
 		common.FailedReturn(c, "查不到当前用户")
 	}
-	if err := mysql.DB.Model(param).Updates(&update).Error; err != nil {
+	if err := mysql.DB.Model(param).Where(param).Updates(&update).Error; err != nil {
 		log.Error("update user failed, id: ", user.ID, " err: ", err)
 		common.FailedReturn(c, "更新用户失败")
 	}
+	common.SuccessReturn(c, update)
+	return
 }
 
 func CreateUser(user UserVO) error {

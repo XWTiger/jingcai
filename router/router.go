@@ -97,7 +97,7 @@ func BindRouters(g *gin.Engine) {
 
 	//文件上传下载
 	r.POST("/upload", files.Upload)
-	r.GET("/download", files.DownLoad)
+	r.GET("/download/:name", files.DownLoad)
 
 }
 

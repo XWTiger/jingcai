@@ -64,7 +64,8 @@ func Upload(c *gin.Context) {
 			path = PATH_LINUX
 		}
 		os.Mkdir(path, 0755)
-		savePath := fmt.Sprintf("%s%s_%s", path, uuid.NewV4().String(), file.Filename)
+		id := uuid.NewV4().String()
+		savePath := fmt.Sprintf("%s%s_%s", path, id, file.Filename)
 		if err := c.SaveUploadedFile(file, savePath); err != nil {
 			log.Error("upload err %s", err.Error())
 			common.FailedReturn(c, "上传图片失败")
@@ -72,7 +73,7 @@ func Upload(c *gin.Context) {
 		}
 		filestores = append(filestores, FileStore{
 			From:     typeFile,
-			FilePath: fmt.Sprintf("%s%s_%s", ImageUrl, uuid.NewV4().String(), file.Filename),
+			FilePath: fmt.Sprintf("%s%s_%s", ImageUrl, id, file.Filename),
 		})
 	}
 	log.Info("=== upload ok %d files ===", len(files))
@@ -92,9 +93,9 @@ func Upload(c *gin.Context) {
 // @Success 200 {object}  common.BaseResponse
 // @failure 500 {object} common.BaseResponse
 // @param file query string true "文件名称"
-// @Router /api/download [get]
+// @Router /api/download/:name [get]
 func DownLoad(c *gin.Context) {
-	file := c.Query("file")
+	file := c.Param("name")
 	if file == "" {
 		common.FailedReturn(c, "填正确的图片地址")
 	}
@@ -105,7 +106,7 @@ func DownLoad(c *gin.Context) {
 		path = PATH_LINUX
 	}
 
-	strFile := fmt.Sprintf("attachment; filename*=utf-8''%s", url.QueryEscape(file))
+	strFile := fmt.Sprintf("attachment; filename*=utf-8' '%s", url.QueryEscape(file))
 	c.Writer.Header().Add("Content-Type", "application/octet-stream;charset=utf-8")
 	c.Writer.Header().Add("Content-Disposition", strFile)
 	c.Header("Content-Transfer-Encoding", "binary")
