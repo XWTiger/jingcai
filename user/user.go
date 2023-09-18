@@ -142,6 +142,9 @@ func UpdateUser(c *gin.Context) {
 	var realUsr User
 	c.BindJSON(&userDTO)
 	var update = User{
+		Model: gorm.Model{
+			ID: user.ID,
+		},
 		Phone:          userDTO.Phone,
 		Name:           userDTO.Name,
 		Role:           userDTO.Role,
