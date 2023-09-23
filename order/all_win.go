@@ -197,6 +197,7 @@ func (a AllWin) GetVO() AllWinVO {
 		vo.FinishedTime = a.FinishedTime
 		vo.Status = a.Status
 		vo.LeastTimes = a.LeastTimes
+		vo.ShowType = a.ShowType
 		//计算合买带红人数
 		//1.查到这人所有中奖单
 		var allOfThePerson []AllWin
@@ -252,14 +253,34 @@ func GetAllWinUser(u user.User) AllWinUser {
 // @Produce json
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
+// @param lotteryType  query string false "足彩（FOOTBALL） 大乐透（SUPER_LOTTO）  排列三（P3） 篮球(BASKETBALL) 七星彩（SEVEN_STAR） 排列五（P5）"
 // @Router /api/order/all_win [get]
 func AllWinList(c *gin.Context) {
+	param := c.Query("lotteryType")
 	var all []AllWin
-	mysql.DB.Model(AllWin{}).Where(&AllWin{
-		Timeout:  false,
-		ParentId: 0,
-	}).Find(&all)
+	var list []Order
 	allVo := make([]AllWinVO, 0)
+	if len(param) > 0 {
+		mysql.DB.Model(Order{}).Where("lottery_type=? and all_win_id > 0", param).Find(&list)
+		if len(list) <= 0 {
+			common.SuccessReturn(c, allVo)
+			return
+		}
+		var allWinIds = make([]uint, 0)
+		for _, order := range list {
+			allWinIds = append(allWinIds, order.AllWinId)
+		}
+		mysql.DB.Model(AllWin{}).Where(&AllWin{
+			Timeout:  false,
+			ParentId: 0,
+		}).Where("id in (?)", allWinIds).Find(&all)
+	} else {
+		mysql.DB.Model(AllWin{}).Where(&AllWin{
+			Timeout:  false,
+			ParentId: 0,
+		}).Find(&all)
+	}
+
 	for _, win := range all {
 		allVo = append(allVo, win.GetVO())
 	}

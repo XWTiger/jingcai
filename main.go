@@ -42,7 +42,7 @@ func main() {
 	if conf.HttpConf.CreeperSwitch {
 		go admin.InitCronForCreep(ctx)
 	}
-	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM) //syscall.SIGHUP
 	for {
 		sig := <-sc
 		log.Info("收到信号：", sig.String())

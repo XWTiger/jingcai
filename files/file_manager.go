@@ -3,7 +3,9 @@ package files
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
+
+	"github.com/muesli/cache2go"
 	uuid "github.com/satori/go.uuid"
 	"jingcai/common"
 	"jingcai/config"
@@ -21,6 +23,7 @@ const PATH_LINUX = "/opt/jingcai/"
 const PATH_WINDOW = "D:\\opt\\jingcai\\"
 
 var ImageUrl string
+var userCache = cache2go.Cache("user")
 
 type FileStore struct {
 	gorm.Model
@@ -96,6 +99,7 @@ func Upload(c *gin.Context) {
 // @Router /api/download/:name [get]
 func DownLoad(c *gin.Context) {
 	file := c.Param("name")
+
 	if file == "" {
 		common.FailedReturn(c, "填正确的图片地址")
 	}
@@ -104,6 +108,35 @@ func DownLoad(c *gin.Context) {
 		path = PATH_WINDOW
 	} else {
 		path = PATH_LINUX
+	}
+
+	var fileStore FileStore
+	if err := mysql.DB.Model(FileStore{}).Where(FileStore{FilePath: fmt.Sprintf("%s%s", "/api/download/", file)}).First(&fileStore).Error; err != nil {
+		log.Error(err)
+		common.FailedReturn(c, "图片不存在")
+		return
+	}
+
+	if strings.Compare(fileStore.From, "BBS") == 0 {
+		//论坛得图片不作限制
+	} else {
+		var token string
+		token = c.Query("token") // 访问令牌
+		if token == "" {
+			token = c.GetHeader("token")
+			if token == "" {
+				fmt.Println("== get token failed ===")
+				common.FailedAuthReturn(c, "访问未授权")
+				c.Abort()
+				return
+			}
+		}
+		_, err := userCache.Value(token)
+		if err != nil {
+			c.Abort()
+			common.FailedAuthReturn(c, "token已过期")
+			return
+		}
 	}
 
 	strFile := fmt.Sprintf("attachment; filename*=utf-8' '%s", url.QueryEscape(file))

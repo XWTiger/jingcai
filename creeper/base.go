@@ -1,7 +1,7 @@
 package creeper
 
 import (
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 type Content struct {

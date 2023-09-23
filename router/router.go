@@ -58,6 +58,7 @@ func BindRouters(g *gin.Engine) {
 		userGroup.POST("/logout", user.Logout)
 	}
 
+	r.GET("/download/:name", files.DownLoad)
 	r.Use(user.Authorize())
 	bbsGroup := r.Group("/bbs")
 	r.POST("/user/complain", user.UserComplain)
@@ -97,7 +98,6 @@ func BindRouters(g *gin.Engine) {
 
 	//文件上传下载
 	r.POST("/upload", files.Upload)
-	r.GET("/download/:name", files.DownLoad)
 
 }
 
