@@ -15,6 +15,8 @@ import (
 	alog "jingcai/log"
 	"jingcai/mysql"
 	"jingcai/order"
+	"jingcai/shop"
+	"jingcai/user"
 	"os"
 	"os/signal"
 	"syscall"
@@ -59,6 +61,7 @@ func initTables() {
 	mysql.DB.AutoMigrate(&order.AllWin{})
 	mysql.DB.AutoMigrate(&order.Order{})
 	mysql.DB.AutoMigrate(&order.Match{})
+	mysql.DB.AutoMigrate(&user.Bill{})
 	mysql.DB.AutoMigrate(&order.LotteryDetail{})
 	mysql.DB.AutoMigrate(&order.Bet{})
 	mysql.DB.AutoMigrate(&order.FootView{})
@@ -67,4 +70,5 @@ func initTables() {
 	mysql.DB.AutoMigrate(&bbs.Comment{})
 	mysql.DB.AutoMigrate(&bbs.Response{})
 	mysql.DB.AutoMigrate(&creeper.Content{})
+	mysql.DB.AutoMigrate(&shop.Shop{})
 }

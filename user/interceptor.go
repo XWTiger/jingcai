@@ -31,8 +31,8 @@ func Authorize() gin.HandlerFunc {
 		}
 		res, err := userCahe.Value(token)
 		if err != nil {
-			c.Abort()
 			common.FailedAuthReturn(c, "token已过期")
+			c.Abort()
 			return
 		} else {
 			// 验证通过，会继续访问下一个中间件
@@ -46,4 +46,20 @@ func Authorize() gin.HandlerFunc {
 			c.Next()
 		}
 	}
+}
+
+func AdminCheck() gin.HandlerFunc {
+	return func(context *gin.Context) {
+		user, _ := context.Get("userInfo")
+		var usr = user.(User)
+		if strings.Compare(usr.Role, ROLE_ADMIN) == 0 {
+			context.Next()
+			return
+		} else {
+			common.FailedAuthReturn(context, "用户没有管理权限")
+			context.Abort()
+			return
+		}
+	}
+
 }

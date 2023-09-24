@@ -16,8 +16,10 @@ import (
 	"jingcai/common"
 	ilog "jingcai/log"
 	"jingcai/mysql"
+	"jingcai/shop"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -28,6 +30,12 @@ const TOKEN_TIME_OUT = 4 * time.Hour
 const ADMIN = "Admin"
 const USER = "User"
 const LOCK_TIMES = 5
+const (
+	SCORE    = "SCORE"
+	RMB      = "RMB"
+	ADD      = "ADD" //增加
+	SUBTRACT = "SUBTRACT"
+)
 
 type User struct {
 	gorm.Model
@@ -47,6 +55,9 @@ type User struct {
 	Score float32
 	//头像地址
 	HeaderImageUrl string
+
+	//来自推荐的码/店铺（管理员的用户id）
+	From uint
 }
 
 // 用户对象
@@ -305,6 +316,40 @@ func Login(c *gin.Context) {
 	}
 }
 
+// @Summary 管理员基础统计
+// @Description 管理员基础统计
+// @Accept json
+// @Produce json
+// @Success 200 {object} common.BaseResponse
+// @failure 500 {object} common.BaseResponse
+// @param param body UserVO true "用户对象"
+// @Router /api/super/statistics [get]
+func StatisticsCount(c *gin.Context) {
+	var user = FetUserInfo(c)
+	var shopInfo shop.Shop
+	if err := mysql.DB.Model(shop.Shop{}).Where(&shop.Shop{UserId: user.ID}).First(&shopInfo).Error; err != nil {
+		log.Error("该用户没有店铺 user id： ", user.ID)
+		common.FailedReturn(c, "您还没有注册店铺")
+		return
+	}
+	var bills []Bill
+	year, month, day := time.Now().Date()
+	var dateStart = fmt.Sprintf("%d-%d-%d 00:00:00", year, int(month), day)
+	var dateEnd = fmt.Sprintf("%d-%d-%d 23:59:59", year, int(month), day)
+	mysql.DB.Model(Bill{}).Where(Bill{ShopId: shopInfo.ID}).Where("created_at BETWEEN ? AND ? ", dateStart, dateEnd).Find(&bills)
+	var count float32 = 0
+	for _, bill := range bills {
+		count = count + bill.Num
+	}
+	var statics = Statistics{
+		OnlineNum: userCahe.Count(),
+		TodayBill: count,
+		shop:      shopInfo,
+	}
+	common.SuccessReturn(c, statics)
+
+}
+
 func checkLock(account string) bool {
 	var count int = 0
 	if userCahe.Exists(account) {
@@ -319,6 +364,16 @@ func checkLock(account string) bool {
 		userCahe.Add(account, 30*time.Minute, count)
 	}
 	return false
+}
+
+type Statistics struct {
+	//在线人数
+	OnlineNum int
+
+	//今日流水
+	TodayBill float32
+
+	shop shop.Shop
 }
 
 // 投诉对象
@@ -470,4 +525,113 @@ func ReturnScore(userId uint, score float32) error {
 
 	tx.Commit()
 	return nil
+}
+
+type Bill struct {
+	gorm.Model
+
+	//SCORE、RMB
+	Type string
+	//订单id
+	OrderId string
+
+	//数量
+	Num float32
+
+	//用户id
+	UserId uint
+
+	//ADD SUBTRACT
+	Option string
+
+	ShopId uint
+}
+
+func BillForScore(OrderId string, userId uint, score float32) error {
+	var lock sync.Mutex
+	//扣积分逻辑
+	lock.Lock()
+	tx := mysql.DB.Begin()
+	var bill = Bill{
+		Num:     score,
+		UserId:  userId,
+		OrderId: OrderId,
+		Type:    SCORE,
+		Option:  SUBTRACT,
+	}
+	var user User
+	tx.Model(User{}).Where(&User{Model: gorm.Model{
+		ID: userId,
+	}}).First(&user)
+	if user.Score < score {
+
+		tx.Rollback()
+		lock.Unlock()
+		return errors.New("余额不足")
+	}
+	if err := tx.Model(User{}).Where(&User{Model: gorm.Model{
+		ID: userId,
+	}}).Update("score", user.Score-score).Error; err != nil {
+		tx.Rollback()
+		lock.Unlock()
+		return errors.New("更新订单失败！")
+	}
+
+	if billerr := tx.Model(Bill{}).Save(bill).Error; billerr != nil {
+		tx.Rollback()
+		lock.Unlock()
+		return errors.New("创建账单失败")
+	}
+	tx.Commit()
+	lock.Unlock()
+	return nil
+}
+
+type Score struct {
+	//分数
+	Num float32
+
+	//用户id
+	UserId uint
+}
+
+// @Summary 积分充值
+// @Description 积分充值
+// @Accept json
+// @Produce json
+// @Success 200 {object} common.BaseResponse
+// @failure 500 {object} common.BaseResponse
+// @param param body Score true "投诉对象"
+// @Router /api/super/add-score [post]
+func AddScore(c *gin.Context) {
+	var score Score
+	err := c.BindJSON(&score)
+	if err != nil {
+		common.FailedReturn(c, "参数获取失败")
+		return
+	}
+	var lock sync.Mutex
+	if score.Num <= 0 {
+		common.FailedReturn(c, "积分需要大于0")
+		return
+	}
+
+	lock.Lock()
+	tx := mysql.DB.Begin()
+	var user User
+	tx.Model(User{}).Where(&User{Model: gorm.Model{
+		ID: score.UserId,
+	}}).First(&user)
+
+	if err := tx.Model(User{}).Where(&User{Model: gorm.Model{
+		ID: score.UserId,
+	}}).Update("score", user.Score+score.Num).Error; err != nil {
+		tx.Rollback()
+		lock.Unlock()
+		common.FailedReturn(c, "更新订单失败")
+		return
+	}
+	tx.Commit()
+	lock.Unlock()
+	common.FailedReturn(c, "上分成功")
 }

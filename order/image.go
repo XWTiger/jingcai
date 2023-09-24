@@ -68,7 +68,7 @@ type MatchOdd struct {
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
 // @param bets  body UploadBet true "管理员提交票对象"
-// @Router /api/admin/bets [post]
+// @Router /api/super/bets [post]
 func UploadBets(c *gin.Context) {
 	var userInfo = user.FetUserInfo(c)
 	if strings.Compare(userInfo.Role, user.ADMIN) != 0 {
@@ -160,19 +160,19 @@ func UploadBets(c *gin.Context) {
 // @param lotteryType  query string false "足彩（FOOTBALL） 大乐透（SUPER_LOTTO）  排列三（P3） 篮球(BASKETBALL) 七星彩（SEVEN_STAR） 排列五（P5）"
 // @param pageNo  query int true "页码"
 // @param pageSize  query int true "每页大小"
-// @Router /api/admin/order [get]
+// @Router /api/super/order [get]
 func AdminOrderList(c *gin.Context) {
-	//var userInfo = user.FetUserInfo(c)
+	var userInfo = user.FetUserInfo(c)
 	saveType := c.Query("saveType")
 	lotteryType := c.Query("lotteryType")
 	page, _ := strconv.Atoi(c.Query("pageNo"))
 	pageSize, _ := strconv.Atoi(c.Query("pageSize"))
 
 	// TODO
-	/*if strings.Compare(userInfo.Role, user.ADMIN) != 0 {
+	if strings.Compare(userInfo.Role, user.ADMIN) != 0 {
 		common.FailedReturn(c, "该接口只提供给管理员")
 		return
-	}*/
+	}
 	var param = Order{
 		SaveType:    saveType,
 		LotteryType: lotteryType,

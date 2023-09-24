@@ -28,7 +28,7 @@ var userCache = cache2go.Cache("user")
 type FileStore struct {
 	gorm.Model
 	FilePath string
-	From     string //BBS,USER,HEADER
+	From     string //BBS,USER,HEADER,Certificate
 }
 
 func Init(c *config.Config) {

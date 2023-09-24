@@ -43,8 +43,9 @@ const (
 	PL_C3       = "C3"
 	PL_C6       = "C6"
 	TOMASTER    = "TOMASTER"
-
-	TEMP = "TEMP"
+	SCORE       = "SCORE"
+	RMB         = "RMB"
+	TEMP        = "TEMP"
 )
 
 type Match struct {
@@ -289,21 +290,23 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 		common.FailedReturn(c, "订单类型不能为空")
 		return
 	}
+	if order.ShouldPay <= 0 {
+		common.FailedReturn(c, "付款小于0")
+		return
+	}
 	order.Bonus = 0
 	order.UUID = uuid.NewV4().String()
 	order.BetUpload = false
-	//var user = user.FetUserInfo(c)
-	//order.UserID = user.ID
+	var userInfo = user.FetUserInfo(c)
+	order.UserID = userInfo.ID
 	//校验字段
 	validatior.Validator(c, order)
 	switch order.LotteryType {
 
 	case FOOTBALL:
 		football(c, &order)
-		return
 	case BASKETBALL:
 		basketball(c, &order)
-		return
 	case P3:
 		err := CreatePLW(&order)
 		if err != nil {
@@ -318,7 +321,6 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 		fmt.Println("实际付款: ", order.ShouldPay)
 		fmt.Println("=========================================")
 		common.SuccessReturn(c, order.UUID)
-		return
 	case P5:
 		err := CreatePLW(&order)
 		if err != nil {
@@ -334,7 +336,6 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 		fmt.Println("实际付款: ", order.ShouldPay)
 		fmt.Println("=========================================")
 		common.SuccessReturn(c, order.UUID)
-		return
 	case SUPER_LOTTO:
 		//大乐透
 		err := checkSuperLotto(&order)
@@ -366,7 +367,6 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 		fmt.Println("实际付款: ", order.ShouldPay)
 		fmt.Println("=========================================")
 		common.SuccessReturn(c, order.UUID)
-		return
 	case SEVEN_STAR:
 		checkSevenStar(&order)
 		if order.AllWinId == 0 {
@@ -392,12 +392,18 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 		fmt.Println("实际付款: ", order.ShouldPay)
 		fmt.Println("=========================================")
 		common.SuccessReturn(c, order.UUID)
-		return
 	default:
 		common.FailedReturn(c, "购买类型不正确")
 		return
 	}
 	//TODO 扣款逻辑/扣积分逻辑
+	//积分逻辑
+	err := user.BillForScore(order.UUID, userInfo.ID, order.ShouldPay)
+	if err != nil {
+		log.Error(err)
+		common.FailedReturn(c, err.Error())
+		return
+	}
 }
 
 func checkSuperLotto(ord *Order) error {

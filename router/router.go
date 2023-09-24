@@ -66,10 +66,15 @@ func BindRouters(g *gin.Engine) {
 	r.POST("/user/info", user.UpdateUser)
 	s := r.Group("/super")
 	{
+		s.Use(user.AdminCheck())
 		s.GET("/creep", admin.CreepHandler)
 		s.GET("/complains", admin.ListComplain)
 		s.POST("/notify", advise.Create)
 		s.POST("/check/lottery_check", order.AddCheckForManual)
+		s.POST("/add-score", user.AddScore)
+		s.GET("/order", order.AdminOrderList)
+		s.POST("/bets", order.UploadBets)
+		s.GET("/statistics", user.StatisticsCount)
 	}
 	{
 		bbsGroup.GET("/list", bbs.ListHandler)
@@ -89,12 +94,11 @@ func BindRouters(g *gin.Engine) {
 		orderGroup.POST("/all_win", order.AllWinCreateHandler)
 		orderGroup.POST("/follow", order.FollowOrder)
 	}
-	adminGroup := r.Group("/admin")
+	/*adminGroup := r.Group("/admin")
 	{
-		adminGroup.GET("/order", order.AdminOrderList)
-		adminGroup.POST("/bets", order.UploadBets)
 
-	}
+
+	}*/
 
 	//文件上传下载
 	r.POST("/upload", files.Upload)
