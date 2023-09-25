@@ -71,4 +71,5 @@ func initTables() {
 	mysql.DB.AutoMigrate(&bbs.Response{})
 	mysql.DB.AutoMigrate(&creeper.Content{})
 	mysql.DB.AutoMigrate(&shop.Shop{})
+	mysql.DB.AutoMigrate(&user.User{})
 }

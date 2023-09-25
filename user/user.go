@@ -16,8 +16,8 @@ import (
 	"jingcai/common"
 	ilog "jingcai/log"
 	"jingcai/mysql"
-	"jingcai/shop"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -69,6 +69,8 @@ type UserVO struct {
 	Secret string `minLength:"6" maxLength:"16"`
 	//头像
 	Avatar string
+
+	From uint
 }
 
 // token 对象
@@ -235,7 +237,20 @@ func UserCreateHandler(c *gin.Context) {
 		common.FailedReturn(c, "手机号已经存在")
 		return
 	}
-
+	var intId int
+	id := c.Query("sharedId")
+	if strings.Compare(id, "") == 0 {
+		intId = 1
+	} else {
+		ind, err := strconv.Atoi(id)
+		if err != nil {
+			log.Error(err)
+			intId = 1
+		} else {
+			intId = ind
+		}
+	}
+	user.From = uint(intId)
 	if CreateUser(user) != nil {
 		c.JSON(http.StatusInternalServerError, &common.BaseResponse{
 			Code:    0,
@@ -316,40 +331,6 @@ func Login(c *gin.Context) {
 	}
 }
 
-// @Summary 管理员基础统计
-// @Description 管理员基础统计
-// @Accept json
-// @Produce json
-// @Success 200 {object} common.BaseResponse
-// @failure 500 {object} common.BaseResponse
-// @param param body UserVO true "用户对象"
-// @Router /api/super/statistics [get]
-func StatisticsCount(c *gin.Context) {
-	var user = FetUserInfo(c)
-	var shopInfo shop.Shop
-	if err := mysql.DB.Model(shop.Shop{}).Where(&shop.Shop{UserId: user.ID}).First(&shopInfo).Error; err != nil {
-		log.Error("该用户没有店铺 user id： ", user.ID)
-		common.FailedReturn(c, "您还没有注册店铺")
-		return
-	}
-	var bills []Bill
-	year, month, day := time.Now().Date()
-	var dateStart = fmt.Sprintf("%d-%d-%d 00:00:00", year, int(month), day)
-	var dateEnd = fmt.Sprintf("%d-%d-%d 23:59:59", year, int(month), day)
-	mysql.DB.Model(Bill{}).Where(Bill{ShopId: shopInfo.ID}).Where("created_at BETWEEN ? AND ? ", dateStart, dateEnd).Find(&bills)
-	var count float32 = 0
-	for _, bill := range bills {
-		count = count + bill.Num
-	}
-	var statics = Statistics{
-		OnlineNum: userCahe.Count(),
-		TodayBill: count,
-		shop:      shopInfo,
-	}
-	common.SuccessReturn(c, statics)
-
-}
-
 func checkLock(account string) bool {
 	var count int = 0
 	if userCahe.Exists(account) {
@@ -364,16 +345,6 @@ func checkLock(account string) bool {
 		userCahe.Add(account, 30*time.Minute, count)
 	}
 	return false
-}
-
-type Statistics struct {
-	//在线人数
-	OnlineNum int
-
-	//今日流水
-	TodayBill float32
-
-	shop shop.Shop
 }
 
 // 投诉对象

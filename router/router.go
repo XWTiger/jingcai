@@ -15,6 +15,7 @@ import (
 	"jingcai/lottery"
 	"jingcai/mysql"
 	"jingcai/order"
+	"jingcai/shop"
 	"jingcai/user"
 	"net/http"
 	"strconv"
@@ -59,8 +60,9 @@ func BindRouters(g *gin.Engine) {
 	}
 
 	r.GET("/download/:name", files.DownLoad)
-	r.Use(user.Authorize())
 	bbsGroup := r.Group("/bbs")
+	bbsGroup.GET("/list", bbs.ListHandler)
+	r.Use(user.Authorize())
 	r.POST("/user/complain", user.UserComplain)
 	r.GET("/user/info", user.GetUserInfo)
 	r.POST("/user/info", user.UpdateUser)
@@ -74,10 +76,15 @@ func BindRouters(g *gin.Engine) {
 		s.POST("/add-score", user.AddScore)
 		s.GET("/order", order.AdminOrderList)
 		s.POST("/bets", order.UploadBets)
-		s.GET("/statistics", user.StatisticsCount)
+		s.GET("/statistics", shop.StatisticsCount)
 	}
+	shopGroup := s.Group("/shop")
 	{
-		bbsGroup.GET("/list", bbs.ListHandler)
+		//店铺注册
+		shopGroup.POST("", shop.ShopRegistry)
+	}
+
+	{
 		bbsGroup.POST("/commit", bbs.CommitHandler)
 		bbsGroup.POST("/response", bbs.ResponseHandler)
 		bbsGroup.POST("/comment", bbs.CommentHandler)
