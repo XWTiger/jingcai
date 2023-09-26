@@ -10,6 +10,7 @@ import (
 	"jingcai/user"
 	"jingcai/util"
 	"jingcai/validatior"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -254,15 +255,27 @@ func GetAllWinUser(u user.User) AllWinUser {
 // @Produce json
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
+// @param pageNo query int   true  "页码"
+// @param pageSize query int  true  "每页条数"
 // @param lotteryType  query string false "足彩（FOOTBALL） 大乐透（SUPER_LOTTO）  排列三（P3） 篮球(BASKETBALL) 七星彩（SEVEN_STAR） 排列五（P5）"
 // @Router /api/order/all_win [get]
 func AllWinList(c *gin.Context) {
 	param := c.Query("lotteryType")
+	pageNo := c.Query("pageNo")
+	pageSize := c.Query("pageSize")
+
 	var all []AllWin
 	var list []Order
 	allVo := make([]AllWinVO, 0)
 	if len(param) > 0 {
-		mysql.DB.Model(Order{}).Where("lottery_type=? and all_win_id > 0", param).Find(&list)
+		if pageNo == "" || pageSize == "" {
+			mysql.DB.Model(Order{}).Where("lottery_type=? and all_win_id > 0", param).Find(&list)
+		} else {
+			pageN, _ := strconv.Atoi(pageNo)
+			pageS, _ := strconv.Atoi(pageSize)
+			mysql.DB.Model(Order{}).Where("lottery_type=? and all_win_id > 0", param).Offset((pageN - 1) * pageS).Limit(pageS).Find(&list)
+		}
+
 		if len(list) <= 0 {
 			common.SuccessReturn(c, allVo)
 			return
@@ -311,7 +324,7 @@ func AllWinCreateHandler(c *gin.Context) {
 		//合买
 		var order Order
 
-		if err := tx.Model(Order{UUID: body.OrderId}).First(&order).Error; err != nil {
+		if err := tx.Model(Order{UUID: body.OrderId}).Where(&Order{UUID: body.OrderId}).First(&order).Error; err != nil {
 			log.Error("查询发起人订单失败", body.OrderId)
 			common.FailedReturn(c, "查询发起人订单失败")
 			return
@@ -347,14 +360,16 @@ func AllWinCreateHandler(c *gin.Context) {
 				return
 			}
 			var shouldPay = float32(order.ShouldPay/float32(body.Number)) * float32(initAllWin.LeastTimes)
-			leastErr := user.CheckScoreOrDoBill(initAllWin.UserId, shouldPay, false)
+			leastErr := user.CheckScoreOrDoBill(initAllWin.UserId, shouldPay, false, tx)
 			if leastErr != nil {
 				common.FailedReturn(c, "积分不够付款保底份数")
+				tx.Rollback()
 				return
 			}
-			payErr := user.CheckScoreOrDoBill(initAllWin.UserId, initAllWin.ShouldPay, true)
+			payErr := user.CheckScoreOrDoBill(initAllWin.UserId, initAllWin.ShouldPay, true, tx)
 			if payErr != nil {
 				log.Error("all win id: ", initAllWin.ID, "扣款失败")
+				tx.Rollback()
 				common.FailedReturn(c, payErr.Error())
 				return
 			}
@@ -413,9 +428,10 @@ func AllWinCreateHandler(c *gin.Context) {
 				PayWay:           body.PayWay,
 				AllMatchFinished: order.AllMatchFinished,
 			}
-			payErr := user.CheckScoreOrDoBill(userInfo.ID, userOrder.ShouldPay, true)
+			payErr := user.CheckScoreOrDoBill(userInfo.ID, userOrder.ShouldPay, true, tx)
 			if payErr != nil {
 				log.Error("user id: ", userInfo.ID, "扣款失败")
+				tx.Rollback()
 				common.FailedReturn(c, payErr.Error())
 				return
 			}

@@ -77,11 +77,14 @@ func BindRouters(g *gin.Engine) {
 		s.GET("/order", order.AdminOrderList)
 		s.POST("/bets", order.UploadBets)
 		s.GET("/statistics", shop.StatisticsCount)
+		s.POST("/substract-score", user.BillClear)
+		s.GET("/bills", shop.ShopBills)
 	}
 	shopGroup := s.Group("/shop")
 	{
 		//店铺注册
 		shopGroup.POST("", shop.ShopRegistry)
+		shopGroup.GET("/users", shop.QueryShopUser)
 	}
 
 	{

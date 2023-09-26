@@ -162,7 +162,7 @@ func basketball(c *gin.Context, order *Order) {
 	order.CreatedAt = time.Now()
 	fmt.Println("实际付款：", order.ShouldPay)
 	if order.AllWinId == 0 {
-		billErr := user.CheckScoreOrDoBill(order.UserID, order.ShouldPay, true)
+		billErr := user.CheckScoreOrDoBill(order.UserID, order.ShouldPay, true, tx)
 		if billErr != nil {
 			log.Error("扣款失败， 无法提交订单")
 			common.FailedReturn(c, billErr.Error())

@@ -463,11 +463,10 @@ func UserComplain(c *gin.Context) {
 	common.SuccessReturn(c, "提交成功")
 }
 
-func CheckScoreOrDoBill(userId uint, score float32, doBill bool) error {
+func CheckScoreOrDoBill(userId uint, score float32, doBill bool, tx *gorm.DB) error {
 	var user User
 	var lock sync.Mutex
 	lock.Lock()
-	tx := mysql.DB.Begin()
 	if err := tx.Model(User{}).Where(&User{Model: gorm.Model{ID: userId}}).First(&user).Error; err != nil {
 		lock.Unlock()
 		return errors.New("用户查询失败")
@@ -481,7 +480,6 @@ func CheckScoreOrDoBill(userId uint, score float32, doBill bool) error {
 		tx.Model(&user).Update("score", user.Score)
 
 	}
-	tx.Commit()
 	lock.Unlock()
 	return nil
 }
@@ -507,7 +505,7 @@ type Bill struct {
 
 	//SCORE、RMB
 	Type string
-	//订单id
+	//订单id id如果是空说明是后台加账
 	OrderId string
 
 	//数量
@@ -536,6 +534,7 @@ func BillForScore(OrderId string, userId uint, score float32, option string) err
 	tx.Model(User{}).Where(&User{Model: gorm.Model{
 		ID: userId,
 	}}).First(&user)
+	bill.ShopId = user.From
 	/*if user.Score < score {
 
 		tx.Rollback()
@@ -572,7 +571,7 @@ type Score struct {
 // @Produce json
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
-// @param param body Score true "投诉对象"
+// @param param body Score true "积分对象"
 // @Router /api/super/add-score [post]
 func AddScore(c *gin.Context) {
 	var score Score
@@ -602,11 +601,88 @@ func AddScore(c *gin.Context) {
 		common.FailedReturn(c, "更新订单失败")
 		return
 	}
+	var bill = Bill{
+		Num:    score.Num,
+		UserId: score.UserId,
+		Type:   SCORE,
+		Option: ADD,
+	}
+	bill.ShopId = user.From
+	if billerr := tx.Model(Bill{}).Save(&bill).Error; billerr != nil {
+		common.FailedReturn(c, "创建账单失败")
+		tx.Rollback()
+		lock.Unlock()
+		return
+
+	}
 	tx.Commit()
 	lock.Unlock()
 	common.FailedReturn(c, "上分成功")
 }
 
+// @Summary 清账接口
+// @Description 清账接口
+// @Accept json
+// @Produce json
+// @Success 200 {object} common.BaseResponse
+// @failure 500 {object} common.BaseResponse
+// @param param body Score true "积分对象"
+// @Router /api/super/substract-score [post]
 func BillClear(c *gin.Context) {
+	var score Score
+	var lock sync.Mutex
+	err := c.BindJSON(&score)
+	if err != nil {
+		common.FailedReturn(c, "参数获取失败")
+		return
+	}
+
+	tx := mysql.DB.Begin()
+
+	var user User
+	if err := tx.Model(User{}).Where(&User{Model: gorm.Model{
+		ID: score.UserId,
+	}}).First(&user).Error; err != nil {
+		common.FailedReturn(c, "用户不存在")
+		lock.Unlock()
+		return
+	}
+	lock.Lock()
+
+	if user.Score < score.Num {
+		tx.Rollback()
+		common.FailedReturn(c, "分数不足，请确定清账数额")
+		lock.Unlock()
+		return
+	}
+
+	var bill = Bill{
+		Num:    score.Num,
+		UserId: score.UserId,
+		Type:   SCORE,
+		Option: SUBTRACT,
+	}
+
+	bill.ShopId = user.From
+	if billerr := tx.Model(Bill{}).Save(&bill).Error; billerr != nil {
+		common.FailedReturn(c, "创建账单失败")
+		tx.Rollback()
+		lock.Unlock()
+		return
+
+	}
+
+	if err := tx.Model(User{}).Where(&User{Model: gorm.Model{
+		ID: score.UserId,
+	}}).Update("score", user.Score-score.Num).Error; err != nil {
+		tx.Rollback()
+		common.FailedReturn(c, "更新积分失败")
+		lock.Unlock()
+		return
+	}
+
+	lock.Unlock()
+	tx.Commit()
+	common.SuccessReturn(c, "清账成功！")
 
 }

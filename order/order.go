@@ -338,6 +338,7 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 		common.SuccessReturn(c, order.UUID)
 	case SUPER_LOTTO:
 		//大乐透
+		tx := mysql.DB.Begin()
 		err := checkSuperLotto(&order)
 		if err != nil {
 			log.Error(err)
@@ -345,18 +346,19 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 		}
 
 		if order.AllWinId == 0 {
-			billErr := user.CheckScoreOrDoBill(order.UserID, order.ShouldPay, true)
+			billErr := user.CheckScoreOrDoBill(order.UserID, order.ShouldPay, true, tx)
 			if billErr != nil {
 				log.Error("扣款失败， 无法提交订单")
 				common.FailedReturn(c, billErr.Error())
+				tx.Rollback()
 				return
 			}
 			order.PayStatus = true
 		}
-		if err := mysql.DB.Model(&Order{}).Create(&order).Error; err != nil {
+		if err := tx.Model(&Order{}).Create(&order).Error; err != nil {
 			log.Error("创建订单失败 ", err)
 			common.FailedReturn(c, "创建订单失败， 请联系店主")
-
+			tx.Rollback()
 			return
 		}
 		fmt.Println("=================大乐透===================", order.UUID)
@@ -367,21 +369,24 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 		fmt.Println("实际付款: ", order.ShouldPay)
 		fmt.Println("=========================================")
 		common.SuccessReturn(c, order.UUID)
+		tx.Commit()
 	case SEVEN_STAR:
 		checkSevenStar(&order)
+		tx := mysql.DB.Begin()
 		if order.AllWinId == 0 {
-			billErr := user.CheckScoreOrDoBill(order.UserID, order.ShouldPay, true)
+			billErr := user.CheckScoreOrDoBill(order.UserID, order.ShouldPay, true, tx)
 			if billErr != nil {
 				log.Error("扣款失败， 无法提交订单")
 				common.FailedReturn(c, billErr.Error())
+				tx.Rollback()
 				return
 			}
 			order.PayStatus = true
 		}
-		if err := mysql.DB.Model(&Order{}).Create(&order).Error; err != nil {
+		if err := tx.Model(&Order{}).Create(&order).Error; err != nil {
 			log.Error("创建订单失败 ", err)
 			common.FailedReturn(c, "创建订单失败， 请联系店主")
-
+			tx.Rollback()
 			return
 		}
 		fmt.Println("=================七星彩===================", order.UUID)
@@ -392,6 +397,7 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 		fmt.Println("实际付款: ", order.ShouldPay)
 		fmt.Println("=========================================")
 		common.SuccessReturn(c, order.UUID)
+		tx.Commit()
 	default:
 		common.FailedReturn(c, "购买类型不正确")
 		return
@@ -670,7 +676,7 @@ func football(c *gin.Context, order *Order) {
 	order.CreatedAt = time.Now()
 	fmt.Println("实际付款：", order.ShouldPay)
 	if order.AllWinId == 0 {
-		billErr := user.CheckScoreOrDoBill(order.UserID, order.ShouldPay, true)
+		billErr := user.CheckScoreOrDoBill(order.UserID, order.ShouldPay, true, tx)
 		if err != nil {
 			log.Error("扣款失败， 无法提交订单")
 			common.FailedReturn(c, billErr.Error())
@@ -2230,6 +2236,7 @@ func CreatePLW(ord *Order) error {
 		tp = 5
 	}
 
+	tx := mysql.DB.Begin()
 	if strings.Contains(ord.Content, ",") {
 		arr := strings.Split(ord.Content, ",")
 		ord.ShouldPay = float32(len(arr) * 2 * ord.Times)
@@ -2266,21 +2273,24 @@ func CreatePLW(ord *Order) error {
 		return errors.New("参数异常")
 	}
 	if ord.AllWinId == 0 {
-		billErr := user.CheckScoreOrDoBill(ord.UserID, ord.ShouldPay, true)
+		billErr := user.CheckScoreOrDoBill(ord.UserID, ord.ShouldPay, true, tx)
 		if billErr != nil {
 			log.Error("扣款失败， 无法提交订单")
+			tx.Rollback()
 			return billErr
 		}
 		ord.PayStatus = true
 	}
-	if err := mysql.DB.Create(ord).Error; err != nil {
+	if err := tx.Create(ord).Error; err != nil {
 		log.Error(err)
+		tx.Rollback()
 		return errors.New("保存订单失败")
 	}
 	if !lottery.LotteryStatistics.Exists("plw_check") {
 		lottery.LotteryStatistics.Add("plw_check", 8*time.Hour, 1)
 		AddPlwCheck(tp)
 	}
+	tx.Commit()
 	return nil
 }
 

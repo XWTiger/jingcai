@@ -103,8 +103,10 @@ func ShopRegistry(c *gin.Context) {
 		common.FailedReturn(c, "加密失败，请联系管理员！")
 	}
 	userPo.Secret = pwd
-	tx.Create(&userPo)
 	tx.Create(&shopvo)
+	userPo.From = shopvo.ID
+	tx.Create(&userPo)
+
 	tx.Commit()
 }
 
@@ -174,5 +176,51 @@ func StatisticsCount(c *gin.Context) {
 		shop:      shopInfo,
 	}
 	common.SuccessReturn(c, statics)
+
+}
+
+// @Summary 查询店内用户信息
+// @Description 查询店内用户信息
+// @Accept json
+// @Produce json
+// @Success 200 {object} common.BaseResponse
+// @failure 500 {object} common.BaseResponse
+// @param pageNo query int   true  "页码"
+// @param pageSize query int  true  "每页条数"
+// @param userId query int   true  "用户id"
+// @Router /api/shop/users [get]
+func QueryShopUser(c *gin.Context) {
+	param := c.Query("userId")
+	pageNo := c.Query("pageNo")
+	pageSize := c.Query("pageSize")
+	var userInfo = user.FetUserInfo(c)
+	var shopInfo Shop
+	if err := mysql.DB.Model(Shop{}).Where(&Shop{UserId: userInfo.ID}).First(&shopInfo).Error; err != nil {
+		log.Error("该用户没有店铺 user id： ", userInfo.ID)
+		common.FailedReturn(c, "您还没有注册店铺")
+		return
+	}
+
+	if param != "" {
+		userId, err := strconv.Atoi(param)
+		if err != nil {
+			log.Error(err)
+			common.FailedReturn(c, "用户id 不正确")
+			return
+		}
+		var userInfo user.User
+		mysql.DB.Model(user.User{}).Where(&user.User{Model: gorm.Model{
+			ID: uint(userId),
+		}}).First(&userInfo)
+		common.SuccessReturn(c, userInfo)
+		return
+	} else if pageNo != "" && pageSize != "" {
+		pageN, _ := strconv.Atoi(pageNo)
+		pageS, _ := strconv.Atoi(pageSize)
+		var userInfos []user.User
+		mysql.DB.Model(user.User{}).Where(&user.User{From: shopInfo.ID}).Offset((pageN - 1) * pageS).Limit(pageS).Find(&userInfos)
+		common.SuccessReturn(c, userInfos)
+		return
+	}
 
 }

@@ -27,11 +27,12 @@ func Validator(c *gin.Context, dest any) {
 		fmt.Println(s.Field(i).Tag)
 		tag := s.Field(i).Tag
 		t := s.Field(i).Type
-		fmt.Println("name: ", t.Name(), "kind: ", t.Kind(), "str: ", t.String(), " value: ", v.Field(i).String())
+		fmt.Println("name: ", t.Name(), "kind: ", t.Kind(), "str: ", t.String())
 		//必填校验
 		if tag.Get(MUST) != "" {
 			switch t.Kind() {
 			case reflect.Int:
+				fmt.Println(" value: ", v.Field(i).Int())
 				if v.Field(i).Int() <= 0 {
 					common.FailedReturn(c, fmt.Sprintf("%s %s", s.Field(i).Name, " 必填"))
 					return
@@ -60,6 +61,7 @@ func Validator(c *gin.Context, dest any) {
 
 				break
 			case reflect.String:
+				fmt.Println(" value: ", v.Field(i).String())
 				if v.Field(i).Len() <= 0 || v.Field(i).String() == "" {
 					common.FailedReturn(c, fmt.Sprintf("%s %s", s.Field(i).Name, " 必填"))
 					c.Abort()
@@ -67,6 +69,7 @@ func Validator(c *gin.Context, dest any) {
 				}
 				break
 			case reflect.Float32, reflect.Float64:
+				fmt.Println(" value: ", v.Field(i).Float())
 				if v.Field(i).Float() <= 0 {
 					common.FailedReturn(c, fmt.Sprintf("%s %s", s.Field(i).Name, " 必填"))
 					c.Abort()
