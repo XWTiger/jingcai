@@ -58,8 +58,8 @@ type Statistics struct {
 
 //TODO 店铺注册分享码 注册分享码、网站分享码
 
-// @Summary 订单创建接口
-// @Description 订单创建接口， matchs 比赛按时间从先到后排序
+// @Summary 店铺注册
+// @Description 店铺注册
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse

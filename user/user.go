@@ -465,8 +465,11 @@ func UserComplain(c *gin.Context) {
 
 func CheckScoreOrDoBill(userId uint, score float32, doBill bool) error {
 	var user User
+	var lock sync.Mutex
+	lock.Lock()
 	tx := mysql.DB.Begin()
-	if err := tx.Model(User{}).Where(&User{Model: gorm.Model{ID: userId}}).Clauses(clause.Locking{Strength: "UPDATE"}).First(&user).Error; err != nil {
+	if err := tx.Model(User{}).Where(&User{Model: gorm.Model{ID: userId}}).First(&user).Error; err != nil {
+		lock.Unlock()
 		return errors.New("用户查询失败")
 	}
 	if score > user.Score {
@@ -479,6 +482,7 @@ func CheckScoreOrDoBill(userId uint, score float32, doBill bool) error {
 
 	}
 	tx.Commit()
+	lock.Unlock()
 	return nil
 }
 
@@ -518,23 +522,21 @@ type Bill struct {
 	ShopId uint
 }
 
-func BillForScore(OrderId string, userId uint, score float32) error {
-	var lock sync.Mutex
+func BillForScore(OrderId string, userId uint, score float32, option string) error {
 	//扣积分逻辑
-	lock.Lock()
 	tx := mysql.DB.Begin()
 	var bill = Bill{
 		Num:     score,
 		UserId:  userId,
 		OrderId: OrderId,
 		Type:    SCORE,
-		Option:  SUBTRACT,
+		Option:  option,
 	}
 	var user User
 	tx.Model(User{}).Where(&User{Model: gorm.Model{
 		ID: userId,
 	}}).First(&user)
-	if user.Score < score {
+	/*if user.Score < score {
 
 		tx.Rollback()
 		lock.Unlock()
@@ -546,15 +548,13 @@ func BillForScore(OrderId string, userId uint, score float32) error {
 		tx.Rollback()
 		lock.Unlock()
 		return errors.New("更新订单失败！")
-	}
+	}*/
 
-	if billerr := tx.Model(Bill{}).Save(bill).Error; billerr != nil {
+	if billerr := tx.Model(Bill{}).Save(&bill).Error; billerr != nil {
 		tx.Rollback()
-		lock.Unlock()
 		return errors.New("创建账单失败")
 	}
 	tx.Commit()
-	lock.Unlock()
 	return nil
 }
 
@@ -605,4 +605,8 @@ func AddScore(c *gin.Context) {
 	tx.Commit()
 	lock.Unlock()
 	common.FailedReturn(c, "上分成功")
+}
+
+func BillClear(c *gin.Context) {
+
 }

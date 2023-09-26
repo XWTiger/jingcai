@@ -889,14 +889,14 @@ const docTemplate = `{
         },
         "/api/super/shop": {
             "post": {
-                "description": "订单创建接口， matchs 比赛按时间从先到后排序",
+                "description": "店铺注册",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
-                "summary": "订单创建接口",
+                "summary": "店铺注册",
                 "parameters": [
                     {
                         "description": "订单对象",

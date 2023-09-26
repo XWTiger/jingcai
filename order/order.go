@@ -397,8 +397,8 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 		return
 	}
 	//TODO 扣款逻辑/扣积分逻辑
-	//积分逻辑
-	err := user.BillForScore(order.UUID, userInfo.ID, order.ShouldPay)
+	//积分逻辑 在上面已经完成积分扣除， 这里只创建流水
+	err := user.BillForScore(order.UUID, userInfo.ID, order.ShouldPay, user.SUBTRACT)
 	if err != nil {
 		log.Error(err)
 		common.FailedReturn(c, err.Error())
@@ -598,7 +598,9 @@ func football(c *gin.Context, order *Order) {
 		return
 	}
 	tx := mysql.DB.Begin()
-
+	defer func() {
+		tx.Rollback()
+	}()
 	//回填比赛信息 以及反填胜率
 	officalMatch := cache.GetOnTimeFootballMatch(order.LotteryUuid)
 	if officalMatch == nil {

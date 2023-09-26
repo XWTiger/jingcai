@@ -198,6 +198,7 @@ func (a AllWin) GetVO() AllWinVO {
 		vo.Status = a.Status
 		vo.LeastTimes = a.LeastTimes
 		vo.ShowType = a.ShowType
+		vo.Number = a.Number
 		//计算合买带红人数
 		//1.查到这人所有中奖单
 		var allOfThePerson []AllWin
