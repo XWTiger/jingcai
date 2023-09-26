@@ -185,7 +185,7 @@ func (tan Leisu) childCreeper(url string, content *Content) {
 		cfavora := cbuf.String() //有利情报
 
 		cfavoraContent := fmt.Sprintf("%s: \n %s: \n %s: \n ", cname, ctitle, cfavora)
-		fmt.Println(cfavoraContent)
+		//fmt.Println(cfavoraContent)
 
 		gname := e.ChildText(".team-item:nth-last-child(1) > .team > .name")
 		gtitle := e.ChildText(".team-item:nth-last-child(1) > .good > .title")
@@ -201,7 +201,7 @@ func (tan Leisu) childCreeper(url string, content *Content) {
 		})
 		gharmful := gbuf2.String()
 		gfavoraContent := fmt.Sprintf("%s: \n %s: \n %s: \n %s: \n %s \n", gname, gtitle, gfavora, gharmfulTitle, gharmful)
-		fmt.Println(gfavoraContent)
+		//fmt.Println(gfavoraContent)
 		content.Content = fmt.Sprintf("%s \n %s \n %s \n", favoraContent, cfavoraContent, gfavoraContent)
 
 	})

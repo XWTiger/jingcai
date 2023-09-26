@@ -48,12 +48,12 @@ func Init(conf config.Config) {
 func (cc *CreepCenter) Doing() error {
 	initTables()
 	tx := mysql.DB.Begin()
-	for k, c := range cc.Creepers {
-		log.Info("url=", k)
+	for _, c := range cc.Creepers {
+		//log.Info("url=", k)
 		content := c.Creep()
 		tx.Create(&content)
 		for _, ctx := range content {
-			log.Info("content: ", ctx.Content, "url: ", ctx.Url)
+			//log.Info("content: ", ctx.Content, "url: ", ctx.Url)
 			if len(ctx.Conditions) > 0 {
 				for _, cond := range ctx.Conditions {
 					tx.Create(&creeper.Condition{
