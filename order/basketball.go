@@ -98,7 +98,7 @@ func basketball(c *gin.Context, order *Order) {
 	tx := mysql.DB.Begin()
 
 	//回填比赛信息 以及反填胜率
-	officalMatch := cache.GetOnTimeBasketBallMatch(order.LotteryUuid)
+	officalMatch, err := cache.GetOnTimeBasketBallMatch(order.LotteryUuid)
 	if officalMatch == nil {
 		common.FailedReturn(c, "查公布信息异常， 请联系管理员！")
 		return

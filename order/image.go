@@ -90,15 +90,15 @@ func UploadBets(c *gin.Context) {
 	//校验
 	switch order.LotteryType {
 	case FOOTBALL:
-		officalMatch := cache.GetOnTimeFootballMatch(betImgObj.LotteryUuid)
-		if officalMatch == nil {
+		_, err := cache.GetOnTimeFootballMatch(betImgObj.LotteryUuid)
+		if err == nil {
 			common.FailedReturn(c, "非法参数")
 			return
 		}
 		break
 	case BASKETBALL:
-		officalMatch := cache.GetOnTimeBasketBallMatch(order.LotteryUuid)
-		if officalMatch == nil {
+		_, err := cache.GetOnTimeBasketBallMatch(order.LotteryUuid)
+		if err == nil {
 			common.FailedReturn(c, "非法参数")
 			return
 		}

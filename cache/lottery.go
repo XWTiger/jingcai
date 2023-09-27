@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/goccy/go-json"
@@ -66,15 +67,19 @@ func Get(key string) interface{} {
 	return item.Data()
 }
 
-func GetOnTimeFootballMatch(uuid string) *FootBallGames {
+func GetOnTimeFootballMatch(uuid string) (*FootBallGames, error) {
+	var err error
 	if !lotteryCahe.Exists(uuid) {
-		return nil
+		err = errors.New("uuid 不存在")
+		log.Error("uuid 不存在")
+	} else {
+		err = nil
 	}
 	var url = "http://127.0.0.1:8090/lottery/sports/jc/mixed"
 	resp, err := http.Get(url)
 	if err != nil {
 		fmt.Println(err)
-		return nil
+		return nil, err
 	}
 	defer resp.Body.Close()
 	body, _ := io.ReadAll(resp.Body)
@@ -82,21 +87,25 @@ func GetOnTimeFootballMatch(uuid string) *FootBallGames {
 	err = json.Unmarshal(body, &result)
 	if err != nil {
 		log.Error("转换足彩后台查询实时对象失败")
-		return nil
+		return nil, err
 	}
 	lotteryCahe.Add(uuid, 10*time.Minute, string(body))
-	return &result.Content
+	return &result.Content, err
 }
 
-func GetOnTimeBasketBallMatch(uuid string) *BasketBallGames {
+func GetOnTimeBasketBallMatch(uuid string) (*BasketBallGames, error) {
+	var err error
 	if !lotteryCahe.Exists(uuid) {
-		return nil
+		err = errors.New("uuid 不存在")
+		log.Error("uuid 不存在")
+	} else {
+		err = nil
 	}
 	var url = "http://127.0.0.1:8090/lottery/sports/basketball/jc/mixed"
 	resp, err := http.Get(url)
 	if err != nil {
 		fmt.Println(err)
-		return nil
+		return nil, err
 	}
 	defer resp.Body.Close()
 	body, _ := io.ReadAll(resp.Body)
@@ -104,8 +113,8 @@ func GetOnTimeBasketBallMatch(uuid string) *BasketBallGames {
 	err = json.Unmarshal(body, &result)
 	if err != nil {
 		log.Error("转换足彩后台查询实时对象失败")
-		return nil
+		return nil, err
 	}
 	lotteryCahe.Add(uuid, 10*time.Minute, string(body))
-	return &result
+	return &result, err
 }

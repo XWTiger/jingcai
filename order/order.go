@@ -40,8 +40,8 @@ const (
 	READY       = "READY"
 	NO_PAY      = "NO_PAY"
 	PL_SIGNAL   = "SIGNAL"
-	PL_C3       = "C3"
-	PL_C6       = "C6"
+	PL_C3       = "C3" //组合3
+	PL_C6       = "C6" //组合6
 	TOMASTER    = "TOMASTER"
 	SCORE       = "SCORE"
 	RMB         = "RMB"
@@ -305,8 +305,10 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 
 	case FOOTBALL:
 		football(c, &order)
+		break
 	case BASKETBALL:
 		basketball(c, &order)
+		break
 	case P3:
 		err := CreatePLW(&order)
 		if err != nil {
@@ -321,6 +323,7 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 		fmt.Println("实际付款: ", order.ShouldPay)
 		fmt.Println("=========================================")
 		common.SuccessReturn(c, order.UUID)
+		break
 	case P5:
 		err := CreatePLW(&order)
 		if err != nil {
@@ -336,6 +339,7 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 		fmt.Println("实际付款: ", order.ShouldPay)
 		fmt.Println("=========================================")
 		common.SuccessReturn(c, order.UUID)
+		break
 	case SUPER_LOTTO:
 		//大乐透
 		tx := mysql.DB.Begin()
@@ -370,6 +374,7 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 		fmt.Println("=========================================")
 		common.SuccessReturn(c, order.UUID)
 		tx.Commit()
+		break
 	case SEVEN_STAR:
 		checkSevenStar(&order)
 		tx := mysql.DB.Begin()
@@ -398,6 +403,7 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 		fmt.Println("=========================================")
 		common.SuccessReturn(c, order.UUID)
 		tx.Commit()
+		break
 	default:
 		common.FailedReturn(c, "购买类型不正确")
 		return
@@ -527,21 +533,25 @@ func OrderList(c *gin.Context) {
 	mysql.DB.Model(&param).Where(&param).Order("created_at desc").Offset(page * pageSize).Limit(pageSize).Find(&list)
 
 	for index, order := range list {
-		var mathParam = Match{
-			OrderId: list[index].UUID,
-		}
-		var matchList = make([]Match, 0)
-		mysql.DB.Model(&mathParam).Where(&mathParam).Find(&matchList)
-		list[index].Matches = matchList
-		for _, match := range matchList {
-			var detailParam = LotteryDetail{
-				ParentId: match.ID,
+		//如果是足球和篮球 就把比赛回填回来
+		if strings.Compare(order.LotteryType, FOOTBALL) == 0 || strings.Compare(order.LotteryType, BASKETBALL) == 0 {
+			var mathParam = Match{
+				OrderId: list[index].UUID,
 			}
-			var detailList = make([]LotteryDetail, 0)
-			mysql.DB.Model(&detailParam).Where(&detailParam).Find(&detailList)
-			match.Combines = detailList
+			var matchList = make([]Match, 0)
+			mysql.DB.Model(&mathParam).Where(&mathParam).Find(&matchList)
+			list[index].Matches = matchList
+			for idx, match := range matchList {
+				var detailParam = LotteryDetail{
+					ParentId: match.ID,
+				}
+				var detailList = make([]LotteryDetail, 0)
+				mysql.DB.Model(&detailParam).Where(&detailParam).Find(&detailList)
+				matchList[idx].Combines = detailList
+			}
 		}
 		var uuid string
+		//如果是参加别人的合买 就把票查回来
 		if strings.Compare(order.SaveType, ALL_WIN) == 0 {
 			var initAllWin AllWin
 			mysql.DB.Model(AllWin{}).Where(&AllWin{
@@ -564,6 +574,53 @@ func OrderList(c *gin.Context) {
 	}
 	common.SuccessReturn(c, resultList)
 }
+
+// @Summary 订单分享接口
+// @Description 订单分享接口
+// @Accept json
+// @Produce json
+// @Success 200 {object} OrderVO
+// @failure 500 {object} common.BaseResponse
+// @param lotteryType  query string false "足彩（FOOTBALL） 大乐透（SUPER_LOTTO）  排列三（P3） 篮球(BASKETBALL) 七星彩（SEVEN_STAR） 排列五（P5）"
+// @param pageNo  query int true "页码"
+// @param pageSize  query int true "每页大小"
+// @Router /api/order/shared [get]
+func SharedOrderList(c *gin.Context) {
+	saveType := c.Query("saveType")
+	lotteryType := c.Query("lotteryType")
+	page, _ := strconv.Atoi(c.Query("pageNo"))
+	pageSize, _ := strconv.Atoi(c.Query("pageSize"))
+
+	var param = Order{
+		SaveType:    saveType,
+		LotteryType: lotteryType,
+		Share:       true,
+	}
+	var list = make([]Order, 0)
+	mysql.DB.Model(&param).Where(&param).Order("created_at desc").Offset(page * pageSize).Limit(pageSize).Find(&list)
+
+	for i := 0; i < len(list); i++ {
+		order := list[i]
+		if strings.Compare(order.LotteryType, FOOTBALL) == 0 || strings.Compare(order.LotteryType, BASKETBALL) == 0 {
+			var mathParam = Match{
+				OrderId: list[i].UUID,
+			}
+			var matchList = make([]Match, 0)
+			mysql.DB.Model(&mathParam).Where(&mathParam).Find(&matchList)
+			list[i].Matches = matchList
+			for idx, match := range matchList {
+				var detailParam = LotteryDetail{
+					ParentId: match.ID,
+				}
+				var detailList = make([]LotteryDetail, 0)
+				mysql.DB.Model(&detailParam).Where(&detailParam).Find(&detailList)
+				matchList[idx].Combines = detailList
+			}
+		}
+	}
+	common.SuccessReturn(c, list)
+}
+
 func FindById(uuid string, searchMatch bool) Order {
 	var param = Order{
 		UUID: uuid,
@@ -608,7 +665,7 @@ func football(c *gin.Context, order *Order) {
 		tx.Rollback()
 	}()
 	//回填比赛信息 以及反填胜率
-	officalMatch := cache.GetOnTimeFootballMatch(order.LotteryUuid)
+	officalMatch, err := cache.GetOnTimeFootballMatch(order.LotteryUuid)
 	if officalMatch == nil {
 		common.FailedReturn(c, "查公布信息异常， 请联系管理员！")
 		return
@@ -2187,9 +2244,11 @@ func GetDesc(t string, scoreVsScore string) string {
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
 // @param order_id query string true "跟单对象id"
+// @param times query string true "倍数"
 // @Router /api/order/follow [post]
 func FollowOrder(c *gin.Context) {
 	orderId := c.Param("order_id")
+	times := c.Param("times")
 	if len(orderId) <= 0 {
 		common.FailedReturn(c, "订单id不能为空")
 	}
@@ -2206,6 +2265,12 @@ func FollowOrder(c *gin.Context) {
 			}
 		}
 	}
+	timesBuy, err := strconv.Atoi(times)
+	if err != nil {
+		common.FailedReturn(c, "参数错误")
+		return
+	}
+	order.Times = timesBuy
 	orderCreateFunc(c, &order)
 }
 
@@ -2235,7 +2300,37 @@ func CreatePLW(ord *Order) error {
 	if strings.Compare(ord.LotteryType, "P5") == 0 {
 		tp = 5
 	}
+	//TODO 优化效率
+	var url = "https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListPlwV1.qry?gameNo=350133&provinceId=0&isVerify=1&termLimits=5"
+	resp, err := http.Get(url)
+	if err != nil {
+		fmt.Println(err)
+		return errors.New("获取期刊失败")
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	fmt.Println(body)
+	if err != nil {
+		log.Error("请求大乐透列表失败: ", err)
+		return errors.New("获取期刊失败")
+	}
 
+	var result lottery.Plw
+	err = json.Unmarshal(body, &result)
+
+	drawNum, err := strconv.Atoi(result.Value.List[0].LotteryDrawNum)
+	issueId, err := strconv.Atoi(ord.IssueId)
+	if err != nil {
+		log.Error(err)
+		return errors.New("校验期号失败")
+	}
+	if drawNum-issueId != 1 {
+		return errors.New("购买期号不正确")
+	}
+	ftime := util.GetPLWFinishedTime()
+	if ftime.Second() > time.Now().Second() {
+		return errors.New("今日已经停售明天继续")
+	}
 	tx := mysql.DB.Begin()
 	if strings.Contains(ord.Content, ",") {
 		arr := strings.Split(ord.Content, ",")
