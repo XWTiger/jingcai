@@ -266,13 +266,14 @@ func AllWinList(c *gin.Context) {
 
 	var all []AllWin
 	var list []Order
+	var pageN, pageS int
 	allVo := make([]AllWinVO, 0)
 	if len(param) > 0 {
 		if pageNo == "" || pageSize == "" {
 			mysql.DB.Model(Order{}).Where("lottery_type=? and all_win_id > 0", param).Find(&list)
 		} else {
-			pageN, _ := strconv.Atoi(pageNo)
-			pageS, _ := strconv.Atoi(pageSize)
+			pageN, _ = strconv.Atoi(pageNo)
+			pageS, _ = strconv.Atoi(pageSize)
 			mysql.DB.Model(Order{}).Where("lottery_type=? and all_win_id > 0", param).Offset((pageN - 1) * pageS).Limit(pageS).Find(&list)
 		}
 
@@ -294,11 +295,17 @@ func AllWinList(c *gin.Context) {
 			ParentId: 0,
 		}).Find(&all)
 	}
-
+	var count int64
+	mysql.DB.Model(Order{}).Where("lottery_type=? and all_win_id > 0", param).Count(&count)
 	for _, win := range all {
 		allVo = append(allVo, win.GetVO())
 	}
-	common.SuccessReturn(c, allVo)
+	common.SuccessReturn(c, common.PageCL{
+		PageNo:   pageN,
+		PageSize: pageS,
+		Total:    int(count),
+		Content:  allVo,
+	})
 }
 
 // @Summary 合买发起/跟买

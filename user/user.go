@@ -56,8 +56,11 @@ type User struct {
 	//头像地址
 	HeaderImageUrl string
 
-	//来自推荐的码/店铺（管理员的用户id）
+	//来自店铺码（管理员的用户id）
 	From uint
+
+	//来自某个用户推广
+	FromUser uint
 }
 
 // 用户对象
@@ -69,8 +72,6 @@ type UserVO struct {
 	Secret string `minLength:"6" maxLength:"16"`
 	//头像
 	Avatar string
-
-	From uint
 }
 
 // token 对象
@@ -178,14 +179,16 @@ func UpdateUser(c *gin.Context) {
 	return
 }
 
-func CreateUser(user UserVO) error {
+func CreateUser(user UserVO, shopId uint, sharedUserId uint) error {
 	var userPo = User{
-		Phone:  user.Phone,
-		Secret: user.Secret,
-		Name:   user.Name,
-		Salt:   uuid.NewV4().String()[0:16],
-		Role:   "User",
-		Score:  0.00,
+		Phone:    user.Phone,
+		Secret:   user.Secret,
+		Name:     user.Name,
+		Salt:     uuid.NewV4().String()[0:16],
+		Role:     "User",
+		Score:    0.00,
+		From:     shopId,
+		FromUser: sharedUserId,
 	}
 
 	pwd, err := common.EnPwdCode([]byte(user.Secret), []byte(userPo.Salt))
@@ -211,6 +214,8 @@ func (u User) ChangePass(user UserVO) error {
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
 // @param param body UserVO true "用户对象"
+// @param sharedShopId query string   false  "店铺id"
+// @param sharedUserId query string  false  "分享者id"
 // @Router /api/user [post]
 func UserCreateHandler(c *gin.Context) {
 	var user UserVO
@@ -237,21 +242,34 @@ func UserCreateHandler(c *gin.Context) {
 		common.FailedReturn(c, "手机号已经存在")
 		return
 	}
-	var intId int
-	id := c.Query("sharedId")
-	if strings.Compare(id, "") == 0 {
-		intId = 1
+	var shopId int
+	id := c.Query("sharedShopId")
+	shardUserId := c.Query("sharedUserId")
+	if id == "" {
+		shopId = 1
 	} else {
 		ind, err := strconv.Atoi(id)
 		if err != nil {
 			log.Error(err)
-			intId = 1
+			shopId = 1
 		} else {
-			intId = ind
+			shopId = ind
 		}
 	}
-	user.From = uint(intId)
-	if CreateUser(user) != nil {
+	var sharedId uint
+	if shardUserId == "" {
+		sharedId = 0
+	} else {
+		ind, err := strconv.Atoi(shardUserId)
+		if err != nil {
+			log.Error(err)
+			sharedId = 0
+		} else {
+			sharedId = uint(ind)
+		}
+	}
+
+	if CreateUser(user, uint(shopId), sharedId) != nil {
 		c.JSON(http.StatusInternalServerError, &common.BaseResponse{
 			Code:    0,
 			Message: "创建用户失败",

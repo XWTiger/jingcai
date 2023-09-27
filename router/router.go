@@ -62,6 +62,7 @@ func BindRouters(g *gin.Engine) {
 	r.GET("/download/:name", files.DownLoad)
 	bbsGroup := r.Group("/bbs")
 	bbsGroup.GET("/list", bbs.ListHandler)
+	r.POST("/shop", shop.ShopRegistry)
 	r.Use(user.Authorize())
 	r.POST("/user/complain", user.UserComplain)
 	r.GET("/user/info", user.GetUserInfo)
@@ -83,7 +84,6 @@ func BindRouters(g *gin.Engine) {
 	shopGroup := s.Group("/shop")
 	{
 		//店铺注册
-		shopGroup.POST("", shop.ShopRegistry)
 		shopGroup.GET("/users", shop.QueryShopUser)
 	}
 

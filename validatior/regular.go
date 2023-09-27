@@ -1,6 +1,7 @@
 package validatior
 
 import (
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"jingcai/common"
@@ -18,7 +19,7 @@ const (
 	MAX  = "max"
 )
 
-func Validator(c *gin.Context, dest any) {
+func Validator(c *gin.Context, dest any) error {
 
 	s := reflect.TypeOf(dest)
 
@@ -35,7 +36,8 @@ func Validator(c *gin.Context, dest any) {
 				fmt.Println(" value: ", v.Field(i).Int())
 				if v.Field(i).Int() <= 0 {
 					common.FailedReturn(c, fmt.Sprintf("%s %s", s.Field(i).Name, " 必填"))
-					return
+					c.Abort()
+					return errors.New(fmt.Sprintf("%s %s", s.Field(i).Name, " 必填"))
 				}
 				if tag.Get(MIN) != "" {
 					min, err := strconv.ParseInt(tag.Get(MIN), 10, 64)
@@ -43,7 +45,7 @@ func Validator(c *gin.Context, dest any) {
 						if v.Field(i).Int() < min {
 							common.FailedReturn(c, fmt.Sprintf("%s 必须大于%v", s.Field(i).Name, min))
 							c.Abort()
-							return
+							return errors.New(fmt.Sprintf("%s 必须大于%v", s.Field(i).Name, min))
 						}
 					}
 				}
@@ -54,7 +56,7 @@ func Validator(c *gin.Context, dest any) {
 						if v.Field(i).Int() > max {
 							common.FailedReturn(c, fmt.Sprintf("%s 必须小于%v", s.Field(i).Name, max))
 							c.Abort()
-							return
+							return errors.New(fmt.Sprintf("%s 必须小于%v", s.Field(i).Name, max))
 						}
 					}
 				}
@@ -65,7 +67,7 @@ func Validator(c *gin.Context, dest any) {
 				if v.Field(i).Len() <= 0 || v.Field(i).String() == "" {
 					common.FailedReturn(c, fmt.Sprintf("%s %s", s.Field(i).Name, " 必填"))
 					c.Abort()
-					return
+					return errors.New(fmt.Sprintf("%s %s", s.Field(i).Name, " 必填"))
 				}
 				break
 			case reflect.Float32, reflect.Float64:
@@ -73,7 +75,7 @@ func Validator(c *gin.Context, dest any) {
 				if v.Field(i).Float() <= 0 {
 					common.FailedReturn(c, fmt.Sprintf("%s %s", s.Field(i).Name, " 必填"))
 					c.Abort()
-					return
+					return errors.New(fmt.Sprintf("%s %s", s.Field(i).Name, " 必填"))
 				}
 				break
 			}
@@ -87,11 +89,11 @@ func Validator(c *gin.Context, dest any) {
 				if tag.Get(MSG) != "" {
 					common.FailedReturn(c, tag.Get(MSG))
 					c.Abort()
-					return
+					return errors.New(tag.Get(MSG))
 				} else {
 					common.FailedReturn(c, fmt.Sprintf("%s %s", s.Field(i).Name, " 校验失败"))
 					c.Abort()
-					return
+					return errors.New(fmt.Sprintf("%s %s", s.Field(i).Name, " 校验失败"))
 				}
 			}
 		}
@@ -108,4 +110,5 @@ func Validator(c *gin.Context, dest any) {
 		}
 
 	}
+	return nil
 }

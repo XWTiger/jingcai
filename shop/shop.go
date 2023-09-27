@@ -44,7 +44,7 @@ type Shop struct {
 	Status bool
 
 	//用户基本信息
-	user.UserVO `gorm:"-:all"`
+	User user.UserVO `gorm:"-:all"`
 }
 type Statistics struct {
 	//在线人数
@@ -66,7 +66,7 @@ type Statistics struct {
 // @failure 500 {object} common.BaseResponse
 // @param param body Shop false "订单对象"
 // @param sharedId query   uint false "开始日期 2023-09-25 00:00:00"
-// @Router /api/super/shop [post]
+// @Router /api/shop [post]
 func ShopRegistry(c *gin.Context) {
 	var shopvo Shop
 	c.BindJSON(&shopvo)
@@ -84,21 +84,30 @@ func ShopRegistry(c *gin.Context) {
 		}
 	}
 
-	validatior.Validator(c, shopvo)
+	err := validatior.Validator(c, shopvo)
+	if err != nil {
+		log.Error(err)
+		return
+	}
 	tx := mysql.DB.Begin()
+	var count int64
+	tx.Model(user.User{}).Where(user.User{Phone: shopvo.User.Phone}).Count(&count)
+	if count > 0 {
+		common.FailedReturn(c, "手机号已经被注册")
+		return
+	}
 	var userPo = user.User{
-		Phone:  shopvo.Phone,
-		Secret: shopvo.Secret,
-		Name:   shopvo.Name,
-		Salt:   uuid.NewV4().String()[0:16],
-		Role:   user.ADMIN,
-		Score:  0.00,
-		From:   uint(intId),
+		Phone:    shopvo.User.Phone,
+		Secret:   shopvo.User.Secret,
+		Name:     shopvo.Name,
+		Salt:     uuid.NewV4().String()[0:16],
+		Role:     user.ADMIN,
+		Score:    0.00,
+		FromUser: uint(intId),
 	}
 
-	pwd, err := common.EnPwdCode([]byte(shopvo.Secret), []byte(userPo.Salt))
+	pwd, err := common.EnPwdCode([]byte(shopvo.User.Secret), []byte(userPo.Salt))
 	if err != nil {
-
 		log.Error("加密密码失败", err)
 		common.FailedReturn(c, "加密失败，请联系管理员！")
 	}
@@ -106,8 +115,9 @@ func ShopRegistry(c *gin.Context) {
 	tx.Create(&shopvo)
 	userPo.From = shopvo.ID
 	tx.Create(&userPo)
-
+	tx.Model(Shop{}).Where("id=?", shopvo.ID).Update("user_id", userPo.ID)
 	tx.Commit()
+	common.SuccessReturn(c, "注册成功,祝老板财源广进!")
 }
 
 // @Summary 门店流水
