@@ -184,10 +184,10 @@ func (a AllWin) GetVO() AllWinVO {
 		var allW = make([]AllWin, 0)
 		var partner = make([]AllWinUser, 0)
 		allW = append(allW, a)
-		userInfo := GetAllWinUser(user.FindUserById(a.UserId))
+		//userInfo := GetAllWinUser(user.FindUserById(a.UserId))
 
-		userInfo.BuyNumber = a.BuyNumber
-		partner = append(partner, userInfo)
+		//userInfo.BuyNumber = a.BuyNumber
+		//partner = append(partner, userInfo)
 		for _, win := range all {
 			userInfos := GetAllWinUser(user.FindUserById(win.UserId))
 			userInfos.BuyNumber = win.BuyNumber
@@ -405,7 +405,7 @@ func AllWinCreateHandler(c *gin.Context) {
 			}
 			//校验是否还能合买，如果自己认购 + 别人认购 < 总数可以购买
 			var allOrder = make([]AllWin, 0)
-			tx.Model(AllWin{}).Where(&AllWin{ParentId: initAll.ParentId}).Find(&allOrder)
+			tx.Model(AllWin{}).Where(&AllWin{ParentId: initAll.ID}).Find(&allOrder)
 			var count = 0
 			for _, win := range allOrder {
 				count += win.BuyNumber
@@ -549,7 +549,7 @@ func AllWinCheck(when time.Time) {
 					var allWin = allWinOrders[i]
 
 					var partners = make([]AllWin, 0)
-					mysql.DB.Model(AllWin{}).Where(&AllWin{ParentId: allWin.ID}).Find(partners)
+					mysql.DB.Model(AllWin{}).Where(&AllWin{ParentId: allWin.ID}).Find(&partners)
 					if len(partners) > 0 {
 						var count = 0
 						for _, partner := range partners {

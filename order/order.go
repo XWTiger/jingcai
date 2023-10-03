@@ -590,14 +590,22 @@ func SharedOrderList(c *gin.Context) {
 	lotteryType := c.Query("lotteryType")
 	page, _ := strconv.Atoi(c.Query("pageNo"))
 	pageSize, _ := strconv.Atoi(c.Query("pageSize"))
+	var param Order
 
-	var param = Order{
-		SaveType:    saveType,
-		LotteryType: lotteryType,
-		Share:       true,
+	param = Order{
+		Share: true,
+	}
+	if lotteryType != "" {
+		param.LotteryType = lotteryType
+	}
+
+	if saveType != "" {
+		param.SaveType = saveType
 	}
 	var list = make([]Order, 0)
-	mysql.DB.Model(&param).Where(&param).Order("created_at desc").Offset(page * pageSize).Limit(pageSize).Find(&list)
+	var count int64
+
+	mysql.DB.Debug().Model(Order{}).Where(&param).Order("created_at desc").Count(&count).Offset((page - 1) * pageSize).Limit(pageSize).Find(&list)
 
 	for i := 0; i < len(list); i++ {
 		order := list[i]
@@ -618,7 +626,7 @@ func SharedOrderList(c *gin.Context) {
 			}
 		}
 	}
-	common.SuccessReturn(c, list)
+	common.SuccessReturn(c, common.PageCL{page, pageSize, int(count), list})
 }
 
 func FindById(uuid string, searchMatch bool) Order {
