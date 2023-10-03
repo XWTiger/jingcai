@@ -30,11 +30,16 @@ const TOKEN_TIME_OUT = 4 * time.Hour
 const ADMIN = "Admin"
 const USER = "User"
 const LOCK_TIMES = 5
+
+// 清账方式  WECHAT(微信) CARD(银行卡) ALI(支付宝) SCORE(积分清账)
 const (
 	SCORE    = "SCORE"
 	RMB      = "RMB"
 	ADD      = "ADD" //增加
 	SUBTRACT = "SUBTRACT"
+	WECHAT   = "WECHAT" //微信
+	CARD     = "CARD"   //银行卡
+	ALI      = "ALI"    //支付宝
 )
 
 type User struct {
@@ -583,8 +588,8 @@ type Score struct {
 	UserId uint
 }
 
-// @Summary 积分充值
-// @Description 积分充值
+// @Summary 积分加账
+// @Description 积分加账
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse
@@ -698,9 +703,125 @@ func BillClear(c *gin.Context) {
 		lock.Unlock()
 		return
 	}
-
+	var notify ScoreUserNotify
+	tx.Model(ScoreUserNotify{}).Where(&ScoreUserNotify{Initiator: score.UserId}).First(&notify)
+	if notify != (ScoreUserNotify{}) {
+		if err := tx.Model(ScoreUserNotify{}).Update("num", score.Num).Update("status", true).Where(&notify).Error; err != nil {
+			tx.Rollback()
+			common.FailedReturn(c, "更新清账通知失败")
+			lock.Unlock()
+		}
+	}
 	lock.Unlock()
 	tx.Commit()
 	common.SuccessReturn(c, "清账成功！")
+
+}
+
+type ScoreUserNotify struct {
+	//发起人
+	Initiator uint
+	//给哪个店主
+	ToAdminId uint
+	//是否完成清账
+	Status bool
+	//清账方式  WECHAT(微信) CARD(银行卡) ALI(支付宝)
+	Way string
+	//清账分数（以实际清账为主）
+	NUM float32
+
+	gorm.Model
+}
+
+// @Summary 清账发起接口
+// @Description 清账发起， 提示：清账积分以协商为主
+// @Accept json
+// @Produce json
+// @Success 200 {object} common.BaseResponse
+// @failure 500 {object} common.BaseResponse
+// @param param body Score true "积分对象"
+// @Router /api/user/bill/notify [post]
+func BillClearNotify(c *gin.Context) {
+	var user = getUserInfo(c)
+	var userInfo User
+	mysql.DB.Model(User{}).Where(&User{
+		Model: gorm.Model{
+			ID: user.ID,
+		},
+	}).First(&userInfo)
+	if userInfo.From <= 0 {
+		common.FailedReturn(c, "您没有对应的店铺， 请联系管理员！")
+		return
+	}
+	if userInfo.Score <= 0 {
+		common.FailedReturn(c, "该账户没有积分不用清账！")
+		return
+	}
+	var notify = ScoreUserNotify{
+		Initiator: user.ID,
+		ToAdminId: userInfo.From,
+		Way:       SCORE,
+	}
+
+	if err := mysql.DB.Save(&notify).Error; err != nil {
+		common.FailedReturn(c, "提交清账失败！")
+		return
+	}
+
+	common.SuccessReturn(c, "提交清账成功！")
+}
+
+// @Summary 查询自己发起清账接口
+// @Description 查询自己发起清账接口
+// @Accept json
+// @Produce json
+// @Success 200 {object} common.BaseResponse
+// @failure 500 {object} common.BaseResponse
+// @param pageNo  query int true "页码"
+// @param pageSize  query int true "每页大小"
+// @Router /api/user/bill/notify [get]
+func BillClearNotifyList(c *gin.Context) {
+	var user = getUserInfo(c)
+	page, _ := strconv.Atoi(c.Query("pageNo"))
+	pageSize, _ := strconv.Atoi(c.Query("pageSize"))
+	var notifies []ScoreUserNotify
+	mysql.DB.Model(ScoreUserNotify{}).Where(&ScoreUserNotify{Initiator: user.ID, Status: false}).Offset((page - 1) * pageSize).Limit(pageSize).Find(&notifies)
+	common.SuccessReturn(c, notifies)
+}
+
+// @Summary 查询需要清账通知
+// @Description 查询自己发起清账通知
+// @Accept json
+// @Produce json
+// @Success 200 {object} common.BaseResponse
+// @failure 500 {object} common.BaseResponse
+// @param pageNo  query int true "页码"
+// @param pageSize  query int true "每页大小"
+// @Router /api/super/bill/notify [get]
+func BillClearShopNotifyList(c *gin.Context) {
+	var user = getUserInfo(c)
+	page, _ := strconv.Atoi(c.Query("pageNo"))
+	pageSize, _ := strconv.Atoi(c.Query("pageSize"))
+	var notifies []ScoreUserNotify
+	mysql.DB.Model(ScoreUserNotify{}).Where(&ScoreUserNotify{ToAdminId: user.ID, Status: false}).Offset((page - 1) * pageSize).Limit(pageSize).Find(&notifies)
+	common.SuccessReturn(c, notifies)
+}
+
+// @Summary 查询店主信息
+// @Description 查询店主信息
+// @Accept json
+// @Produce json
+// @Success 200 {object} common.BaseResponse
+// @failure 500 {object} common.BaseResponse
+// @Router /api/user/owner [get]
+func GetShopOwnerInfo(c *gin.Context) {
+	var user = getUserInfo(c)
+	var owner User
+	mysql.DB.Model(User{}).Where(&User{
+		Model: gorm.Model{ID: user.From},
+	}).Find(&owner)
+	owner.Score = 0
+	owner.Salt = ""
+	common.SuccessReturn(c, owner)
 
 }

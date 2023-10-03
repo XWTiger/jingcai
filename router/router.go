@@ -57,6 +57,9 @@ func BindRouters(g *gin.Engine) {
 		userGroup.POST("", user.UserCreateHandler)
 		userGroup.POST("/login", user.Login)
 		userGroup.POST("/logout", user.Logout)
+		userGroup.POST("/bill/notify", user.BillClearNotify)
+		userGroup.GET("/bill/notify", user.BillClearNotifyList)
+		userGroup.GET("/owner", user.GetShopOwnerInfo)
 	}
 
 	r.GET("/download/:name", files.DownLoad)
@@ -80,11 +83,13 @@ func BindRouters(g *gin.Engine) {
 		s.GET("/statistics", shop.StatisticsCount)
 		s.POST("/substract-score", user.BillClear)
 		s.GET("/bills", shop.ShopBills)
+		s.GET("/bill/notify", user.BillClearShopNotifyList)
 	}
 	shopGroup := s.Group("/shop")
 	{
 		//店铺注册
 		shopGroup.GET("/users", shop.QueryShopUser)
+
 	}
 
 	{

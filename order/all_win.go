@@ -500,6 +500,7 @@ func GetAllWinByParentId(parentId uint) []AllWin {
 	return all
 }
 
+// 获取各种玩法的结束时间
 func getFinishedTime(order Order) time.Time {
 	switch order.LotteryType {
 
@@ -535,8 +536,7 @@ func getFinishedTime(order Order) time.Time {
 	return time.Now()
 }
 
-//  合买是否保底校验校验, 如果其他人购买数 + 自己认购 不等于 总份数 并且已经超时
-
+// 合买是否保底校验校验, 如果其他人购买数 + 自己认购 不等于 总份数 并且已经超时
 func AllWinCheck(when time.Time) {
 
 	job := Job{

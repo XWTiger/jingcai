@@ -258,7 +258,7 @@ type FootView struct {
 }
 
 // @Summary 订单创建接口
-// @Description 订单创建接口， matchs 比赛按时间从先到后排序
+// @Description 订单创建接口， matchs 比赛按时间从先到后排序, 提示：所有赔率以店主出票为准！
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse
@@ -292,6 +292,14 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 	}
 	if order.ShouldPay <= 0 {
 		common.FailedReturn(c, "付款小于0")
+		return
+	}
+
+	now := time.Now()
+	//校验是否在售票时间内
+	finishedTime := getFinishedTime(order)
+	if now.Second() > finishedTime.Second() {
+		common.FailedReturn(c, "现在已经不在营业时间")
 		return
 	}
 	order.Bonus = 0
@@ -593,7 +601,8 @@ func SharedOrderList(c *gin.Context) {
 	var param Order
 
 	param = Order{
-		Share: true,
+		Share:            true,
+		AllMatchFinished: false,
 	}
 	if lotteryType != "" {
 		param.LotteryType = lotteryType
@@ -2335,10 +2344,7 @@ func CreatePLW(ord *Order) error {
 	if drawNum-issueId != 1 {
 		return errors.New("购买期号不正确")
 	}
-	ftime := util.GetPLWFinishedTime()
-	if ftime.Second() > time.Now().Second() {
-		return errors.New("今日已经停售明天继续")
-	}
+
 	tx := mysql.DB.Begin()
 	if strings.Contains(ord.Content, ",") {
 		arr := strings.Split(ord.Content, ",")
