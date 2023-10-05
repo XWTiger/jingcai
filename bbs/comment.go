@@ -76,6 +76,7 @@ type Comment struct {
 
 // @Summary 评论帖子
 // @Description 评论帖子
+// @Tags bbs 贴吧
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse
@@ -103,6 +104,7 @@ func CommentHandler(c *gin.Context) {
 
 // @Summary 回复评论
 // @Description 回复评论
+// @Tags bbs 贴吧
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse
@@ -130,6 +132,7 @@ func ResponseHandler(c *gin.Context) {
 
 // @Summary  查询回复和评论
 // @Description 通过帖子id 查询回复和评论
+// @Tags bbs 贴吧
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse
@@ -210,6 +213,7 @@ func ListComment(c *gin.Context) {
 
 // @Summary  通过评论id查回复
 // @Description 通过帖子id 查询回复和评论
+// @Tags bbs 贴吧
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse

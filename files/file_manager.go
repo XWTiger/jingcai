@@ -37,6 +37,7 @@ func Init(c *config.Config) {
 
 // @Summary 上传文件或者图片
 // @Description 上传文件或者图片
+// @Tags  files 图片/文件
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse
@@ -91,6 +92,7 @@ func Upload(c *gin.Context) {
 
 // @Summary 下载文件/图片
 // @Description 下载文件/图片
+// @Tags  files 图片/文件
 // @Accept json
 // @Produce json
 // @Success 200 {object}  common.BaseResponse

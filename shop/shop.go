@@ -60,6 +60,7 @@ type Statistics struct {
 
 // @Summary 店铺注册
 // @Description 店铺注册
+// @Tags shop 门店
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse
@@ -122,6 +123,7 @@ func ShopRegistry(c *gin.Context) {
 
 // @Summary 门店流水
 // @Description 门店流水
+// @Tags owner 店主
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse
@@ -158,6 +160,7 @@ func ShopBills(c *gin.Context) {
 
 // @Summary 管理员基础统计
 // @Description 管理员基础统计
+// @Tags owner 店主
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse
@@ -191,6 +194,7 @@ func StatisticsCount(c *gin.Context) {
 
 // @Summary 查询店内用户信息
 // @Description 查询店内用户信息
+// @Tags shop 门店
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse

@@ -73,7 +73,7 @@ func (cc *CreepCenter) Doing() error {
 // @Accept json
 // @Produce json
 // @Success 200 {object} string
-// @Router /api/super/creep [get]
+// @Router /api/admin/creep [get]
 func CreepHandler(c *gin.Context) {
 
 	if !creeperSwitch {

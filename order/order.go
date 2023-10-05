@@ -259,6 +259,7 @@ type FootView struct {
 
 // @Summary 订单创建接口
 // @Description 订单创建接口， matchs 比赛按时间从先到后排序, 提示：所有赔率以店主出票为准！
+// @Tags order 订单
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse
@@ -515,6 +516,7 @@ func checkSevenStar(ord *Order) error {
 
 // @Summary 订单查询接口
 // @Description 订单查询接口
+// @Tags order 订单
 // @Accept json
 // @Produce json
 // @Success 200 {object} OrderVO
@@ -585,6 +587,7 @@ func OrderList(c *gin.Context) {
 
 // @Summary 订单分享接口
 // @Description 订单分享接口
+// @Tags order 订单
 // @Accept json
 // @Produce json
 // @Success 200 {object} OrderVO
@@ -2256,6 +2259,7 @@ func GetDesc(t string, scoreVsScore string) string {
 
 // @Summary 跟单订单
 // @Description 跟单订单
+// @Tags order 订单
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse

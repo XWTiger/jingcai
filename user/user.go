@@ -116,6 +116,7 @@ func (u User) GetDTO() UserDTO {
 
 // @Summary 查询用户信息
 // @Description 查询用户信息
+// @Tags user  用户
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse
@@ -144,6 +145,7 @@ func GetUserInfo(c *gin.Context) {
 
 // @Summary 更新用户信息
 // @Description 更新用户信息
+// @Tags user  用户
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse
@@ -214,6 +216,7 @@ func (u User) ChangePass(user UserVO) error {
 
 // @Summary 创建用户
 // @Description 创建用户
+// @Tags user  用户
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse
@@ -286,6 +289,7 @@ func UserCreateHandler(c *gin.Context) {
 
 // @Summary 登录接口
 // @Description 公钥放在头里 salt， 密码：需要和公钥rsa 加密 账号为手机号
+// @Tags user  用户
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse
@@ -391,6 +395,7 @@ type Complain struct {
 
 // @Summary 注销登录
 // @Description 注销当前用户
+// @Tags user  用户
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse
@@ -412,7 +417,11 @@ func getUserInfo(c *gin.Context) User {
 }
 
 func FetUserInfo(c *gin.Context) User {
-	user, _ := c.Get("userInfo")
+	user, exist := c.Get("userInfo")
+	if !exist {
+		log.Warn("用户信息不存在！")
+		return User{}
+	}
 	return user.(User)
 }
 
@@ -469,6 +478,7 @@ func FindUsserMapById(id []uint) map[uint]UserVO {
 
 // @Summary 投诉
 // @Description 投诉
+// @Tags user  用户
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse
@@ -590,6 +600,8 @@ type Score struct {
 
 // @Summary 积分加账
 // @Description 积分加账
+// @Tags owner 店主
+// @Tags user  用户
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse
@@ -603,6 +615,7 @@ func AddScore(c *gin.Context) {
 		common.FailedReturn(c, "参数获取失败")
 		return
 	}
+	var userSelf = getUserInfo(c)
 	var lock sync.Mutex
 	if score.Num <= 0 {
 		common.FailedReturn(c, "积分需要大于0")
@@ -612,9 +625,15 @@ func AddScore(c *gin.Context) {
 	lock.Lock()
 	tx := mysql.DB.Begin()
 	var user User
-	tx.Model(User{}).Where(&User{Model: gorm.Model{
+	if err := tx.Model(User{}).Where(&User{Model: gorm.Model{
 		ID: score.UserId,
-	}}).First(&user)
+	}, From: userSelf.ID,
+	}).First(&user).Error; err != nil {
+		lock.Unlock()
+		tx.Rollback()
+		common.FailedReturn(c, "该用户不是您的用户!")
+		return
+	}
 
 	if err := tx.Model(User{}).Where(&User{Model: gorm.Model{
 		ID: score.UserId,
@@ -645,6 +664,7 @@ func AddScore(c *gin.Context) {
 
 // @Summary 清账接口
 // @Description 清账接口
+// @Tags owner 店主
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse
@@ -734,12 +754,12 @@ type ScoreUserNotify struct {
 }
 
 // @Summary 清账发起接口
-// @Description 清账发起， 提示：清账积分以协商为主
+// @Description 清账发起， 提示：清账积分以协商为主, 默认清除剩余所有！
+// @Tags user  用户
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
-// @param param body Score true "积分对象"
 // @Router /api/user/bill/notify [post]
 func BillClearNotify(c *gin.Context) {
 	var user = getUserInfo(c)
@@ -773,6 +793,7 @@ func BillClearNotify(c *gin.Context) {
 
 // @Summary 查询自己发起清账接口
 // @Description 查询自己发起清账接口
+// @Tags user  用户
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse
@@ -791,6 +812,7 @@ func BillClearNotifyList(c *gin.Context) {
 
 // @Summary 查询需要清账通知
 // @Description 查询自己发起清账通知
+// @Tags owner 店主
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse
@@ -809,6 +831,7 @@ func BillClearShopNotifyList(c *gin.Context) {
 
 // @Summary 查询店主信息
 // @Description 查询店主信息
+// @Tags user  用户
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse

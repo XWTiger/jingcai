@@ -6,6 +6,7 @@ import (
 	"jingcai/common"
 	ilog "jingcai/log"
 	"jingcai/mysql"
+	"jingcai/user"
 	"time"
 )
 
@@ -15,6 +16,9 @@ type NotificationPO struct {
 	gorm.Model
 	//通知内容，富文本
 	Content string `minLength:"2"`
+
+	//店主id
+	UserId uint
 
 	//过期时间
 	Expired time.Time
@@ -31,6 +35,7 @@ type Notification struct {
 
 // @Summary 创建通告
 // @Description 创建通告
+// @Tags owner 店主
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse
@@ -38,13 +43,13 @@ type Notification struct {
 // @param param body Notification false "通告对象"
 // @Router /api/super/notify [post]
 func Create(c *gin.Context) {
-
+	var userInfo = user.FetUserInfo(c)
 	var notify Notification
 	c.BindJSON(&notify)
 	mysql.DB.AutoMigrate(&NotificationPO{})
 	if notify != (Notification{}) {
 		timeExpire, _ := time.ParseInLocation("2006-01-02 15:04:05", notify.Expired, time.Local)
-		if err := mysql.DB.Create(&NotificationPO{Content: notify.Content, Expired: timeExpire}).Error; err != nil {
+		if err := mysql.DB.Create(&NotificationPO{Content: notify.Content, Expired: timeExpire, UserId: userInfo.ID}).Error; err != nil {
 			common.FailedReturn(c, "创建失败")
 		}
 	}
@@ -52,6 +57,7 @@ func Create(c *gin.Context) {
 
 // @Summary 查询通告
 // @Description 查询通告
+// @Tags notify 通告
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse
@@ -64,7 +70,7 @@ func Query(c *gin.Context) {
 	mysql.DB.AutoMigrate(&NotificationPO{})
 	if err := mysql.DB.Model(&NotificationPO{}).Where("expired  >= ?", date).First(&notify).Error; err != nil {
 		log.Error(err)
-		common.FailedReturn(c, "当前没有通告")
+		common.SuccessReturn(c, "欢迎来到黑马门店助手！")
 		return
 	}
 	common.SuccessReturn(c, notify)

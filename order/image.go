@@ -63,6 +63,7 @@ type MatchOdd struct {
 
 // @Summary 票提交接口
 // @Description 票提交接口
+// @Tags owner 店主
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse
@@ -152,6 +153,7 @@ func UploadBets(c *gin.Context) {
 
 // @Summary 管理员订单查询接口
 // @Description 订单查询接口
+// @Tags owner 店主
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse

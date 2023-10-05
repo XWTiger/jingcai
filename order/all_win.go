@@ -251,6 +251,7 @@ func GetAllWinUser(u user.User) AllWinUser {
 
 // @Summary 合买列表
 // @Description 合买列表
+// @Tags order 订单
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse
@@ -310,6 +311,7 @@ func AllWinList(c *gin.Context) {
 
 // @Summary 合买发起/跟买
 // @Description 合买跟买，发起/跟买 自动确认
+// @Tags order 订单
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse

@@ -9,6 +9,7 @@ import (
 
 // @Summary 查询足彩组合详情
 // @Description 查询足彩组合详情
+// @Tags order 订单
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse

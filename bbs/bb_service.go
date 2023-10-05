@@ -25,6 +25,7 @@ var log = ilog.Logger
 
 // @Summary 提交帖子
 // @Description 提交论坛的帖子
+// @Tags bbs 贴吧
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse
@@ -68,6 +69,7 @@ func getUserInfo(c *gin.Context) user.User {
 
 // @Summary 查询全部贴子
 // @Description 提交论坛的帖子
+// @Tags bbs 贴吧
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse

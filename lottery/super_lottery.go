@@ -268,6 +268,7 @@ var LotteryStatistics = cache2go.Cache("lottery-statistics")
 
 // @Summary 超级大乐透
 // @Description 超级大乐透
+// @Tags lotto 其它彩票
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse
@@ -297,6 +298,7 @@ func SuperLotteryFun(c *gin.Context) {
 
 // @Summary 排列五
 // @Description 排列五
+// @Tags lotto 其它彩票
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse
@@ -334,6 +336,7 @@ func PlwFun(c *gin.Context) {
 
 // @Summary 七星彩
 // @Description 七星彩
+// @Tags lotto 其它彩票
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse

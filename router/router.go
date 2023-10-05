@@ -37,9 +37,12 @@ import (
 
 // @securityDefinitions.basic  BasicAuth
 func BindRouters(g *gin.Engine) {
+
 	g.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	g.GET("/ping", pong)
 	r := g.Group("/api")
+	shopGroup := r.Group("/shop")
+	userGroup := r.Group("/user")
 	r.GET("/salt", common.Salt)
 	r.GET("/notify", advise.Query)
 	r.GET("/tiger-dragon-list", order.TigerDragonList)
@@ -52,7 +55,6 @@ func BindRouters(g *gin.Engine) {
 	}
 
 	//r.GET("/ws", websocket.OrderWebSocket)
-	userGroup := r.Group("/user")
 	{
 		userGroup.POST("", user.UserCreateHandler)
 		userGroup.POST("/login", user.Login)
@@ -64,7 +66,7 @@ func BindRouters(g *gin.Engine) {
 
 	r.GET("/download/:name", files.DownLoad)
 	bbsGroup := r.Group("/bbs")
-	bbsGroup.GET("/list", bbs.ListHandler)
+
 	r.POST("/shop", shop.ShopRegistry)
 	r.Use(user.Authorize())
 	r.POST("/user/complain", user.UserComplain)
@@ -73,7 +75,6 @@ func BindRouters(g *gin.Engine) {
 	s := r.Group("/super")
 	{
 		s.Use(user.AdminCheck())
-		s.GET("/creep", admin.CreepHandler)
 		s.GET("/complains", admin.ListComplain)
 		s.POST("/notify", advise.Create)
 		s.POST("/check/lottery_check", order.AddCheckForManual)
@@ -85,7 +86,7 @@ func BindRouters(g *gin.Engine) {
 		s.GET("/bills", shop.ShopBills)
 		s.GET("/bill/notify", user.BillClearShopNotifyList)
 	}
-	shopGroup := s.Group("/shop")
+
 	{
 		//店铺注册
 		shopGroup.GET("/users", shop.QueryShopUser)
@@ -94,6 +95,7 @@ func BindRouters(g *gin.Engine) {
 
 	{
 		bbsGroup.POST("/commit", bbs.CommitHandler)
+		bbsGroup.GET("/list", bbs.ListHandler)
 		bbsGroup.POST("/response", bbs.ResponseHandler)
 		bbsGroup.POST("/comment", bbs.CommentHandler)
 		bbsGroup.GET("/comment/list", bbs.ListComment)
@@ -110,11 +112,11 @@ func BindRouters(g *gin.Engine) {
 		orderGroup.POST("/follow", order.FollowOrder)
 		orderGroup.POST("/shared", order.SharedOrderList)
 	}
-	/*adminGroup := r.Group("/admin")
+	adminGroup := r.Group("/admin")
 	{
+		adminGroup.GET("/creep", admin.CreepHandler)
 
-
-	}*/
+	}
 
 	//文件上传下载
 	r.POST("/upload", files.Upload)

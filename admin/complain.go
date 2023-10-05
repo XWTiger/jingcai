@@ -10,6 +10,7 @@ import (
 
 // @Summary 查看投诉
 // @Description 查看投诉
+// @Tags owner 店主
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse

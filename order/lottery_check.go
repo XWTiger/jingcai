@@ -762,6 +762,7 @@ type Content struct {
 
 // @Summary 手动触发对账接口
 // @Description 手动触发对账接口
+// @Tags owner 店主
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse
