@@ -118,8 +118,8 @@ func GetMatchFinishedTime(time2 time.Time) time.Time {
 		fmt.Println(err)
 	}
 	if time1.UnixMicro() > time2.UnixMicro() {
-		timeBefore := time2.Second() - 300
-		return time.Unix(int64(timeBefore), 0)
+		timeBefore := time2.UnixMicro() - 300000
+		return time.UnixMicro(timeBefore).Local()
 	} else {
 		return time1
 	}

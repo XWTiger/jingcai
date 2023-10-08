@@ -299,7 +299,7 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 	now := time.Now()
 	//校验是否在售票时间内
 	finishedTime := getFinishedTime(order)
-	if now.Second() > finishedTime.Second() {
+	if now.UnixMicro() > finishedTime.UnixMicro() {
 		common.FailedReturn(c, "现在已经不在营业时间")
 		return
 	}
@@ -514,8 +514,8 @@ func checkSevenStar(ord *Order) error {
 	return nil
 }
 
-// @Summary 订单查询接口
-// @Description 订单查询接口
+// @Summary 用户自己的订单查询接口
+// @Description 用户自己的订单查询接口
 // @Tags order 订单
 // @Accept json
 // @Produce json
@@ -2257,6 +2257,11 @@ func GetDesc(t string, scoreVsScore string) string {
 	return ""
 }
 
+type FollowDto struct {
+	OrderId string
+	Times   int
+}
+
 // @Summary 跟单订单
 // @Description 跟单订单
 // @Tags order 订单
@@ -2264,16 +2269,16 @@ func GetDesc(t string, scoreVsScore string) string {
 // @Produce json
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
-// @param order_id query string true "跟单对象id"
-// @param times query string true "倍数"
+// @param follow body FollowDto true "跟单对象id"
 // @Router /api/order/follow [post]
 func FollowOrder(c *gin.Context) {
-	orderId := c.Param("order_id")
-	times := c.Param("times")
-	if len(orderId) <= 0 {
+	var follow FollowDto
+	c.BindJSON(&follow)
+	if len(follow.OrderId) <= 0 {
 		common.FailedReturn(c, "订单id不能为空")
+		return
 	}
-	order := FindById(orderId, true)
+	order := FindById(follow.OrderId, true)
 	order.UUID = ""
 	if len(order.Matches) > 0 {
 		for _, match := range order.Matches {
@@ -2286,12 +2291,8 @@ func FollowOrder(c *gin.Context) {
 			}
 		}
 	}
-	timesBuy, err := strconv.Atoi(times)
-	if err != nil {
-		common.FailedReturn(c, "参数错误")
-		return
-	}
-	order.Times = timesBuy
+
+	order.Times = follow.Times
 	orderCreateFunc(c, &order)
 }
 
