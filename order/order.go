@@ -309,7 +309,11 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 	var userInfo = user.FetUserInfo(c)
 	order.UserID = userInfo.ID
 	//校验字段
-	validatior.Validator(c, order)
+	verr := validatior.Validator(c, order)
+	if verr != nil {
+		log.Error(verr)
+		return
+	}
 	switch order.LotteryType {
 
 	case FOOTBALL:
@@ -2293,6 +2297,15 @@ func FollowOrder(c *gin.Context) {
 	}
 
 	order.Times = follow.Times
+
+	if strings.Compare(order.LotteryType, FOOTBALL) == 0 || strings.Compare(order.LotteryType, BASKETBALL) == 0 {
+		var uid = uuid.NewV4().String()
+		cache.GetOnTimeFootballMatch(uid)
+		order.LotteryUuid = uid
+	} else {
+		order.LotteryUuid = "8888888"
+	}
+
 	orderCreateFunc(c, &order)
 }
 
