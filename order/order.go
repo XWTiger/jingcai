@@ -182,6 +182,8 @@ type Order struct {
 
 	//比赛完成且完成对比， true 全完成
 	AllMatchFinished bool
+	//售票结束时间
+	DeadTime time.Time
 	//是否中奖
 	Win bool
 
@@ -303,6 +305,7 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 		common.FailedReturn(c, "现在已经不在营业时间")
 		return
 	}
+	order.DeadTime = finishedTime
 	order.Bonus = 0
 	order.UUID = uuid.NewV4().String()
 	order.BetUpload = false
@@ -544,7 +547,8 @@ func OrderList(c *gin.Context) {
 	}
 	var list = make([]Order, 0)
 	var resultList = make([]OrderVO, 0)
-	mysql.DB.Model(&param).Where(&param).Order("created_at desc").Offset(page * pageSize).Limit(pageSize).Find(&list)
+	var count int64
+	mysql.DB.Model(&param).Where(&param).Order("created_at desc").Count(&count).Offset(page * pageSize).Limit(pageSize).Find(&list)
 
 	for index, order := range list {
 		//如果是足球和篮球 就把比赛回填回来
@@ -586,7 +590,13 @@ func OrderList(c *gin.Context) {
 			Images: images,
 		})
 	}
-	common.SuccessReturn(c, resultList)
+
+	common.SuccessReturn(c, common.PageCL{
+		Total:    int(count),
+		Content:  resultList,
+		PageSize: pageSize,
+		PageNo:   page,
+	})
 }
 
 // @Summary 订单分享接口
@@ -621,7 +631,7 @@ func SharedOrderList(c *gin.Context) {
 	var list = make([]Order, 0)
 	var count int64
 
-	mysql.DB.Debug().Model(Order{}).Where(&param).Order("created_at desc").Count(&count).Offset((page - 1) * pageSize).Limit(pageSize).Find(&list)
+	mysql.DB.Debug().Model(Order{}).Where(&param).Where("dead_time > now()").Order("created_at desc").Count(&count).Offset((page - 1) * pageSize).Limit(pageSize).Find(&list)
 
 	for i := 0; i < len(list); i++ {
 		order := list[i]
@@ -2273,14 +2283,14 @@ type FollowDto struct {
 // @Produce json
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
-// @param follow body FollowDto true "跟单对象id"
+// @param follow body FollowDto true "跟单对象"
 // @Router /api/order/follow [post]
 func FollowOrder(c *gin.Context) {
 	var follow FollowDto
 	c.BindJSON(&follow)
+
 	if len(follow.OrderId) <= 0 {
 		common.FailedReturn(c, "订单id不能为空")
-		return
 	}
 	order := FindById(follow.OrderId, true)
 	order.UUID = ""
@@ -2305,7 +2315,7 @@ func FollowOrder(c *gin.Context) {
 	} else {
 		order.LotteryUuid = "8888888"
 	}
-
+	order.Share = false
 	orderCreateFunc(c, &order)
 }
 
