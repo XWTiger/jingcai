@@ -174,7 +174,7 @@ func (tan Leisu) childCreeper(url string, content *Content) {
 		})
 		harmful := buf2.String()
 		favoraContent := fmt.Sprintf("%s: \n %s: \n %s: \n %s: \n %s \n", name, title, favora, harmfulTitle, harmful)
-		fmt.Println(favoraContent)
+		//fmt.Println(favoraContent)
 
 		cname := e.ChildText(".common-item > .middle > .name")
 		ctitle := e.ChildText(".common-item > .middle > .title")
