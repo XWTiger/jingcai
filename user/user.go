@@ -128,7 +128,7 @@ func GetUserInfo(c *gin.Context) {
 	var param = User{}
 	param.ID = user.ID
 
-	if mysql.DB.Model(param).First(&userPO).Error != nil {
+	if mysql.DB.Model(param).Where(&param).First(&userPO).Error != nil {
 		common.FailedReturn(c, "查询信息失败")
 	}
 	var userDTO = UserDTO{

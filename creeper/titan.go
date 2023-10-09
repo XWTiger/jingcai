@@ -1,7 +1,6 @@
 package creeper
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/gocolly/colly"
 	ilog "jingcai/log"
@@ -27,7 +26,7 @@ func (tan Titan) Creep() []Content {
 	c.OnHTML(".theme-content-box > .theme-content", func(e *colly.HTMLElement) {
 
 		predict := e.ChildText(".time > .dpt")
-		log.Info("predict: ", predict)
+		//log.Info("predict: ", predict)
 		title := e.ChildText(".title > a")
 		if title == "" || predict == "" {
 			return
@@ -54,8 +53,8 @@ func (tan Titan) Creep() []Content {
 			contentList = append(contentList, *content)
 			time.Sleep(5000 * time.Microsecond)
 
-			bytes, _ := json.Marshal(content)
-			log.Info(string(bytes))
+			//bytes, _ := json.Marshal(content)
+			//log.Info(string(bytes))
 		} else {
 			log.Info("=======>", realUrl, " 已经被爬过了！")
 		}
