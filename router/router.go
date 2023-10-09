@@ -110,7 +110,7 @@ func BindRouters(g *gin.Engine) {
 		orderGroup.GET("/all_win", order.AllWinList)
 		orderGroup.POST("/all_win", order.AllWinCreateHandler)
 		orderGroup.POST("/follow", order.FollowOrder)
-		orderGroup.POST("/shared", order.SharedOrderList)
+		orderGroup.GET("/shared", order.SharedOrderList)
 	}
 	adminGroup := r.Group("/admin")
 	{

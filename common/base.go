@@ -125,3 +125,18 @@ func GetMatchFinishedTime(time2 time.Time) time.Time {
 	}
 
 }
+
+func GetDateStartAndEnd(time time.Time) (string, string) {
+	now := time
+	var dateEnd string
+	if now.Weekday() == 0 || now.Weekday() == 6 {
+		dateEnd = fmt.Sprintf("%d-%s-%s 22:55:00", now.Year(), getNum(int(now.Month())), getNum(int(now.Day())))
+
+	} else {
+		dateEnd = fmt.Sprintf("%d-%s-%s 21:55:00", now.Year(), getNum(int(now.Month())), getNum(int(now.Day())))
+	}
+
+	var dateStart string
+	dateStart = fmt.Sprintf("%d-%s-%s 00:00:00", now.Year(), getNum(int(now.Month())), getNum(int(now.Day())))
+	return dateStart, dateEnd
+}

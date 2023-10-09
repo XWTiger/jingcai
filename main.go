@@ -73,4 +73,5 @@ func initTables() {
 	mysql.DB.AutoMigrate(&shop.Shop{})
 	mysql.DB.AutoMigrate(&user.User{})
 	mysql.DB.AutoMigrate(&user.ScoreUserNotify{})
+	mysql.DB.AutoMigrate(&order.JobExecution{})
 }

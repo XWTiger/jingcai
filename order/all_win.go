@@ -594,6 +594,13 @@ func AllWinCheck(when time.Time) {
 				}
 
 			}
+			if param != nil {
+				id := fmt.Sprintf("%d", param)
+				err := mysql.DB.Model(JobExecution{}).Update("status", true).Where("id = ?", id).Error
+				if err != nil {
+					log.Error("更新job状态失败!")
+				}
+			}
 		},
 	}
 	AddJob(job)
