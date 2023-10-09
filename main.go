@@ -40,6 +40,7 @@ func main() {
 		os.Exit(1)
 	}
 	initTables()
+	order.OrderCheckInit()
 	ctx, cancel := context.WithCancel(context.Background())
 	if conf.HttpConf.CreeperSwitch {
 		go admin.InitCronForCreep(ctx)

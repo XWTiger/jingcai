@@ -2486,8 +2486,15 @@ func AddPlwCheck(p int) {
 					}
 				}
 				tx.Commit()
-
+				if param != nil {
+					id := fmt.Sprintf("%d", param)
+					err := mysql.DB.Model(JobExecution{}).Update("status", true).Where("id = ?", id).Error
+					if err != nil {
+						log.Error("更新job状态失败!")
+					}
+				}
 			},
+			Type: P3,
 		}
 
 		break
@@ -2522,8 +2529,15 @@ func AddPlwCheck(p int) {
 					}
 				}
 				tx.Commit()
-
+				if param != nil {
+					id := fmt.Sprintf("%d", param)
+					err := mysql.DB.Model(JobExecution{}).Update("status", true).Where("id = ?", id).Error
+					if err != nil {
+						log.Error("更新job状态失败!")
+					}
+				}
 			},
+			Type: P5,
 		}
 		break
 	}
@@ -2532,20 +2546,7 @@ func AddPlwCheck(p int) {
 }
 
 func AddSuperLottoCheck() {
-	resp, err := http.Get(lottery.SUPER_LOTTO_URL)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	defer resp.Body.Close()
-	body, _ := io.ReadAll(resp.Body)
-	var result lottery.SuperLottery
-	err = json.Unmarshal(body, &result)
-	if err != nil || &result.Value == nil {
-		log.Error("转换大乐透结果为对象失败", err)
 
-		return
-	}
 	var job Job
 
 	job = Job{
@@ -2555,6 +2556,20 @@ func AddSuperLottoCheck() {
 			week := time.Now().Weekday()
 			if !(week == 1 || week == 3 || week == 6) {
 				log.Info("========== 不是 1 3 6 不检测大乐透============")
+				return
+			}
+			resp, err := http.Get(lottery.SUPER_LOTTO_URL)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			defer resp.Body.Close()
+			body, _ := io.ReadAll(resp.Body)
+			var result lottery.SuperLottery
+			err = json.Unmarshal(body, &result)
+			if err != nil || &result.Value == nil {
+				log.Error("转换大乐透结果为对象失败", err)
+
 				return
 			}
 			orders := GetOrderByLotteryType("SUPER_LOTTO")
@@ -2645,8 +2660,15 @@ func AddSuperLottoCheck() {
 				}
 			}
 			tx.Commit()
-
+			if param != nil {
+				id := fmt.Sprintf("%d", param)
+				err := mysql.DB.Model(JobExecution{}).Update("status", true).Where("id = ?", id).Error
+				if err != nil {
+					log.Error("更新job状态失败!")
+				}
+			}
 		},
+		Type: SUPER_LOTTO,
 	}
 
 	AddJob(job)
@@ -2654,20 +2676,7 @@ func AddSuperLottoCheck() {
 }
 
 func AddSevenStarCheck() {
-	resp, err := http.Get(lottery.SEVEN_START_URL)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	defer resp.Body.Close()
-	body, _ := io.ReadAll(resp.Body)
-	var result lottery.SevenStar
-	err = json.Unmarshal(body, &result)
-	if err != nil || &result.Value == nil {
-		log.Error("转换大乐透结果为对象失败", err)
 
-		return
-	}
 	var job Job
 
 	job = Job{
@@ -2677,6 +2686,20 @@ func AddSevenStarCheck() {
 			week := time.Now().Weekday()
 			if !(week == 0 || week == 2 || week == 5) {
 				log.Info("========== 不是 0 25 不检测七星彩============")
+				return
+			}
+			resp, err := http.Get(lottery.SEVEN_START_URL)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			defer resp.Body.Close()
+			body, _ := io.ReadAll(resp.Body)
+			var result lottery.SevenStar
+			err = json.Unmarshal(body, &result)
+			if err != nil || &result.Value == nil {
+				log.Error("转换大乐透结果为对象失败", err)
+
 				return
 			}
 			orders := GetOrderByLotteryType("SEVEN_STAR")
@@ -2745,8 +2768,15 @@ func AddSevenStarCheck() {
 				}
 			}
 			tx.Commit()
-
+			if param != nil {
+				id := fmt.Sprintf("%d", param)
+				err := mysql.DB.Model(JobExecution{}).Update("status", true).Where("id = ?", id).Error
+				if err != nil {
+					log.Error("更新job状态失败!")
+				}
+			}
 		},
+		Type: SEVEN_STAR,
 	}
 
 	AddJob(job)

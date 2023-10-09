@@ -602,6 +602,7 @@ func AllWinCheck(when time.Time) {
 				}
 			}
 		},
+		Type: ALL_WIN,
 	}
 	AddJob(job)
 }

@@ -716,9 +716,15 @@ func CheckLottery(whenStart time.Time) error {
 				}
 			}
 			orderTx.Commit()
-
+			if param != nil {
+				id := fmt.Sprintf("%d", param)
+				err := mysql.DB.Model(JobExecution{}).Update("status", true).Where("id = ?", id).Error
+				if err != nil {
+					log.Error("更新job状态失败!")
+				}
+			}
 		},
-		Param: nil,
+		Type: FOOTBALL,
 	}
 	fmt.Println("==========比赛对账任务已经启动============")
 	return AddJob(job)
