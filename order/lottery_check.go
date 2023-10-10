@@ -698,7 +698,8 @@ func CheckLottery(whenStart time.Time) error {
 					}
 					order.Bonus = bonus * float32(order.Times)
 					if err := orderTx.Save(&order).Error; err != nil {
-						log.Error("定时任务，更新订单")
+						log.Error("定时任务，更新订单失败")
+						log.Error(err)
 						orderTx.Rollback()
 						return
 					}
@@ -718,7 +719,7 @@ func CheckLottery(whenStart time.Time) error {
 			orderTx.Commit()
 			if param != nil {
 				id := fmt.Sprintf("%d", param)
-				err := mysql.DB.Model(JobExecution{}).Update("status", true).Where("id = ?", id).Error
+				err := mysql.DB.Model(JobExecution{}).Where("id = ?", id).Update("status", true).Error
 				if err != nil {
 					log.Error("更新job状态失败!")
 				}

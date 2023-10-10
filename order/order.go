@@ -2489,7 +2489,7 @@ func AddPlwCheck(p int) {
 				tx.Commit()
 				if param != nil {
 					id := fmt.Sprintf("%d", param)
-					err := mysql.DB.Model(JobExecution{}).Update("status", true).Where("id = ?", id).Error
+					err := mysql.DB.Model(JobExecution{}).Where("id = ?", id).Update("status", true).Error
 					if err != nil {
 						log.Error("更新job状态失败!")
 					}
@@ -2546,7 +2546,7 @@ func AddPlwCheck(p int) {
 				tx.Commit()
 				if param != nil {
 					id := fmt.Sprintf("%d", param)
-					err := mysql.DB.Model(JobExecution{}).Update("status", true).Where("id = ?", id).Error
+					err := mysql.DB.Model(JobExecution{}).Where("id = ?", id).Update("status", true).Error
 					if err != nil {
 						log.Error("更新job状态失败!")
 					}
@@ -2677,7 +2677,7 @@ func AddSuperLottoCheck() {
 			tx.Commit()
 			if param != nil {
 				id := fmt.Sprintf("%d", param)
-				err := mysql.DB.Model(JobExecution{}).Update("status", true).Where("id = ?", id).Error
+				err := mysql.DB.Model(JobExecution{}).Where("id = ?", id).Update("status", true).Error
 				if err != nil {
 					log.Error("更新job状态失败!")
 				}
@@ -2785,7 +2785,7 @@ func AddSevenStarCheck() {
 			tx.Commit()
 			if param != nil {
 				id := fmt.Sprintf("%d", param)
-				err := mysql.DB.Model(JobExecution{}).Update("status", true).Where("id = ?", id).Error
+				err := mysql.DB.Model(JobExecution{}).Where("id = ?", id).Update("status", true).Error
 				if err != nil {
 					log.Error("更新job状态失败!")
 				}

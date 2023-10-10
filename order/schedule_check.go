@@ -50,7 +50,7 @@ func RecordJob(job *Job) {
 	start, end := common.GetDateStartAndEnd(job.Time)
 	var count int64
 	mysql.DB.Model(&JobExecution{}).Where("time between ? and ?", start, end).Where("type = ? and status = ?", job.Type, 0).Count(&count)
-	if count <= 0 {
+	if count <= 1 {
 		var je = JobExecution{
 			Type:   job.Type,
 			Time:   job.Time,
@@ -63,7 +63,7 @@ func RecordJob(job *Job) {
 
 func OrderCheckInit() {
 	var jobs []JobExecution
-	var counts []int
+	var counts []int = make([]int, 6)
 	mysql.DB.Model(JobExecution{}).Where(&JobExecution{Status: false}).Find(&jobs)
 	for _, job := range jobs {
 		switch job.Type {

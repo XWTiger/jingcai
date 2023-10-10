@@ -17,6 +17,7 @@ var baseUrl = "http://ba2.titan007.com/"
 
 func (tan Titan) Creep() []Content {
 	contentList := make([]Content, 0)
+	log.Info("================ 体探开始=============")
 	// Instantiate default collector
 	c := colly.NewCollector(
 		colly.AllowedDomains("ba2.titan007.com"),
