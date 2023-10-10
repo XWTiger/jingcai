@@ -19,7 +19,7 @@ func CheckLottery(whenStart time.Time) error {
 	job := Job{
 		Time: whenStart,
 		CallBack: func(param interface{}) {
-			log.Info("======= 比赛对账线程开始 ========")
+			log.Info("======= 足球比赛对账线程开始 ========")
 
 			time := time.Now()
 			date := time.Format("2006-01-02 15:04:05")

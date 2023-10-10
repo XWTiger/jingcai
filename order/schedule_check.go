@@ -44,12 +44,12 @@ type JobExecution struct {
 
 // 添加job 记录，一天内记录只有存一次
 func RecordJob(job *Job) {
-	if job.JobId >= 0 {
+	if job.JobId > 0 {
 		return
 	}
 	start, end := common.GetDateStartAndEnd(job.Time)
 	var count int64
-	mysql.DB.Model(&JobExecution{}).Where("time between ? and ?", start, end).Where("type = ?", job.Type).Count(&count)
+	mysql.DB.Model(&JobExecution{}).Where("time between ? and ?", start, end).Where("type = ? and status = ?", job.Type, 0).Count(&count)
 	if count <= 0 {
 		var je = JobExecution{
 			Type:   job.Type,
@@ -111,7 +111,7 @@ func OrderCheckInit() {
 			break
 
 		}
-		mysql.DB.Model(JobExecution{}).Update("status", true).Where("id = ?", job.ID)
+		mysql.DB.Model(JobExecution{}).Where("id = ?", job.ID).Update("status", true)
 	}
 }
 

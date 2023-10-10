@@ -190,11 +190,12 @@ func exchangeHomeAwayTeam(str string) string {
 }
 
 func CheckBasketBallLottery(checkTime time.Time) {
-	var url = "https://webapi.sporttery.cn/gateway/jc/basketball/getMatchResultV2.qry?matchPage=1&matchBeginDate=%s&matchEndDate=%s&leagueId=&pageSize=299&pageNo=1&isFix=0&pcOrWap=1"
+	log.Info("============= 篮球对账任务开启==============")
 	job := Job{
 		Time:  checkTime,
 		Param: nil,
 		CallBack: func(param interface{}) {
+			var url = "https://webapi.sporttery.cn/gateway/jc/basketball/getMatchResultV2.qry?matchPage=1&matchBeginDate=%s&matchEndDate=%s&leagueId=&pageSize=299&pageNo=1&isFix=0&pcOrWap=1"
 			time := time.Now()
 			date := time.Format("2006-01-02 15:04:05")
 			begin := strings.Split(date, " ")[0]

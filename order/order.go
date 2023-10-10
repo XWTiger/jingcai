@@ -2432,20 +2432,7 @@ func CreatePLW(ord *Order) error {
 }
 
 func AddPlwCheck(p int) {
-	resp, err := http.Get(lottery.PLW_URL)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	defer resp.Body.Close()
-	body, _ := io.ReadAll(resp.Body)
-	var result lottery.Plw
-	err = json.Unmarshal(body, &result)
-	if err != nil || &result.Value == nil {
-		log.Error("转换排列5结果为对象失败", err)
-
-		return
-	}
+	log.Info("============ 排列对账任务开启==============")
 	var job Job
 	switch p {
 	case 3:
@@ -2453,6 +2440,20 @@ func AddPlwCheck(p int) {
 			Time:  util.GetPLWFinishedTime(),
 			Param: nil,
 			CallBack: func(param interface{}) {
+				resp, err := http.Get(lottery.PLW_URL)
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+				defer resp.Body.Close()
+				body, _ := io.ReadAll(resp.Body)
+				var result lottery.Plw
+				err = json.Unmarshal(body, &result)
+				if err != nil || &result.Value == nil {
+					log.Error("转换排列5结果为对象失败", err)
+
+					return
+				}
 				orders := GetOrderByLotteryType("P3")
 				tx := mysql.DB.Begin()
 				if len(orders) > 0 {
@@ -2503,6 +2504,20 @@ func AddPlwCheck(p int) {
 			Time:  util.GetPLWFinishedTime(),
 			Param: nil,
 			CallBack: func(param interface{}) {
+				resp, err := http.Get(lottery.PLW_URL)
+				if err != nil {
+					fmt.Println(err)
+					return
+				}
+				defer resp.Body.Close()
+				body, _ := io.ReadAll(resp.Body)
+				var result lottery.Plw
+				err = json.Unmarshal(body, &result)
+				if err != nil || &result.Value == nil {
+					log.Error("转换排列5结果为对象失败", err)
+
+					return
+				}
 				orders := GetOrderByLotteryType("P5")
 				tx := mysql.DB.Begin()
 				if len(orders) > 0 {
@@ -2546,7 +2561,7 @@ func AddPlwCheck(p int) {
 }
 
 func AddSuperLottoCheck() {
-
+	log.Info("============= 大乐透对账任务开启==============")
 	var job Job
 
 	job = Job{
@@ -2676,7 +2691,7 @@ func AddSuperLottoCheck() {
 }
 
 func AddSevenStarCheck() {
-
+	log.Info("============= 七星彩对账任务开启==============")
 	var job Job
 
 	job = Job{
