@@ -2,7 +2,6 @@ package creeper
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"github.com/gocolly/colly"
 	ilog "jingcai/log"
@@ -60,8 +59,8 @@ func (Lei Leisu) Creep() []Content {
 				Lei.childCreeper(childUrl, content)
 				contentList = append(contentList, *content)
 
-				bytes, _ := json.Marshal(content)
-				log.Info(string(bytes))
+				//bytes, _ := json.Marshal(content)
+				//log.Info(string(bytes))
 				time.Sleep(2000 * time.Microsecond)
 			} else {
 				log.Info("=======>", childUrl, " 已经被爬过了！")
@@ -222,7 +221,7 @@ func (tan Leisu) childCreeper(url string, content *Content) {
 }
 func (Lei Leisu) checkIfExist(url string) bool {
 	var content Content
-	if err := mysql.DB.First(&content, "title=?", url).Error; err != nil {
+	if err := mysql.DB.Model(Content{}).Where("title=?", url).First(&content).Error; err != nil {
 		return false
 	}
 	return true
