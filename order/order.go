@@ -2369,7 +2369,7 @@ func CreatePLW(ord *Order) error {
 		log.Error(err)
 		return errors.New("校验期号失败")
 	}
-	if drawNum-issueId != 1 {
+	if issueId-drawNum != 1 {
 		return errors.New("购买期号不正确")
 	}
 
