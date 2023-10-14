@@ -2,6 +2,7 @@ package order
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"io"
@@ -90,10 +91,10 @@ type BaseketBallResult struct {
 	Success   bool   `json:"success"`
 }
 
-func basketball(c *gin.Context, order *Order) {
+func basketball(c *gin.Context, order *Order) error {
 	if len(order.Matches) <= 0 {
 		common.FailedReturn(c, "比赛场数不能为空")
-		return
+		return errors.New("比赛场数不能为空")
 	}
 	tx := mysql.DB.Begin()
 
@@ -101,12 +102,12 @@ func basketball(c *gin.Context, order *Order) {
 	officalMatch, err := cache.GetOnTimeBasketBallMatch(order.LotteryUuid)
 	if officalMatch == nil {
 		common.FailedReturn(c, "查公布信息异常， 请联系管理员！")
-		return
+		return errors.New("查公布信息异常， 请联系管理员！")
 	}
 	fillStatus := fillBasketBallMatches(*officalMatch, order, c, tx)
 	if fillStatus == nil {
 		common.FailedReturn(c, "回填订单信息失败， 请联系管理员！")
-		return
+		return errors.New("回填订单信息失败， 请联系管理员！")
 	}
 
 	//保存所有组合
@@ -116,7 +117,7 @@ func basketball(c *gin.Context, order *Order) {
 		log.Error("解析足彩组合失败", err)
 		common.FailedReturn(c, "解析足彩组合失败")
 		tx.Rollback()
-		return
+		return errors.New("解析足彩组合失败")
 	}
 	fmt.Println("======", order.UUID, "======")
 	for s, v := range mm {
@@ -127,7 +128,7 @@ func basketball(c *gin.Context, order *Order) {
 				log.Error(err)
 				common.FailedReturn(c, "保存组合失败")
 				tx.Rollback()
-				return
+				return errors.New("保存组合失败")
 			}
 			bonus = append(bonus, bet.Bonus)
 			for _, view := range bet.Group {
@@ -136,7 +137,7 @@ func basketball(c *gin.Context, order *Order) {
 					log.Error(err)
 					common.FailedReturn(c, "解析场次失败")
 					tx.Rollback()
-					return
+					return errors.New("解析场次失败")
 				}
 				fmt.Printf("时间：%s \n", view.Time)
 				fmt.Printf("比赛：%s \n", exchangeHomeAwayTeam(view.League))
@@ -166,7 +167,7 @@ func basketball(c *gin.Context, order *Order) {
 		if billErr != nil {
 			log.Error("扣款失败， 无法提交订单")
 			common.FailedReturn(c, billErr.Error())
-			return
+			return errors.New("扣款失败， 无法提交订单")
 		}
 		order.PayStatus = true
 	}
@@ -174,7 +175,7 @@ func basketball(c *gin.Context, order *Order) {
 		log.Error("创建订单失败 ", err)
 		common.FailedReturn(c, "创建订单失败， 请联系店主")
 		tx.Rollback()
-		return
+		return errors.New("创建订单失败， 请联系店主")
 	}
 
 	CheckLottery(util.AddTwoHToTime(order.Matches[len(order.Matches)-1].TimeDate))
@@ -182,6 +183,8 @@ func basketball(c *gin.Context, order *Order) {
 	tx.Commit()
 
 	common.SuccessReturn(c, order.UUID)
+
+	return nil
 }
 
 func exchangeHomeAwayTeam(str string) string {

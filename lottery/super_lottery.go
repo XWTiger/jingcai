@@ -2,13 +2,16 @@ package lottery
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/muesli/cache2go"
 	"io"
 	"jingcai/common"
 	alog "jingcai/log"
+	"jingcai/util"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -293,7 +296,48 @@ func SuperLotteryFun(c *gin.Context) {
 	if !LotteryStatistics.Exists(SUPER_LOTTERY_POOL) {
 		LotteryStatistics.Add(SUPER_LOTTERY_POOL, 6*time.Hour, result.Value.LastPoolDraw.PoolBalanceAfterdraw)
 	}
+	key := GetSuperLotteryIssueKey()
+	if !LotteryStatistics.Exists(key) {
+		LotteryStatistics.Add(key, 9*time.Hour, result.Value.LastPoolDraw.LotteryDrawNum)
+	}
 	common.SuccessReturn(c, result)
+}
+
+func GetSuperLotteryIssueKey() string {
+	var key = fmt.Sprintf("%s,%s", "super-lottery:", util.GetTodayYYHHMMSS())
+	return key
+}
+
+func GetSuperLotteryIssueId() (int, error) {
+	key := GetSuperLotteryIssueKey()
+	if LotteryStatistics.Exists(key) {
+		item, err := LotteryStatistics.Value(key)
+		if err != nil {
+			log.Error(err)
+			return 0, errors.New("获取缓存失败")
+		}
+		num := item.Data().(string)
+		issueId, err := strconv.Atoi(num)
+		return issueId, nil
+	}
+
+	resp, err := http.Get(SUPER_LOTTO_URL)
+	if err != nil {
+		fmt.Println(err)
+		return 0, errors.New("请求在线失败")
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	var result SuperLottery
+	err = json.Unmarshal(body, &result)
+	if err != nil || &result.Value == nil {
+		log.Error("转换大乐透结果为对象失败", err)
+		return 0, errors.New("转换大乐透结果为对象失败")
+	}
+
+	LotteryStatistics.Add(key, 9*time.Hour, result.Value.LastPoolDraw.LotteryDrawNum)
+	issueId, err := strconv.Atoi(result.Value.LastPoolDraw.LotteryDrawNum)
+	return issueId, nil
 }
 
 // @Summary 排列五
@@ -305,6 +349,7 @@ func SuperLotteryFun(c *gin.Context) {
 // @failure 500 {object} common.BaseResponse
 // @Router /lottery-api/plw [get]
 func PlwFun(c *gin.Context) {
+
 	var url = "https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListPlwV1.qry?gameNo=350133&provinceId=0&isVerify=1&termLimits=5"
 	resp, err := http.Get(url)
 	if err != nil {
@@ -330,8 +375,55 @@ func PlwFun(c *gin.Context) {
 	if !LotteryStatistics.Exists(PLW_POOL) {
 		LotteryStatistics.Add(PLW_POOL, 6*time.Hour, result.Value.List[0].PoolBalanceAfterdraw)
 	}
+	key := GetPLWIssueKey()
+	if !LotteryStatistics.Exists(key) {
+		LotteryStatistics.Add(key, 9*time.Hour, result.Value.List[0].LotteryDrawNum)
+	}
 	common.SuccessReturn(c, result)
 
+}
+
+func GetPLWIssueKey() string {
+	var key = fmt.Sprintf("%s,%s", "p3-5:", util.GetTodayYYHHMMSS())
+	return key
+}
+
+func GetPLWIssueId() (int, error) {
+	key := GetPLWIssueKey()
+	if LotteryStatistics.Exists(key) {
+		item, err := LotteryStatistics.Value(key)
+		if err != nil {
+			log.Error(err)
+			return 0, errors.New("获取缓存失败")
+		}
+		num := item.Data().(string)
+		issueId, err := strconv.Atoi(num)
+		return issueId, nil
+	}
+
+	var url = "https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListPlwV1.qry?gameNo=350133&provinceId=0&isVerify=1&termLimits=5"
+	resp, err := http.Get(url)
+	if err != nil {
+		fmt.Println(err)
+		return 0, errors.New("请求失败")
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	fmt.Println(body)
+	if err != nil {
+		log.Error("请求大乐透列表失败: ", err)
+		return 0, errors.New("请求大乐透列表失败")
+	}
+
+	var result Plw
+	err = json.Unmarshal(body, &result)
+	if err != nil || &result.Value == nil {
+		log.Error("转换大乐透结果为对象失败", err)
+		return 0, errors.New("查询失败， 请稍后重试")
+	}
+	LotteryStatistics.Add(key, 9*time.Hour, result.Value.List[0].LotteryDrawNum)
+	issueId, err := strconv.Atoi(result.Value.List[0].LotteryDrawNum)
+	return issueId, nil
 }
 
 // @Summary 七星彩
@@ -362,5 +454,44 @@ func SevenStarFun(c *gin.Context) {
 	if !LotteryStatistics.Exists(SEVEN_STAR_POOL) {
 		LotteryStatistics.Add(SEVEN_STAR_POOL, 6*time.Hour, result.Value.LastPoolDraw.PoolBalanceAfterdraw)
 	}
+	key := GetSevenStarKey()
+	if !LotteryStatistics.Exists(key) {
+		LotteryStatistics.Add(key, 9*time.Hour, result.Value.List[0].LotteryDrawNum)
+	}
 	common.SuccessReturn(c, result)
+}
+
+func GetSevenStarKey() string {
+	var key = fmt.Sprintf("%s,%s", "seven-start:", util.GetTodayYYHHMMSS())
+	return key
+}
+
+func GetSevenStarIssueId() (int, error) {
+	key := GetSevenStarKey()
+	if LotteryStatistics.Exists(key) {
+		item, err := LotteryStatistics.Value(key)
+		if err != nil {
+			log.Error(err)
+			return 0, errors.New("获取缓存失败")
+		}
+		num := item.Data().(string)
+		issueId, err := strconv.Atoi(num)
+		return issueId, nil
+	}
+	resp, err := http.Get(SEVEN_START_URL)
+	if err != nil {
+		fmt.Println(err)
+		return 0, errors.New("请求失败")
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	var result SevenStar
+	err = json.Unmarshal(body, &result)
+	if err != nil || &result.Value == nil {
+		log.Error("转换大乐透结果为对象失败", err)
+		return 0, errors.New("对象转换失败")
+	}
+	LotteryStatistics.Add(key, 9*time.Hour, result.Value.List[0].LotteryDrawNum)
+	issueId, err := strconv.Atoi(result.Value.List[0].LotteryDrawNum)
+	return issueId, nil
 }

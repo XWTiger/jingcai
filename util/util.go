@@ -71,3 +71,10 @@ func getNum(num int) string {
 	}
 
 }
+
+func GetTodayYYHHMMSS() string {
+	now := time.Now()
+	dateEnd := fmt.Sprintf("%d-%s-%s", now.Year(), getNum(int(now.Month())), getNum(int(now.Day())))
+	return dateEnd
+
+}

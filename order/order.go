@@ -320,16 +320,23 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 	switch order.LotteryType {
 
 	case FOOTBALL:
-		football(c, &order)
+		ferr := football(c, &order)
+		if ferr != nil {
+			return
+		}
 		break
 	case BASKETBALL:
-		basketball(c, &order)
+		berr := basketball(c, &order)
+		if berr != nil {
+			return
+		}
 		break
 	case P3:
 		err := CreatePLW(&order)
 		if err != nil {
 			log.Error(err)
 			common.FailedReturn(c, err.Error())
+			return
 		}
 		fmt.Println("=================排列3===================", order.UUID)
 		fmt.Sprintf("逻辑总奖金: %s", order.LogicWinMaX)
@@ -345,6 +352,7 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 		if err != nil {
 			log.Error(err)
 			common.FailedReturn(c, err.Error())
+			return
 		}
 
 		fmt.Println("=================排列5===================", order.UUID)
@@ -363,6 +371,7 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 		if err != nil {
 			log.Error(err)
 			common.FailedReturn(c, err.Error())
+			return
 		}
 
 		if order.AllWinId == 0 {
@@ -442,6 +451,16 @@ func checkSuperLotto(ord *Order) error {
 	if len(ord.IssueId) <= 0 {
 		return errors.New("订单期号不能为空")
 	}
+	//校验期号
+	drawNum, cerr := lottery.GetSuperLotteryIssueId()
+	issueId, err := strconv.Atoi(ord.IssueId)
+	if err != nil || cerr != nil {
+		log.Error(err)
+		return errors.New("校验期号失败")
+	}
+	if issueId-drawNum != 1 {
+		return errors.New("购买期号不正确")
+	}
 
 	nums := getArr(ord.Content)
 	ord.ShouldPay = float32(len(nums) * 2 * ord.Times)
@@ -485,6 +504,16 @@ func checkSevenStar(ord *Order) error {
 
 	if len(ord.IssueId) <= 0 {
 		return errors.New("订单期号不能为空")
+	}
+	//校验期号
+	drawNum, cerr := lottery.GetSevenStarIssueId()
+	issueId, err := strconv.Atoi(ord.IssueId)
+	if err != nil || cerr != nil {
+		log.Error(err)
+		return errors.New("校验期号失败")
+	}
+	if issueId-drawNum != 1 {
+		return errors.New("购买期号不正确")
 	}
 
 	nums := getArr(ord.Content)
@@ -689,10 +718,10 @@ func getNotFinishedOrders() []Order {
 	return list
 }
 
-func football(c *gin.Context, order *Order) {
+func football(c *gin.Context, order *Order) error {
 	if len(order.Matches) <= 0 {
 		common.FailedReturn(c, "比赛场数不能为空")
-		return
+		return errors.New("比赛场数不能为空")
 	}
 	tx := mysql.DB.Begin()
 	defer func() {
@@ -702,11 +731,11 @@ func football(c *gin.Context, order *Order) {
 	officalMatch, err := cache.GetOnTimeFootballMatch(order.LotteryUuid)
 	if officalMatch == nil {
 		common.FailedReturn(c, "查公布信息异常， 请联系管理员！")
-		return
+		return errors.New("查公布信息异常， 请联系管理员！")
 	}
 	fillStatus := fillMatches(*officalMatch, order, c, tx)
 	if fillStatus == nil {
-		return
+		return errors.New("查公布信息异常， 请联系管理员！")
 	}
 
 	//保存所有组合
@@ -717,7 +746,7 @@ func football(c *gin.Context, order *Order) {
 		log.Error("解析足彩组合失败", err)
 		common.FailedReturn(c, "解析足彩组合失败")
 		tx.Rollback()
-		return
+		return errors.New("解析足彩组合失败")
 	}
 	fmt.Println("======", order.UUID, "======")
 	for s, v := range mm {
@@ -728,7 +757,7 @@ func football(c *gin.Context, order *Order) {
 				log.Error(err)
 				common.FailedReturn(c, "保存组合失败")
 				tx.Rollback()
-				return
+				return errors.New("保存组合失败")
 			}
 			bonus = append(bonus, bet.Bonus)
 			for _, view := range bet.Group {
@@ -737,7 +766,7 @@ func football(c *gin.Context, order *Order) {
 					log.Error(err)
 					common.FailedReturn(c, "解析场次失败")
 					tx.Rollback()
-					return
+					return errors.New("解析场次失败")
 				}
 				fmt.Printf("时间：%s \n", view.Time)
 				fmt.Printf("联赛：%s \n", view.League)
@@ -771,7 +800,7 @@ func football(c *gin.Context, order *Order) {
 		if err != nil {
 			log.Error("扣款失败， 无法提交订单")
 			common.FailedReturn(c, billErr.Error())
-			return
+			return errors.New("扣款失败， 无法提交订单")
 		}
 		order.PayStatus = true
 	}
@@ -780,7 +809,7 @@ func football(c *gin.Context, order *Order) {
 		log.Error("创建订单失败 ", err)
 		common.FailedReturn(c, "创建订单失败， 请联系店主")
 		tx.Rollback()
-		return
+		return errors.New("创建订单失败， 请联系店主")
 	}
 
 	fmt.Println("逻辑总奖金: ", order.LogicWinMaX)
@@ -790,6 +819,7 @@ func football(c *gin.Context, order *Order) {
 	//cache.Remove(order.LotteryUuid)
 	tx.Commit()
 	common.SuccessReturn(c, order.UUID)
+	return nil
 }
 func fillMatches(games cache.FootBallGames, order *Order, c *gin.Context, tx *gorm.DB) *Order {
 	if len(order.Matches) <= 0 {
@@ -2345,27 +2375,10 @@ func CreatePLW(ord *Order) error {
 	if strings.Compare(ord.LotteryType, "P5") == 0 {
 		tp = 5
 	}
-	//TODO 优化效率
-	var url = "https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListPlwV1.qry?gameNo=350133&provinceId=0&isVerify=1&termLimits=5"
-	resp, err := http.Get(url)
-	if err != nil {
-		fmt.Println(err)
-		return errors.New("获取期刊失败")
-	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	fmt.Println(body)
-	if err != nil {
-		log.Error("请求大乐透列表失败: ", err)
-		return errors.New("获取期刊失败")
-	}
-
-	var result lottery.Plw
-	err = json.Unmarshal(body, &result)
-
-	drawNum, err := strconv.Atoi(result.Value.List[0].LotteryDrawNum)
+	//校验期号
+	drawNum, cerr := lottery.GetPLWIssueId()
 	issueId, err := strconv.Atoi(ord.IssueId)
-	if err != nil {
+	if err != nil || cerr != nil {
 		log.Error(err)
 		return errors.New("校验期号失败")
 	}
