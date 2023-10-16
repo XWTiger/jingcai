@@ -15,12 +15,10 @@ import (
 )
 
 func CheckLottery(whenStart time.Time) error {
-
+	log.Info("======= 足球比赛对账线程开始 ========")
 	job := Job{
 		Time: whenStart,
 		CallBack: func(param interface{}) {
-			log.Info("======= 足球比赛对账线程开始 ========")
-
 			time := time.Now()
 			date := time.Format("2006-01-02 15:04:05")
 			begin := strings.Split(date, " ")[0]
@@ -727,7 +725,6 @@ func CheckLottery(whenStart time.Time) error {
 		},
 		Type: FOOTBALL,
 	}
-	fmt.Println("==========比赛对账任务已经启动============")
 	return AddJob(job)
 }
 

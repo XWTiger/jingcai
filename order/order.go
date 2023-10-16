@@ -401,7 +401,12 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 		tx.Commit()
 		break
 	case SEVEN_STAR:
-		checkSevenStar(&order)
+		err := checkSevenStar(&order)
+		if err != nil {
+			log.Error(err)
+			common.FailedReturn(c, err.Error())
+			return
+		}
 		tx := mysql.DB.Begin()
 		if order.AllWinId == 0 {
 			billErr := user.CheckScoreOrDoBill(order.UserID, order.ShouldPay, true, tx)
@@ -447,12 +452,16 @@ func checkSuperLotto(ord *Order) error {
 	if len(ord.Content) <= 0 {
 		return errors.New("选号不能为空")
 	}
+	if len(ord.Content) != 13 {
+		return errors.New("选号存在问题")
+	}
 
 	if len(ord.IssueId) <= 0 {
 		return errors.New("订单期号不能为空")
 	}
 	//校验期号
 	drawNum, cerr := lottery.GetSuperLotteryIssueId()
+	fmt.Println("大乐透最新期号=================>", drawNum)
 	issueId, err := strconv.Atoi(ord.IssueId)
 	if err != nil || cerr != nil {
 		log.Error(err)
@@ -491,7 +500,7 @@ func checkSuperLotto(ord *Order) error {
 
 	if !lottery.LotteryStatistics.Exists("super_lotto_check") {
 		lottery.LotteryStatistics.Add("super_lotto_check", 8*time.Hour, 1)
-		AddSuperLottoCheck()
+		AddSuperLottoCheck(nil)
 	}
 
 	return nil
@@ -502,11 +511,17 @@ func checkSevenStar(ord *Order) error {
 		return errors.New("选号不能为空")
 	}
 
+	if len(ord.Content) != 13 {
+		return errors.New("选号存在问题")
+	}
+
 	if len(ord.IssueId) <= 0 {
 		return errors.New("订单期号不能为空")
 	}
+
 	//校验期号
 	drawNum, cerr := lottery.GetSevenStarIssueId()
+	fmt.Println("七星彩最新期号=================>", drawNum)
 	issueId, err := strconv.Atoi(ord.IssueId)
 	if err != nil || cerr != nil {
 		log.Error(err)
@@ -545,7 +560,7 @@ func checkSevenStar(ord *Order) error {
 
 	if !lottery.LotteryStatistics.Exists("seven_star_check") {
 		lottery.LotteryStatistics.Add("seven_star_check", 8*time.Hour, 1)
-		AddSevenStarCheck()
+		AddSevenStarCheck(nil)
 	}
 	return nil
 }
@@ -2369,14 +2384,21 @@ func CreatePLW(ord *Order) error {
 	}
 	var tp = 0
 	if strings.Compare(ord.LotteryType, "P3") == 0 {
+		if len(ord.Content) != 5 {
+			return errors.New("选号存在问题")
+		}
 		tp = 3
 	}
 
 	if strings.Compare(ord.LotteryType, "P5") == 0 {
+		if len(ord.Content) != 9 {
+			return errors.New("选号存在问题")
+		}
 		tp = 5
 	}
 	//校验期号
 	drawNum, cerr := lottery.GetPLWIssueId()
+	fmt.Println("排列最新期号=================>", drawNum)
 	issueId, err := strconv.Atoi(ord.IssueId)
 	if err != nil || cerr != nil {
 		log.Error(err)
@@ -2438,13 +2460,13 @@ func CreatePLW(ord *Order) error {
 	}
 	if !lottery.LotteryStatistics.Exists("plw_check") {
 		lottery.LotteryStatistics.Add("plw_check", 8*time.Hour, 1)
-		AddPlwCheck(tp)
+		AddPlwCheck(tp, nil)
 	}
 	tx.Commit()
 	return nil
 }
 
-func AddPlwCheck(p int) {
+func AddPlwCheck(p int, when *time.Time) {
 	log.Info("============ 排列对账任务开启==============")
 	var job Job
 	switch p {
@@ -2453,6 +2475,7 @@ func AddPlwCheck(p int) {
 			Time:  util.GetPLWFinishedTime(),
 			Param: nil,
 			CallBack: func(param interface{}) {
+				log.Info("========排列3对账任务执行=============")
 				resp, err := http.Get(lottery.PLW_URL)
 				if err != nil {
 					fmt.Println(err)
@@ -2468,12 +2491,21 @@ func AddPlwCheck(p int) {
 					return
 				}
 				orders := GetOrderByLotteryType("P3")
+				//用于映射是否有这个期号
+				var mapper = make(map[string]int)
+				for i, s := range result.Value.List {
+					_, ok := mapper[s.LotteryDrawNum]
+					if !ok {
+						mapper[s.LotteryDrawNum] = i
+					}
+				}
 				tx := mysql.DB.Begin()
 				if len(orders) > 0 {
 					for _, o := range orders {
-						if strings.Compare(result.Value.List[0].LotteryDrawNum, o.IssueId) == 0 {
+						value, ok := mapper[o.IssueId]
+						if ok {
 							content := getArr(o.Content)
-							releaseNum := result.Value.List[0].LotteryDrawResult[0:3]
+							releaseNum := result.Value.List[value].LotteryDrawResult[0:3]
 							for _, s := range content {
 								if strings.Compare(s, releaseNum) == 0 {
 									if strings.Compare(o.PL3Way, PL_SIGNAL) == 0 {
@@ -2517,6 +2549,7 @@ func AddPlwCheck(p int) {
 			Time:  util.GetPLWFinishedTime(),
 			Param: nil,
 			CallBack: func(param interface{}) {
+				log.Info("========排列5对账任务执行=============")
 				resp, err := http.Get(lottery.PLW_URL)
 				if err != nil {
 					fmt.Println(err)
@@ -2532,12 +2565,21 @@ func AddPlwCheck(p int) {
 					return
 				}
 				orders := GetOrderByLotteryType("P5")
+				//用于映射是否有这个期号
+				var mapper map[string]int
+				for i, s := range result.Value.List {
+					_, ok := mapper[s.LotteryDrawNum]
+					if !ok {
+						mapper[s.LotteryDrawNum] = i
+					}
+				}
 				tx := mysql.DB.Begin()
 				if len(orders) > 0 {
 					for _, o := range orders {
-						if strings.Compare(result.Value.List[0].LotteryDrawNum, o.IssueId) == 0 {
+						index, ok := mapper[o.IssueId]
+						if ok {
 							content := getArr(o.Content)
-							releaseNum := result.Value.List[0].LotteryDrawResult
+							releaseNum := result.Value.List[index].LotteryDrawResult
 							for _, s := range content {
 								if strings.Compare(s, releaseNum) == 0 {
 									o.Bonus = o.Bonus + 100000
@@ -2569,11 +2611,14 @@ func AddPlwCheck(p int) {
 		}
 		break
 	}
+	if when != nil {
+		job.Time = *when
+	}
 	AddJob(job)
 
 }
 
-func AddSuperLottoCheck() {
+func AddSuperLottoCheck(when *time.Time) {
 	log.Info("============= 大乐透对账任务开启==============")
 	var job Job
 
@@ -2581,11 +2626,12 @@ func AddSuperLottoCheck() {
 		Time:  util.GetPLWFinishedTime(),
 		Param: nil,
 		CallBack: func(param interface{}) {
-			week := time.Now().Weekday()
+			log.Info("========大乐透对账任务执行=============")
+			/*week := time.Now().Weekday()
 			if !(week == 1 || week == 3 || week == 6) {
 				log.Info("========== 不是 1 3 6 不检测大乐透============")
 				return
-			}
+			}*/
 			resp, err := http.Get(lottery.SUPER_LOTTO_URL)
 			if err != nil {
 				fmt.Println(err)
@@ -2600,13 +2646,22 @@ func AddSuperLottoCheck() {
 
 				return
 			}
+			//用于映射是否有这个期号
+			var mapper = make(map[string]int)
+			for i, s := range result.Value.List {
+				_, ok := mapper[s.LotteryDrawNum]
+				if !ok {
+					mapper[s.LotteryDrawNum] = i
+				}
+			}
 			orders := GetOrderByLotteryType("SUPER_LOTTO")
 			tx := mysql.DB.Begin()
 			if len(orders) > 0 {
 				for _, o := range orders {
-					if strings.Compare(result.Value.LastPoolDraw.LotteryDrawNum, o.IssueId) == 0 {
+					index, ok := mapper[o.IssueId]
+					if ok {
 						content := getArr(o.Content)
-						releaseNum := result.Value.LastPoolDraw.LotteryDrawResult
+						releaseNum := result.Value.List[index].LotteryDrawResult
 						for _, s := range content {
 							if strings.Compare(s, releaseNum) == 0 {
 								//一等奖
@@ -2698,11 +2753,14 @@ func AddSuperLottoCheck() {
 		},
 		Type: SUPER_LOTTO,
 	}
-
+	if when != nil {
+		job.Time = *when
+	}
 	AddJob(job)
 
 }
 
+func AddSevenStarCheck(when *time.Time) {
 type WinUserPO struct {
 	Phone string
 	//用户昵称
@@ -2727,11 +2785,12 @@ func AddSevenStarCheck() {
 		Time:  util.GetPLWFinishedTime(),
 		Param: nil,
 		CallBack: func(param interface{}) {
-			week := time.Now().Weekday()
+			log.Info("========七星彩对账任务执行=============")
+			/*week := time.Now().Weekday()
 			if !(week == 0 || week == 2 || week == 5) {
-				log.Info("========== 不是 0 25 不检测七星彩============")
+				log.Info("========== 不是 0 2 5 不检测七星彩============")
 				return
-			}
+			}*/
 			resp, err := http.Get(lottery.SEVEN_START_URL)
 			if err != nil {
 				fmt.Println(err)
@@ -2747,12 +2806,21 @@ func AddSevenStarCheck() {
 				return
 			}
 			orders := GetOrderByLotteryType("SEVEN_STAR")
+			//用于映射是否有这个期号
+			var mapper = make(map[string]int)
+			for i, s := range result.Value.List {
+				_, ok := mapper[s.LotteryDrawNum]
+				if !ok {
+					mapper[s.LotteryDrawNum] = i
+				}
+			}
 			tx := mysql.DB.Begin()
 			if len(orders) > 0 {
 				for _, o := range orders {
-					if strings.Compare(result.Value.LastPoolDraw.LotteryDrawNum, o.IssueId) == 0 {
+					index, ok := mapper[o.IssueId]
+					if ok {
 						content := getArr(o.Content)
-						releaseNum := result.Value.LastPoolDraw.LotteryDrawResult
+						releaseNum := result.Value.List[index].LotteryDrawResult
 						for _, s := range content {
 							if strings.Compare(s, releaseNum) == 0 {
 								//一等奖
@@ -2822,7 +2890,9 @@ func AddSevenStarCheck() {
 		},
 		Type: SEVEN_STAR,
 	}
-
+	if when != nil {
+		job.Time = *when
+	}
 	AddJob(job)
 
 }

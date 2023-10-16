@@ -12,7 +12,6 @@ import (
 	"github.com/pascaldekloe/jwt"
 	uuid "github.com/satori/go.uuid"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 	"jingcai/common"
 	ilog "jingcai/log"
 	"jingcai/mysql"
@@ -526,8 +525,11 @@ func CheckScoreOrDoBill(userId uint, score float32, doBill bool, tx *gorm.DB) er
 
 func ReturnScore(userId uint, score float32) error {
 	var user User
+	var mu sync.Mutex
+	mu.Lock()
 	tx := mysql.DB.Begin()
-	if err := tx.Model(User{}).Where(&User{Model: gorm.Model{ID: userId}}).Clauses(clause.Locking{Strength: "UPDATE"}).First(&user).Error; err != nil {
+	if err := tx.Model(User{}).Where(&User{Model: gorm.Model{ID: userId}}).First(&user).Error; err != nil {
+		mu.Unlock()
 		return errors.New("用户查询失败")
 	}
 	if score > user.Score {
@@ -536,6 +538,7 @@ func ReturnScore(userId uint, score float32) error {
 	user.Score = user.Score + score
 	tx.Model(&user).Update("score", user.Score)
 
+	mu.Unlock()
 	tx.Commit()
 	return nil
 }

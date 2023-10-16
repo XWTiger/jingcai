@@ -53,29 +53,29 @@ type SuperLottery struct {
 			} `json:"prizeLevelList"`
 		} `json:"lastPoolDraw"`
 		List []struct {
-			DrawFlowFund            string        `json:"drawFlowFund"`
-			DrawFlowFundRj          string        `json:"drawFlowFundRj"`
-			DrawPdfUrl              string        `json:"drawPdfUrl"`
-			EstimateDrawTime        string        `json:"estimateDrawTime"`
-			IsGetKjpdf              int           `json:"isGetKjpdf"`
-			IsGetXlpdf              int           `json:"isGetXlpdf"`
-			LotteryDrawNum          string        `json:"lotteryDrawNum"`
-			LotteryDrawResult       string        `json:"lotteryDrawResult"`
-			LotteryDrawStatus       int           `json:"lotteryDrawStatus"`
-			LotteryDrawStatusNo     string        `json:"lotteryDrawStatusNo"`
-			LotteryDrawTime         string        `json:"lotteryDrawTime"`
-			LotteryEquipmentCount   int           `json:"lotteryEquipmentCount"`
-			LotteryGameName         string        `json:"lotteryGameName"`
-			LotteryGameNum          string        `json:"lotteryGameNum"`
-			LotteryGamePronum       int           `json:"lotteryGamePronum"`
-			LotteryNotice           int           `json:"lotteryNotice"`
-			LotteryNoticeShowFlag   int           `json:"lotteryNoticeShowFlag"`
-			LotteryPaidBeginTime    string        `json:"lotteryPaidBeginTime"`
-			LotteryPaidEndTime      string        `json:"lotteryPaidEndTime"`
-			LotteryPromotionFlag    int           `json:"lotteryPromotionFlag"`
-			LotteryPromotionFlagRj  int           `json:"lotteryPromotionFlagRj"`
-			LotterySaleBeginTime    string        `json:"lotterySaleBeginTime"`
-			LotterySaleEndTimeUnix  int           `json:"lotterySaleEndTimeUnix"`
+			DrawFlowFund           string `json:"drawFlowFund"`
+			DrawFlowFundRj         string `json:"drawFlowFundRj"`
+			DrawPdfUrl             string `json:"drawPdfUrl"`
+			EstimateDrawTime       string `json:"estimateDrawTime"`
+			IsGetKjpdf             int    `json:"isGetKjpdf"`
+			IsGetXlpdf             int    `json:"isGetXlpdf"`
+			LotteryDrawNum         string `json:"lotteryDrawNum"`
+			LotteryDrawResult      string `json:"lotteryDrawResult"`
+			LotteryDrawStatus      int    `json:"lotteryDrawStatus"`
+			LotteryDrawStatusNo    string `json:"lotteryDrawStatusNo"`
+			LotteryDrawTime        string `json:"lotteryDrawTime"`
+			LotteryEquipmentCount  int    `json:"lotteryEquipmentCount"`
+			LotteryGameName        string `json:"lotteryGameName"`
+			LotteryGameNum         string `json:"lotteryGameNum"`
+			LotteryGamePronum      int    `json:"lotteryGamePronum"`
+			LotteryNotice          int    `json:"lotteryNotice"`
+			LotteryNoticeShowFlag  int    `json:"lotteryNoticeShowFlag"`
+			LotteryPaidBeginTime   string `json:"lotteryPaidBeginTime"`
+			LotteryPaidEndTime     string `json:"lotteryPaidEndTime"`
+			LotteryPromotionFlag   int    `json:"lotteryPromotionFlag"`
+			LotteryPromotionFlagRj int    `json:"lotteryPromotionFlagRj"`
+			LotterySaleBeginTime   string `json:"lotterySaleBeginTime"`
+			//LotterySaleEndTimeUnix  int           `json:"lotterySaleEndTimeUnix"`
 			LotterySaleEndtime      string        `json:"lotterySaleEndtime"`
 			LotterySuspendedFlag    int           `json:"lotterySuspendedFlag"`
 			LotteryUnsortDrawresult string        `json:"lotteryUnsortDrawresult"`
@@ -358,7 +358,6 @@ func PlwFun(c *gin.Context) {
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
-	fmt.Println(body)
 	if err != nil {
 		log.Error("请求大乐透列表失败: ", err)
 		return
@@ -409,7 +408,6 @@ func GetPLWIssueId() (int, error) {
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
-	fmt.Println(body)
 	if err != nil {
 		log.Error("请求大乐透列表失败: ", err)
 		return 0, errors.New("请求大乐透列表失败")

@@ -64,21 +64,25 @@ func RecordJob(job *Job) {
 func OrderCheckInit() {
 	var jobs []JobExecution
 	var counts []int = make([]int, 6)
-	mysql.DB.Model(JobExecution{}).Where(&JobExecution{Status: false}).Find(&jobs)
+	mysql.DB.Debug().Model(JobExecution{}).Where("status=?", false).Find(&jobs)
+	now := time.Now()
+	nowAdd := now.Add(time.Minute * 5)
 	for _, job := range jobs {
 		switch job.Type {
 		case FOOTBALL:
 			if job.Time.Unix() > time.Now().Unix() {
 				CheckLottery(job.Time)
 			} else if counts[0] <= 0 {
-				now := time.Now()
+
 				CheckLottery(now.Add(time.Minute * 5))
 				counts[0] = 1
 			}
 			break
 		case P3:
-			if counts[1] <= 0 {
-				AddPlwCheck(3)
+			if job.Time.Unix() > time.Now().Unix() {
+				AddPlwCheck(3, &job.Time)
+			} else if counts[1] <= 0 {
+				AddPlwCheck(3, &nowAdd)
 				counts[1] = 1
 			}
 			break
@@ -92,20 +96,26 @@ func OrderCheckInit() {
 			}
 			break
 		case SEVEN_STAR:
-			if counts[3] <= 0 {
-				AddSevenStarCheck()
+			if job.Time.Unix() > time.Now().Unix() {
+				AddSevenStarCheck(&job.Time)
+			} else if counts[3] <= 0 {
+				AddSevenStarCheck(&nowAdd)
 				counts[3] = 1
 			}
 			break
 		case SUPER_LOTTO:
-			if counts[4] <= 0 {
-				AddSuperLottoCheck()
+			if job.Time.Unix() > time.Now().Unix() {
+				AddSuperLottoCheck(&job.Time)
+			} else if counts[4] <= 0 {
+				AddSuperLottoCheck(&nowAdd)
 				counts[4] = 1
 			}
 			break
 		case P5:
-			if counts[5] <= 0 {
-				AddPlwCheck(5)
+			if job.Time.Unix() > time.Now().Unix() {
+				AddPlwCheck(5, &job.Time)
+			} else if counts[5] <= 0 {
+				AddPlwCheck(5, &nowAdd)
 				counts[5] = 1
 			}
 			break

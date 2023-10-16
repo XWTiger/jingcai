@@ -544,6 +544,7 @@ func AllWinCheck(when time.Time) {
 	job := Job{
 		Time: when,
 		CallBack: func(param interface{}) {
+			log.Info("========合买对账任务执行=============")
 			var allWinOrders = make([]AllWin, 0)
 			mysql.DB.Model(AllWin{}).Where(AllWin{Timeout: false, Status: false, ParentId: 0}).Find(&allWinOrders)
 			if len(allWinOrders) > 0 {
