@@ -54,6 +54,12 @@ func BindRouters(g *gin.Engine) {
 		lott.GET("/super-lottery", lottery.SuperLotteryFun)
 	}
 
+	//广告类接口
+	/*adGroup := r.Group("/advertising")
+	{
+
+	}*/
+
 	//r.GET("/ws", websocket.OrderWebSocket)
 	{
 		userGroup.POST("", user.UserCreateHandler)
@@ -67,6 +73,7 @@ func BindRouters(g *gin.Engine) {
 	r.POST("/shop", shop.ShopRegistry)
 	r.Use(user.Authorize())
 	{
+		userGroup.Use(user.Authorize())
 		userGroup.POST("/bill/notify", user.BillClearNotify)
 		userGroup.GET("/bill/notify", user.BillClearNotifyList)
 		userGroup.GET("/owner", user.GetShopOwnerInfo)

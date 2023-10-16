@@ -153,9 +153,19 @@ func ShopBills(c *gin.Context) {
 	}
 	pageN, _ := strconv.Atoi(pageNo)
 	pageS, _ := strconv.Atoi(pageSize)
-	var bills user.Bill
-	mysql.DB.Model(user.Bill{}).Where(user.Bill{ShopId: shopInfo.ID}).Where("created_at BETWEEN ? AND ? ", start, end).Offset((pageN - 1) * pageS).Limit(pageS).Find(&bills)
-	common.SuccessReturn(c, bills)
+	var bills []user.Bill
+	var count int64
+	if start != "" && end != "" {
+		mysql.DB.Model(user.Bill{}).Where(user.Bill{ShopId: shopInfo.ID}).Where("created_at BETWEEN ? AND ? ", start, end).Offset((pageN - 1) * pageS).Limit(pageS).Count(&count).Find(&bills)
+	} else {
+		mysql.DB.Model(user.Bill{}).Where(user.Bill{ShopId: shopInfo.ID}).Offset((pageN - 1) * pageS).Limit(pageS).Count(&count).Find(&bills)
+	}
+	common.SuccessReturn(c, common.PageCL{
+		PageNo:   pageN,
+		PageSize: pageS,
+		Total:    int(count),
+		Content:  bills,
+	})
 }
 
 // @Summary 管理员基础统计

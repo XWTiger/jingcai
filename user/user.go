@@ -33,13 +33,15 @@ const LOCK_TIMES = 5
 
 // 清账方式  WECHAT(微信) CARD(银行卡) ALI(支付宝) SCORE(积分清账)
 const (
-	SCORE    = "SCORE"
-	RMB      = "RMB"
-	ADD      = "ADD" //增加
-	SUBTRACT = "SUBTRACT"
-	WECHAT   = "WECHAT" //微信
-	CARD     = "CARD"   //银行卡
-	ALI      = "ALI"    //支付宝
+	SCORE       = "SCORE"
+	RMB         = "RMB"
+	ADD         = "ADD" //增加
+	SUBTRACT    = "SUBTRACT"
+	WECHAT      = "WECHAT" //微信
+	CARD        = "CARD"   //银行卡
+	ALI         = "ALI"    //支付宝
+	SALE        = "Sale"   //销售角色
+	SUPER_ADMIN = "SuperAdmin"
 )
 
 type User struct {
@@ -51,7 +53,7 @@ type User struct {
 	Secret string
 	//盐
 	Salt string
-	Role string //"enum: Admin,User"
+	Role string //"enum: Admin,User,Sale"
 	//微信号
 	Wechat string
 	//支付宝号

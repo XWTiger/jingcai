@@ -2703,6 +2703,22 @@ func AddSuperLottoCheck() {
 
 }
 
+type WinUserPO struct {
+	Phone string
+	//用户昵称
+	Name string
+	//金额
+	Bonus float32
+	//中奖时间
+	Time time.Time
+}
+
+func GetWinUserList(c *gin.Context) {
+	var orders []Order
+	mysql.DB.Where("win", true).Find(&orders)
+
+}
+
 func AddSevenStarCheck() {
 	log.Info("============= 七星彩对账任务开启==============")
 	var job Job
