@@ -413,6 +413,11 @@ func Logout(c *gin.Context) {
 
 func getUserInfo(c *gin.Context) User {
 	user, _ := c.Get("userInfo")
+	if user == nil {
+		log.Error("获取不到用户信息！")
+		common.FailedReturn(c, "获取不到用户信息")
+		c.Abort()
+	}
 	return user.(User)
 }
 

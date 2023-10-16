@@ -59,9 +59,6 @@ func BindRouters(g *gin.Engine) {
 		userGroup.POST("", user.UserCreateHandler)
 		userGroup.POST("/login", user.Login)
 		userGroup.POST("/logout", user.Logout)
-		userGroup.POST("/bill/notify", user.BillClearNotify)
-		userGroup.GET("/bill/notify", user.BillClearNotifyList)
-		userGroup.GET("/owner", user.GetShopOwnerInfo)
 	}
 
 	r.GET("/download/:name", files.DownLoad)
@@ -69,6 +66,11 @@ func BindRouters(g *gin.Engine) {
 
 	r.POST("/shop", shop.ShopRegistry)
 	r.Use(user.Authorize())
+	{
+		userGroup.POST("/bill/notify", user.BillClearNotify)
+		userGroup.GET("/bill/notify", user.BillClearNotifyList)
+		userGroup.GET("/owner", user.GetShopOwnerInfo)
+	}
 	r.POST("/user/complain", user.UserComplain)
 	r.GET("/user/info", user.GetUserInfo)
 	r.POST("/user/info", user.UpdateUser)
