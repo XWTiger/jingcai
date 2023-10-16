@@ -52,10 +52,10 @@ func BindRouters(g *gin.Engine) {
 	}
 
 	//广告类接口
-	/*adGroup := r.Group("/advertising")
+	adGroup := r.Group("/advertising")
 	{
-
-	}*/
+		adGroup.GET("/win-list", order.GetWinUserList)
+	}
 
 	//r.GET("/ws", websocket.OrderWebSocket)
 	{

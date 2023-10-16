@@ -2761,23 +2761,7 @@ func AddSuperLottoCheck(when *time.Time) {
 }
 
 func AddSevenStarCheck(when *time.Time) {
-type WinUserPO struct {
-	Phone string
-	//用户昵称
-	Name string
-	//金额
-	Bonus float32
-	//中奖时间
-	Time time.Time
-}
 
-func GetWinUserList(c *gin.Context) {
-	var orders []Order
-	mysql.DB.Where("win", true).Find(&orders)
-
-}
-
-func AddSevenStarCheck() {
 	log.Info("============= 七星彩对账任务开启==============")
 	var job Job
 
@@ -2896,7 +2880,6 @@ func AddSevenStarCheck() {
 	AddJob(job)
 
 }
-
 func randomNumBeforeDirect(length int, num int, userNum string, releaseNum string) (bool, int) {
 	//前5任意数量的数值相同
 	var count = 0
