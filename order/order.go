@@ -2521,6 +2521,7 @@ func AddPlwCheck(p int, when *time.Time) {
 									o.Win = true
 								}
 							}
+							//TODO 组合3和组合6计算
 							o.AllMatchFinished = true
 						}
 						if o.Win == true {
@@ -2671,37 +2672,41 @@ func AddSuperLottoCheck(when *time.Time) {
 								o.Way = "一等奖"
 								continue
 							}
-							if strings.Compare(s[0:4], releaseNum[0:4]) == 0 && (strings.Compare(s[5:5], releaseNum[5:5]) == 0 || strings.Compare(s[6:6], releaseNum[6:6]) == 0) {
+							yes, count := randomNumBeforeDirect(5, 5, s, releaseNum)
+							index := []int{5, 6}
+							state, countR := CompareDirectNum(index, 1, s, releaseNum)
+							if yes && state {
 								//前5相同 后面两个任意一个相同
 								o.Bonus = o.Bonus + 2000000
 								o.Win = true
 								o.Way = fmt.Sprintf("%s + %s", o.Way, "二等奖")
 								continue
 							}
-							if strings.Compare(s[0:4], releaseNum[0:4]) == 0 {
+							if yes {
 								//五个前区号码相同
 								o.Bonus = o.Bonus + 10000
 								o.Win = true
 								o.Way = fmt.Sprintf("%s + %s", o.Way, "三等奖")
 								continue
 							}
+
 							//任意四个前区号码及两个后区号码相同
-							yes, count := randomNumBeforeDirect(5, 4, s, releaseNum)
-							if yes && strings.Compare(s[5:5], releaseNum[5:5]) == 0 && strings.Compare(s[6:6], releaseNum[6:6]) == 0 {
+							if count == 4 && countR == 2 {
 								o.Bonus = o.Bonus + 3000
 								o.Win = true
 								o.Way = fmt.Sprintf("%s + %s", o.Way, "四等奖")
 								continue
 							}
 
-							if yes && (strings.Compare(s[5:5], releaseNum[5:5]) == 0 || strings.Compare(s[6:6], releaseNum[6:6]) == 0) {
+							//任意前区4个号码以及后区一个
+							if count == 4 && countR == 1 {
 								o.Bonus = o.Bonus + 300
 								o.Win = true
 								o.Way = fmt.Sprintf("%s + %s", o.Way, "五等奖")
 								continue
 							}
 
-							if 3 == count && strings.Compare(s[5:5], releaseNum[5:5]) == 0 && strings.Compare(s[6:6], releaseNum[6:6]) == 0 {
+							if 3 == count && countR == 2 {
 								o.Bonus = o.Bonus + 200
 								o.Win = true
 								o.Way = fmt.Sprintf("%s + %s", o.Way, "六等奖")
@@ -2715,15 +2720,14 @@ func AddSuperLottoCheck(when *time.Time) {
 								continue
 							}
 
-							if 3 == count && (strings.Compare(s[5:5], releaseNum[5:5]) == 0 || strings.Compare(s[6:6], releaseNum[6:6]) == 0) {
+							if 3 == count && countR == 1 {
 								o.Bonus = o.Bonus + 15
 								o.Win = true
 								o.Way = fmt.Sprintf("%s + %s", o.Way, "八等奖")
 								continue
 							}
 
-							if 3 == count || (count == 2 && (strings.Compare(s[5:5], releaseNum[5:5]) == 0 || strings.Compare(s[6:6], releaseNum[6:6]) == 0)) || (count == 1 && (strings.Compare(s[5:5], releaseNum[5:5]) == 0 && strings.Compare(s[6:6], releaseNum[6:6]) == 0)) ||
-								strings.Compare(s[5:5], releaseNum[5:5]) == 0 && strings.Compare(s[6:6], releaseNum[6:6]) == 0 {
+							if 3 == count || (1 == count && 2 == countR) || (2 == count && 1 == countR) || countR == 2 {
 								o.Bonus = o.Bonus + 5
 								o.Win = true
 								o.Way = fmt.Sprintf("%s + %s", o.Way, "九等奖")
@@ -2814,8 +2818,9 @@ func AddSevenStarCheck(when *time.Time) {
 								o.Way = "一等奖"
 								continue
 							}
-							if strings.Compare(s[0:5], releaseNum[0:5]) == 0 {
-								//前5相同 后面两个任意一个相同
+							yes, count := randomNumBeforeDirect(6, 6, s, releaseNum)
+							if yes {
+								//前6相同
 								o.Bonus = o.Bonus + 2000000
 								o.Win = true
 								o.Way = fmt.Sprintf("%s + %s", o.Way, "二等奖")
@@ -2823,29 +2828,31 @@ func AddSevenStarCheck(when *time.Time) {
 							}
 
 							//投注号码前6位中的任意5个数字与开奖号码对应位置数字相同且最后一个数字与开奖号码对应位置数字相同，即中奖
-							yes, count := randomNumBeforeDirect(6, 5, s, releaseNum)
-							if yes && strings.Compare(s[6:6], releaseNum[6:6]) == 0 {
+
+							index2 := []int{6}
+							yr, _ := CompareDirectNum(index2, 1, s, releaseNum)
+							if count == 5 && yr {
 								o.Bonus = o.Bonus + 3000
 								o.Win = true
 								o.Way = fmt.Sprintf("%s + %s", o.Way, "三等奖")
 								continue
 							}
-							y, count := randomNumBeforeDirect(7, 5, s, releaseNum)
-							if y {
+							_, countR := randomNumBeforeDirect(7, 5, s, releaseNum)
+							if countR == 5 {
 								o.Bonus = o.Bonus + 500
 								o.Win = true
 								o.Way = fmt.Sprintf("%s + %s", o.Way, "四等奖")
 								continue
 							}
 
-							if 4 == count {
+							if 4 == countR {
 								o.Bonus = o.Bonus + 30
 								o.Win = true
 								o.Way = fmt.Sprintf("%s + %s", o.Way, "五等奖")
 								continue
 							}
 
-							if 3 == count || (count == 1 && strings.Compare(s[6:6], releaseNum[6:6]) == 0) || (strings.Compare(s[6:6], releaseNum[6:6]) == 0) {
+							if 3 == countR || (1 == countR && yr) || yr {
 								o.Bonus = o.Bonus + 5
 								o.Win = true
 								o.Way = fmt.Sprintf("%s + %s", o.Way, "六等奖")
@@ -2882,7 +2889,7 @@ func AddSevenStarCheck(when *time.Time) {
 
 }
 
-// 对比号码， length 个数  是否满足num
+// 对比号码， length 个数  是否满足num个
 func randomNumBeforeDirect(length int, num int, userNum string, releaseNum string) (bool, int) {
 	//前5任意数量的数值相同
 	var count = 0
@@ -2895,6 +2902,24 @@ func randomNumBeforeDirect(length int, num int, userNum string, releaseNum strin
 		}
 	}
 	if count >= num {
+		return true, count
+	}
+	return false, count
+}
+
+// 对比号码， length 个数  是否满足num个
+func CompareDirectNum(index []int, number int, userNum string, releaseNum string) (bool, int) {
+	//前5任意数量的数值相同
+	var count = 0
+	numBuffer := strings.Split(userNum, " ")
+	releaseBuffer := strings.Split(releaseNum, " ")
+
+	for i := 0; i < len(index); i++ {
+		if util.PaddingZeroCompare(numBuffer[index[i]], releaseBuffer[index[i]]) {
+			count += 1
+		}
+	}
+	if count >= number {
 		return true, count
 	}
 	return false, count

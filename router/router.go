@@ -15,8 +15,8 @@ import (
 	"jingcai/order"
 	"jingcai/shop"
 	"jingcai/user"
+	"jingcai/util"
 	"net/http"
-	"strconv"
 )
 
 // @title           黑马推荐接口
@@ -146,13 +146,11 @@ func pong(c *gin.Context) {
 	}}).Find(&user2)
 	fmt.Println(user2.Name)
 	*/
-	num, err := strconv.Atoi("09")
-
-	num2, err := strconv.Atoi("9")
-	if err != nil {
-		fmt.Println(err)
+	arr := []int{1, 2, 3}
+	result := util.Permute(arr)
+	for _, ints := range result {
+		fmt.Println(ints)
 	}
-	fmt.Println(num, num2, num2 == num)
 	c.String(http.StatusOK, "pong")
 
 }

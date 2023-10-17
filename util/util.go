@@ -94,3 +94,38 @@ func GetTodayYYHHMMSS() string {
 	return dateEnd
 
 }
+
+func Permute(nums []int) [][]int {
+	res := make([][]int, 0)
+	track := make([]int, 0)
+	used := make([]bool, len(nums))
+	backtrackA(&res, &track, nums, used)
+	return res
+}
+
+func backtrackA(res *[][]int, track *[]int, nums []int, used []bool) {
+	// base case，到达叶子节点
+	if len(*track) == len(nums) {
+		// 收集叶子节点上的值
+		tmp := make([]int, len(*track))
+		copy(tmp, *track)
+		*res = append(*res, tmp)
+		return
+	}
+
+	// 回溯算法标准框架
+	for i := 0; i < len(nums); i++ {
+		// 已经存在 track 中的元素，不能重复选择
+		if used[i] {
+			continue
+		}
+		// 做选择
+		used[i] = true
+		*track = append(*track, nums[i])
+		// 进入下一层回溯树
+		backtrackA(res, track, nums, used)
+		// 取消选择
+		*track = (*track)[:len(*track)-1]
+		used[i] = false
+	}
+}
