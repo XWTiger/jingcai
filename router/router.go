@@ -1,6 +1,7 @@
 package router
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -11,11 +12,11 @@ import (
 	"jingcai/common"
 	"jingcai/files"
 	"jingcai/lottery"
-	"jingcai/mysql"
 	"jingcai/order"
 	"jingcai/shop"
 	"jingcai/user"
 	"net/http"
+	"strconv"
 )
 
 // @title           黑马推荐接口
@@ -145,10 +146,13 @@ func pong(c *gin.Context) {
 	}}).Find(&user2)
 	fmt.Println(user2.Name)
 	*/
-	var jobs order.JobExecution
-	mysql.DB.Debug().Model(&order.JobExecution{Status: false}).Where(&order.JobExecution{
-		Status: false,
-	}).Find(&jobs)
+	num, err := strconv.Atoi("09")
+
+	num2, err := strconv.Atoi("9")
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(num, num2, num2 == num)
 	c.String(http.StatusOK, "pong")
 
 }

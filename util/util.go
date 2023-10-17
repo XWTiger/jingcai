@@ -72,6 +72,22 @@ func getNum(num int) string {
 
 }
 
+// 09 和 9 对比校验
+func PaddingZeroCompare(buyNum string, releaseNum string) bool {
+	num, err := strconv.Atoi(buyNum)
+	rnum, err := strconv.Atoi(releaseNum)
+	if err != nil {
+		fmt.Println("号码对比失败!")
+		return false
+	}
+	if num == rnum {
+		return true
+	} else {
+		return false
+	}
+
+}
+
 func GetTodayYYHHMMSS() string {
 	now := time.Now()
 	dateEnd := fmt.Sprintf("%d-%s-%s", now.Year(), getNum(int(now.Month())), getNum(int(now.Day())))

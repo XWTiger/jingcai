@@ -63,7 +63,7 @@ func RecordJob(job *Job) {
 
 func OrderCheckInit() {
 	var jobs []JobExecution
-	var counts []int = make([]int, 6)
+	var counts []int = make([]int, 7)
 	mysql.DB.Debug().Model(JobExecution{}).Where("status=?", false).Find(&jobs)
 	now := time.Now()
 	nowAdd := now.Add(time.Minute * 5)
@@ -119,6 +119,13 @@ func OrderCheckInit() {
 				counts[5] = 1
 			}
 			break
+		case ALL_WIN:
+			if job.Time.Unix() > time.Now().Unix() {
+				AllWinCheck(job.Time)
+			} else if counts[6] <= 0 {
+				AllWinCheck(nowAdd)
+				counts[6] = 1
+			}
 
 		}
 		mysql.DB.Model(JobExecution{}).Where("id = ?", job.ID).Update("status", true)

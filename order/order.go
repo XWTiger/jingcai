@@ -452,7 +452,8 @@ func checkSuperLotto(ord *Order) error {
 	if len(ord.Content) <= 0 {
 		return errors.New("选号不能为空")
 	}
-	if len(ord.Content) != 13 {
+	buffer := strings.Split(ord.Content, " ")
+	if len(buffer) != 7 {
 		return errors.New("选号存在问题")
 	}
 
@@ -510,8 +511,8 @@ func checkSevenStar(ord *Order) error {
 	if len(ord.Content) <= 0 {
 		return errors.New("选号不能为空")
 	}
-
-	if len(ord.Content) != 13 {
+	buffer := strings.Split(ord.Content, " ")
+	if len(buffer) != 7 {
 		return errors.New("选号存在问题")
 	}
 
@@ -675,7 +676,7 @@ func SharedOrderList(c *gin.Context) {
 	var list = make([]Order, 0)
 	var count int64
 
-	mysql.DB.Debug().Model(Order{}).Where(&param).Where("dead_time > now()").Order("created_at desc").Count(&count).Offset((page - 1) * pageSize).Limit(pageSize).Find(&list)
+	mysql.DB.Debug().Model(Order{}).Where(&param).Where("TIMESTAMPDIFF(SECOND, dead_time, now()) > 0 ").Order("created_at desc").Count(&count).Offset((page - 1) * pageSize).Limit(pageSize).Find(&list)
 
 	for i := 0; i < len(list); i++ {
 		order := list[i]
@@ -2366,7 +2367,7 @@ func FollowOrder(c *gin.Context) {
 
 func GetOrderByLotteryType(tp string) []Order {
 	var orders []Order
-	if err := mysql.DB.Model(Order{}).Where(&Order{LotteryType: tp}).Find(&orders).Error; err != nil {
+	if err := mysql.DB.Model(Order{}).Where(&Order{LotteryType: tp, AllMatchFinished: false}).Find(&orders).Error; err != nil {
 		log.Error(err)
 		return nil
 	}
@@ -2382,18 +2383,13 @@ func CreatePLW(ord *Order) error {
 	if len(ord.IssueId) <= 0 {
 		return errors.New("订单期号不能为空")
 	}
+
 	var tp = 0
 	if strings.Compare(ord.LotteryType, "P3") == 0 {
-		if len(ord.Content) != 5 {
-			return errors.New("选号存在问题")
-		}
 		tp = 3
 	}
 
 	if strings.Compare(ord.LotteryType, "P5") == 0 {
-		if len(ord.Content) != 9 {
-			return errors.New("选号存在问题")
-		}
 		tp = 5
 	}
 	//校验期号
@@ -2411,10 +2407,14 @@ func CreatePLW(ord *Order) error {
 	tx := mysql.DB.Begin()
 	if strings.Contains(ord.Content, ",") {
 		arr := strings.Split(ord.Content, ",")
+
 		ord.ShouldPay = float32(len(arr) * 2 * ord.Times)
 		if len(arr) == tp {
 			for _, s := range arr {
 				numArr := strings.Split(s, " ")
+				if len(numArr) != tp {
+					return errors.New("选号存在问题")
+				}
 				for _, s2 := range numArr {
 					num, err := strconv.Atoi(s2)
 					if err != nil {
@@ -2427,8 +2427,11 @@ func CreatePLW(ord *Order) error {
 				}
 			}
 		}
-	} else if len(ord.Content) == tp {
+	} else {
 		numArr := strings.Split(ord.Content, " ")
+		if len(numArr) != tp {
+			return errors.New("选号存在问题")
+		}
 		for _, s2 := range numArr {
 			num, err := strconv.Atoi(s2)
 			if err != nil {
@@ -2441,8 +2444,6 @@ func CreatePLW(ord *Order) error {
 		}
 		ord.ShouldPay = float32(1 * 2 * ord.Times)
 
-	} else {
-		return errors.New("参数异常")
 	}
 	if ord.AllWinId == 0 {
 		billErr := user.CheckScoreOrDoBill(ord.UserID, ord.ShouldPay, true, tx)
@@ -2880,11 +2881,16 @@ func AddSevenStarCheck(when *time.Time) {
 	AddJob(job)
 
 }
+
+// 对比号码， length 个数  是否满足num
 func randomNumBeforeDirect(length int, num int, userNum string, releaseNum string) (bool, int) {
 	//前5任意数量的数值相同
 	var count = 0
+	numBuffer := strings.Split(userNum, " ")
+	releaseBuffer := strings.Split(releaseNum, " ")
+
 	for i := 0; i < length; i++ {
-		if strings.Compare(userNum[i:i], releaseNum[i:i]) == 0 {
+		if util.PaddingZeroCompare(numBuffer[i], releaseBuffer[i]) {
 			count += 1
 		}
 	}
