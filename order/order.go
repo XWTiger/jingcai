@@ -307,10 +307,10 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 	}
 	order.DeadTime = finishedTime
 	order.Bonus = 0
-	order.UUID = uuid.NewV4().String()
 	order.BetUpload = false
 	var userInfo = user.FetUserInfo(c)
 	order.UserID = userInfo.ID
+	order.UUID = GetOrderId(&order)
 	//校验字段
 	verr := validatior.Validator(c, order)
 	if verr != nil {
@@ -2507,16 +2507,59 @@ func AddPlwCheck(p int, when *time.Time) {
 						if ok {
 							content := getArr(o.Content)
 							releaseNum := result.Value.List[value].LotteryDrawResult[0:3]
+							releaseArr := strings.Split(releaseNum, " ")
 							for _, s := range content {
+								arr := strings.Split(s, " ")
+
 								if strings.Compare(s, releaseNum) == 0 {
 									if strings.Compare(o.PL3Way, PL_SIGNAL) == 0 {
 										o.Bonus = o.Bonus + 1040
 									}
 									if strings.Compare(o.PL3Way, PL_C3) == 0 {
-										o.Bonus = o.Bonus + 346
+										numArr := util.CovertStrArrToInt(arr)
+										sendWorld := util.GetCombine3(numArr)
+										release := util.CovertStrArrToInt(releaseArr)
+										win := 0
+										for _, ints := range sendWorld {
+											for i, value := range ints {
+												if release[i] == value {
+													win++
+													continue
+												} else {
+													break
+												}
+											}
+											if win == 3 {
+
+											}
+										}
+										if win == 3 {
+											o.Bonus = o.Bonus + 346
+										}
+										o.Way = fmt.Sprintf("%s 组合3：%s 中奖", o.Way, s)
 									}
 									if strings.Compare(o.PL3Way, PL_C6) == 0 {
-										o.Bonus = o.Bonus + 173
+										numArr := util.CovertStrArrToInt(arr)
+										sendWorld := util.Permute(numArr)
+										release := util.CovertStrArrToInt(releaseArr)
+										win := 0
+										for _, ints := range sendWorld {
+											for i, value := range ints {
+												if release[i] == value {
+													win++
+													continue
+												} else {
+													break
+												}
+											}
+											if win == 3 {
+
+											}
+										}
+										if win == 3 {
+											o.Bonus = o.Bonus + 173
+										}
+										o.Way = fmt.Sprintf("%s 组合6：%s 中奖", o.Way, s)
 									}
 									o.Win = true
 								}

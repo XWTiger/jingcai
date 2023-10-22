@@ -129,3 +129,48 @@ func backtrackA(res *[][]int, track *[]int, nums []int, used []bool) {
 		used[i] = false
 	}
 }
+
+func GetCombine3(arr []int) [][]int {
+	combines := make([][]int, 0)
+	if arr[0] == arr[1] {
+		var child = []int{arr[2], arr[0], arr[0]}
+		var child2 = []int{arr[0], arr[2], arr[0]}
+		var child3 = []int{arr[0], arr[0], arr[2]}
+		combines = append(combines, child, child2, child3)
+	} else {
+		if arr[0] == arr[2] {
+			var child = []int{arr[1], arr[0], arr[0]}
+			var child2 = []int{arr[0], arr[1], arr[0]}
+			var child3 = []int{arr[0], arr[0], arr[1]}
+			combines = append(combines, child, child2, child3)
+		} else {
+			var child = []int{arr[2], arr[2], arr[0]}
+			var child2 = []int{arr[0], arr[2], arr[2]}
+			var child3 = []int{arr[2], arr[0], arr[2]}
+			combines = append(combines, child, child2, child3)
+		}
+	}
+	return combines
+}
+
+func CovertStrArrToInt(arr []string) []int {
+	arry := make([]int, 0)
+	for _, s := range arr {
+		num, _ := strconv.Atoi(s)
+		arry = append(arry, num)
+	}
+	return arry
+}
+
+func GetPaddingId(id uint) string {
+	strId := strconv.Itoa(int(id))
+	if len(strId) < 6 {
+		size := 6 - len(strId)
+		var padding = make([]byte, size)
+		for i := 0; i < size; i++ {
+			padding[i] = '0'
+		}
+		return fmt.Sprintf("%s%s", string(padding), strId)
+	}
+	return "000000"
+}

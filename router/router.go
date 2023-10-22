@@ -15,8 +15,6 @@ import (
 	"jingcai/order"
 	"jingcai/shop"
 	"jingcai/user"
-	"jingcai/util"
-	"net/http"
 )
 
 // @title           黑马推荐接口
@@ -146,11 +144,22 @@ func pong(c *gin.Context) {
 	}}).Find(&user2)
 	fmt.Println(user2.Name)
 	*/
-	arr := []int{1, 2, 3}
+	/*arr := []int{1, 2, 3}
 	result := util.Permute(arr)
 	for _, ints := range result {
 		fmt.Println(ints)
-	}
-	c.String(http.StatusOK, "pong")
+	}*/
+	/*arr := []int{1, 2, 2}
+	arr2 := []int{3, 1, 3}
+	arr3 := []int{4, 4, 1}
+	fmt.Println(util.GetCombine3(arr))
+	fmt.Println(util.GetCombine3(arr2))
+	fmt.Println(util.GetCombine3(arr3))
+	c.String(http.StatusOK, "pong")*/
+	fmt.Println(order.GetOrderId(&order.Order{
+
+		LotteryType: order.P3,
+		Share:       true,
+	}))
 
 }

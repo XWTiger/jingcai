@@ -2,9 +2,11 @@ package order
 
 import (
 	"errors"
+	"fmt"
 	"gorm.io/gorm"
 	"jingcai/common"
 	"jingcai/mysql"
+	"jingcai/util"
 	"time"
 )
 
@@ -157,4 +159,48 @@ func AddJob(job Job) error {
 func (check Job) Execute() error {
 	check.CallBack(check.Param)
 	return nil
+}
+
+// 时间（2023223141）+ userId（000001） + 订单类型（0-5）+ 是否分享（00/01）
+func GetOrderId(order *Order) string {
+	now := time.Now()
+	strDate := fmt.Sprintf("%d%d%d%d%d%d", now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second())
+	usrId := util.GetPaddingId(order.UserID)
+	var typ string
+	switch order.LotteryType {
+	case FOOTBALL:
+		//01
+
+		typ = "01"
+		break
+	case BASKETBALL:
+		//02
+		typ = "02"
+		break
+	case P3:
+		//03
+		typ = "03"
+		break
+	case P5:
+		//04
+		typ = "04"
+		break
+	case SUPER_LOTTO:
+		//05
+		typ = "05"
+		break
+	case SEVEN_STAR:
+		//06
+		typ = "06"
+		break
+	}
+	var share string
+	if order.Share {
+		share = "01"
+	} else {
+		share = "00"
+	}
+
+	return fmt.Sprintf("%s%s%s%s", strDate, usrId, typ, share)
+
 }
