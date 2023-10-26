@@ -676,7 +676,7 @@ func SharedOrderList(c *gin.Context) {
 	var list = make([]Order, 0)
 	var count int64
 
-	mysql.DB.Debug().Model(Order{}).Where(&param).Where("TIMESTAMPDIFF(SECOND, dead_time, now()) > 0 ").Order("created_at desc").Count(&count).Offset((page - 1) * pageSize).Limit(pageSize).Find(&list)
+	mysql.DB.Debug().Model(Order{}).Where(&param).Where("TIMESTAMPDIFF(SECOND, now(), dead_time) > 0 ").Order("created_at desc").Count(&count).Offset((page - 1) * pageSize).Limit(pageSize).Find(&list)
 
 	for i := 0; i < len(list); i++ {
 		order := list[i]
