@@ -40,8 +40,15 @@ const (
 	READY       = "READY"
 	NO_PAY      = "NO_PAY"
 	PL_SIGNAL   = "SIGNAL"
-	PL_C3       = "C3" //组合3
-	PL_C6       = "C6" //组合6
+	PL_C3       = "C3"      //组合3
+	PL_C6       = "C6"      //组合6
+	ZX_GSB      = "ZX_GSB"  // 直选个十百
+	ALL_C       = "CALL"    // 直选全组合
+	ALL_FS      = "CALL_FS" // 直选 复式
+	C3_FS       = "C3_FS"   //组选三 复式
+	C3_DT       = "C3_DT"   //组选三 胆拖
+	C6_FS       = "C3_FS"   //组选六 复式
+	C6_DT       = "C3_DT"   //组选六 胆拖
 	TOMASTER    = "TOMASTER"
 	SCORE       = "SCORE"
 	RMB         = "RMB"
