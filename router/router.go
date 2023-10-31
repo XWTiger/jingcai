@@ -15,6 +15,7 @@ import (
 	"jingcai/order"
 	"jingcai/shop"
 	"jingcai/user"
+	"jingcai/util"
 )
 
 // @title           黑马推荐接口
@@ -156,10 +157,15 @@ func pong(c *gin.Context) {
 	fmt.Println(util.GetCombine3(arr2))
 	fmt.Println(util.GetCombine3(arr3))
 	c.String(http.StatusOK, "pong")*/
-	fmt.Println(order.GetOrderId(&order.Order{
+	/*fmt.Println(order.GetOrderId(&order.Order{
 
 		LotteryType: order.P3,
 		Share:       true,
-	}))
+	}))*/
+	var all = [][]string{{"0", "1"}, {"0", "1"}, {"0", "1"}}
+	var childs = make([]string, 0)
+	var sb = make([]byte, 0)
+	util.GetZxGsb(0, all, &sb, &childs)
+	fmt.Println(childs[0])
 
 }

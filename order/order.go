@@ -2480,7 +2480,7 @@ func AddPlwCheck(p int, when *time.Time) {
 	switch p {
 	case 3:
 		job = Job{
-			Time:  util.GetPLWFinishedTime(),
+			Time:  util.GetPLWFinishedTime().Add(320 * time.Second),
 			Param: nil,
 			CallBack: func(param interface{}) {
 				log.Info("========排列3对账任务执行=============")
@@ -2512,32 +2512,34 @@ func AddPlwCheck(p int, when *time.Time) {
 					for _, o := range orders {
 						value, ok := mapper[o.IssueId]
 						if ok {
-							content := getArr(o.Content)
+
+							content, types := GetPlAllNums(&o)
 							releaseNum := result.Value.List[value].LotteryDrawResult[0:3]
 							releaseArr := strings.Split(releaseNum, " ")
 							for _, s := range content {
 								arr := strings.Split(s, " ")
-
 								if strings.Compare(s, releaseNum) == 0 {
-									if strings.Compare(o.PL3Way, PL_SIGNAL) == 0 {
+									if strings.Compare(types, PL_SIGNAL) == 0 {
 										o.Bonus = o.Bonus + 1040
 									}
-									if strings.Compare(o.PL3Way, PL_C3) == 0 {
+									if strings.Compare(types, PL_C3) == 0 {
 										numArr := util.CovertStrArrToInt(arr)
 										sendWorld := util.GetCombine3(numArr)
 										release := util.CovertStrArrToInt(releaseArr)
 										win := 0
 										for _, ints := range sendWorld {
+											count := 0
 											for i, value := range ints {
 												if release[i] == value {
-													win++
+													count++
 													continue
 												} else {
 													break
 												}
 											}
-											if win == 3 {
-
+											if count == 3 {
+												win = 3
+												break
 											}
 										}
 										if win == 3 {
@@ -2545,22 +2547,24 @@ func AddPlwCheck(p int, when *time.Time) {
 										}
 										o.Way = fmt.Sprintf("%s 组合3：%s 中奖", o.Way, s)
 									}
-									if strings.Compare(o.PL3Way, PL_C6) == 0 {
+									if strings.Compare(types, PL_C6) == 0 {
 										numArr := util.CovertStrArrToInt(arr)
 										sendWorld := util.Permute(numArr)
 										release := util.CovertStrArrToInt(releaseArr)
 										win := 0
 										for _, ints := range sendWorld {
+											count := 0
 											for i, value := range ints {
 												if release[i] == value {
-													win++
+													count++
 													continue
 												} else {
 													break
 												}
 											}
-											if win == 3 {
-
+											if count == 3 {
+												win = 3
+												break
 											}
 										}
 										if win == 3 {
@@ -2598,7 +2602,7 @@ func AddPlwCheck(p int, when *time.Time) {
 		break
 	case 5:
 		job = Job{
-			Time:  util.GetPLWFinishedTime(),
+			Time:  util.GetPLWFinishedTime().Add(320 * time.Second),
 			Param: nil,
 			CallBack: func(param interface{}) {
 				log.Info("========排列5对账任务执行=============")
@@ -2984,4 +2988,23 @@ func getArr(content string) []string {
 		strs = append(strs, content)
 		return strs
 	}
+}
+
+func GetPlAllNums(order *Order) ([]string, string) {
+
+	if strings.Compare(order.PL3Way, ZX_GSB) == 0 {
+		//个十百 组合
+		arr := strings.Split(order.Content, ",")
+		combineArr := make([][]string, 0)
+		for i, s := range arr {
+			combineArr[i] = strings.Split(s, " ")
+		}
+		var childs = make([]string, 0)
+		var sb = make([]byte, 0)
+		util.GetZxGsb(0, combineArr, &sb, &childs)
+
+		return childs, PL_SIGNAL
+	}
+
+	return nil, ""
 }

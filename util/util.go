@@ -95,6 +95,7 @@ func GetTodayYYHHMMSS() string {
 
 }
 
+// 获取组合6的所有类型
 func Permute(nums []int) [][]int {
 	res := make([][]int, 0)
 	track := make([]int, 0)
@@ -173,4 +174,31 @@ func GetPaddingId(id uint) string {
 		return fmt.Sprintf("%s%s", string(padding), strId)
 	}
 	return "000000"
+}
+
+func GetZxGsb(index int, all [][]string, sb *[]byte, childs *[]string) {
+
+	if index == 3 {
+		var str = string((*sb)[0 : len((*sb))-1])
+		*childs = append(*childs, str)
+		return
+	}
+
+	for i := 0; i < len(all[0]); i++ {
+		fmt.Println(index)
+		num := all[index][i]
+		var b = []byte(fmt.Sprintf("%s%s", num, " "))
+		*sb = append(*sb, b...)
+		GetZxGsb(index+1, all, sb, childs)
+		*sb = (*sb)[:len(*sb)-2]
+	}
+
+}
+
+func GetSpaceStr(num string) []string {
+	var arr = make([]string, 0)
+	for i := 0; i < len(num); i++ {
+		arr = append(arr, fmt.Sprintf("%c", num[i]))
+	}
+	return arr
 }
