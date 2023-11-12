@@ -3,9 +3,11 @@ package util
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 )
 
+// 从n里面取出k个组合C(n,k)
 func Combine(n int, k int) [][]int {
 	res := [][]int{}
 	// 记录回溯算法的递归路径
@@ -203,6 +205,7 @@ func GetSpaceStr(num string) []string {
 	return arr
 }
 
+// 从数组里面抽出A（n,m）
 func PermuteAnm(arr []int, m int) [][]int {
 	result := [][]int{}
 	permHelper(arr, m, []int{}, &result)
@@ -226,4 +229,48 @@ func permHelper(arr []int, m int, current []int, result *[][]int) {
 
 		permHelper(remaining, m-1, next, result)
 	}
+}
+
+// 二同排列5
+func Get2SamePlW(arr []int, sameNum int) []string {
+	result := PermuteAnm(arr, 5)
+	var sum = 0
+
+	var turns = make([]string, 0)
+	var duplicate = make([][]int, 0)
+	for _, ints := range result {
+		var exist = false
+		for _, value := range duplicate {
+			tmp := fmt.Sprintf("%d%d%d%d%d", value[0], value[1], value[2], value[3], value[4])
+			tmp2 := fmt.Sprintf("%d%d%d%d%d", ints[0], ints[1], ints[2], ints[3], ints[4])
+			//fmt.Println(tmp2)
+			if strings.Compare(tmp2, tmp) == 0 {
+				exist = true
+				break
+			}
+		}
+		if !exist {
+			duplicate = append(duplicate, ints)
+		}
+	}
+	fmt.Println(len(duplicate))
+	for _, ints := range duplicate {
+		var count = 0
+		for _, val := range ints {
+			if val == sameNum {
+				count++
+				if count == 2 {
+					break
+				}
+			}
+
+		}
+		if count == 2 {
+
+			sum++
+			turns = append(turns, fmt.Sprintf("%d %d %d %d %d", ints[0], ints[1], ints[2], ints[3], ints[4]))
+		}
+	}
+	fmt.Println(sum)
+	return turns
 }

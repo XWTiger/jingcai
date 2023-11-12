@@ -16,6 +16,7 @@ import (
 	"jingcai/shop"
 	"jingcai/user"
 	"jingcai/util"
+	"strings"
 )
 
 // @title           黑马推荐接口
@@ -168,20 +169,39 @@ func pong(c *gin.Context) {
 	util.GetZxGsb(0, all, &sb, &childs)
 	fmt.Println(childs[0])*/
 
-	var all = []int{7, 7, 3, 2, 4, 5}
+	var all = []int{7, 7, 4, 1, 2, 3}
 	result := util.PermuteAnm(all, 5)
-	fmt.Println(len(result))
 	var sum = 0
+
+	var duplicate = make([][]int, 0)
+	for _, ints := range result {
+		var exist = false
+		for _, value := range duplicate {
+			tmp := fmt.Sprintf("%d%d%d%d%d", value[0], value[1], value[2], value[3], value[4])
+			tmp2 := fmt.Sprintf("%d%d%d%d%d", ints[0], ints[1], ints[2], ints[3], ints[4])
+			//fmt.Println(tmp2)
+			if strings.Compare(tmp2, tmp) == 0 {
+				exist = true
+				break
+			}
+		}
+		if !exist {
+			duplicate = append(duplicate, ints)
+		}
+	}
+	fmt.Println(len(duplicate))
 	for _, ints := range result {
 		var count = 0
-		for i, val := range ints {
-			if i < len(ints)-1 && val == 7 && ints[i+1] == 7 {
+		for _, val := range ints {
+			if val == 7 {
 				count++
-				break
+				if count == 2 {
+					break
+				}
 			}
 
 		}
-		if count == 1 {
+		if count == 2 {
 
 			sum++
 			fmt.Println(ints)
