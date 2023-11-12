@@ -52,7 +52,7 @@ func GetPLWFinishedTime() time.Time {
 	now := time.Now()
 	var dateEnd string
 
-	dateEnd = fmt.Sprintf("%d-%s-%s 21:20:00", now.Year(), getNum(int(now.Month())), getNum(int(now.Day())))
+	dateEnd = fmt.Sprintf("%d-%s-%s 20:55:00", now.Year(), getNum(int(now.Month())), getNum(int(now.Day())))
 	time, err := time.ParseInLocation("2006-01-02 15:04:05", dateEnd, time.Local)
 
 	if err != nil {
@@ -201,4 +201,29 @@ func GetSpaceStr(num string) []string {
 		arr = append(arr, fmt.Sprintf("%c", num[i]))
 	}
 	return arr
+}
+
+func PermuteAnm(arr []int, m int) [][]int {
+	result := [][]int{}
+	permHelper(arr, m, []int{}, &result)
+	return result
+}
+
+func permHelper(arr []int, m int, current []int, result *[][]int) {
+	if m == 0 {
+		*result = append(*result, current)
+		return
+	}
+
+	for i := 0; i < len(arr); i++ {
+		next := make([]int, len(current)+1)
+		copy(next, current)
+		next[len(current)] = arr[i]
+
+		remaining := make([]int, len(arr)-1)
+		copy(remaining[:i], arr[:i])
+		copy(remaining[i:], arr[i+1:])
+
+		permHelper(remaining, m-1, next, result)
+	}
 }

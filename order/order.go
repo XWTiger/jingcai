@@ -3005,6 +3005,25 @@ func GetPlAllNums(order *Order) ([]string, string) {
 
 		return childs, PL_SIGNAL
 	}
+	if strings.Compare(order.PL3Way, PL_C3) == 0 {
+		if strings.Contains(order.Content, ",") {
+			return strings.Split(order.Content, ","), PL_C3
+		} else {
+			var strs []string
+			strs = append(strs, order.Content)
+			return strs, PL_C3
+		}
+	}
+
+	if strings.Compare(order.PL3Way, PL_C6) == 0 {
+		if strings.Contains(order.Content, ",") {
+			return strings.Split(order.Content, ","), PL_C6
+		} else {
+			var strs []string
+			strs = append(strs, order.Content)
+			return strs, PL_C6
+		}
+	}
 
 	return nil, ""
 }

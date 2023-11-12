@@ -162,10 +162,30 @@ func pong(c *gin.Context) {
 		LotteryType: order.P3,
 		Share:       true,
 	}))*/
-	var all = [][]string{{"0", "1"}, {"0", "1"}, {"0", "1"}}
+	/*var all = [][]string{{"0", "1"}, {"0", "1"}, {"0", "1"}}
 	var childs = make([]string, 0)
 	var sb = make([]byte, 0)
 	util.GetZxGsb(0, all, &sb, &childs)
-	fmt.Println(childs[0])
+	fmt.Println(childs[0])*/
 
+	var all = []int{7, 7, 3, 2, 4, 5}
+	result := util.PermuteAnm(all, 5)
+	fmt.Println(len(result))
+	var sum = 0
+	for _, ints := range result {
+		var count = 0
+		for i, val := range ints {
+			if i < len(ints)-1 && val == 7 && ints[i+1] == 7 {
+				count++
+				break
+			}
+
+		}
+		if count == 1 {
+
+			sum++
+			fmt.Println(ints)
+		}
+	}
+	fmt.Println(sum)
 }
