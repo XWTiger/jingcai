@@ -2416,11 +2416,13 @@ func CreatePLW(ord *Order) error {
 		arr := strings.Split(ord.Content, ",")
 
 		ord.ShouldPay = float32(len(arr) * 2 * ord.Times)
-		if len(arr) == tp {
+		if ord.LotteryType == P3 {
 			for _, s := range arr {
 				numArr := strings.Split(s, " ")
-				if len(numArr) != tp {
-					return errors.New("选号存在问题")
+				if ord.PL3Way == PL_SIGNAL || ord.PL3Way == PL_C3 || ord.PL3Way == PL_C6 {
+					if len(numArr) != tp {
+						return errors.New("选号存在问题")
+					}
 				}
 				for _, s2 := range numArr {
 					num, err := strconv.Atoi(s2)
@@ -2436,9 +2438,12 @@ func CreatePLW(ord *Order) error {
 		}
 	} else {
 		numArr := strings.Split(ord.Content, " ")
-		if len(numArr) != tp {
-			return errors.New("选号存在问题")
+		if ord.PL3Way != ALL_C {
+			if len(numArr) != tp {
+				return errors.New("选号存在问题")
+			}
 		}
+
 		for _, s2 := range numArr {
 			num, err := strconv.Atoi(s2)
 			if err != nil {
