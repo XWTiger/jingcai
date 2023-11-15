@@ -35,6 +35,35 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/advertising/win-list": {
+            "post": {
+                "description": "中奖名单",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "advertising 广告"
+                ],
+                "summary": "中奖名单 接口",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/bbs/comment": {
             "post": {
                 "description": "评论帖子",
@@ -2667,7 +2696,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "role": {
-                    "description": "\"enum: Admin,User\"",
+                    "description": "\"enum: Admin,User,Sale\"",
                     "type": "string"
                 },
                 "salt": {

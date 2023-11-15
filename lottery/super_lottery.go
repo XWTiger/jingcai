@@ -121,30 +121,30 @@ type Plw struct {
 	Success      bool   `json:"success"`
 	Value        struct {
 		List []struct {
-			DrawFlowFund            string        `json:"drawFlowFund"`
-			DrawFlowFundRj          string        `json:"drawFlowFundRj"`
-			DrawPdfUrl              string        `json:"drawPdfUrl"`
-			DrawPdfUrlPls           string        `json:"drawPdfUrlPls"`
-			EstimateDrawTime        string        `json:"estimateDrawTime"`
-			IsGetKjpdf              int           `json:"isGetKjpdf"`
-			IsGetXlpdf              int           `json:"isGetXlpdf"`
-			LotteryDrawNum          string        `json:"lotteryDrawNum"`
-			LotteryDrawResult       string        `json:"lotteryDrawResult"`
-			LotteryDrawStatus       int           `json:"lotteryDrawStatus"`
-			LotteryDrawStatusNo     string        `json:"lotteryDrawStatusNo"`
-			LotteryDrawTime         string        `json:"lotteryDrawTime"`
-			LotteryEquipmentCount   int           `json:"lotteryEquipmentCount"`
-			LotteryGameName         string        `json:"lotteryGameName"`
-			LotteryGameNum          string        `json:"lotteryGameNum"`
-			LotteryGamePronum       int           `json:"lotteryGamePronum"`
-			LotteryNotice           int           `json:"lotteryNotice"`
-			LotteryNoticeShowFlag   int           `json:"lotteryNoticeShowFlag"`
-			LotteryPaidBeginTime    string        `json:"lotteryPaidBeginTime"`
-			LotteryPaidEndTime      string        `json:"lotteryPaidEndTime"`
-			LotteryPromotionFlag    int           `json:"lotteryPromotionFlag"`
-			LotteryPromotionFlagRj  int           `json:"lotteryPromotionFlagRj"`
-			LotterySaleBeginTime    string        `json:"lotterySaleBeginTime"`
-			LotterySaleEndTimeUnix  int           `json:"lotterySaleEndTimeUnix"`
+			DrawFlowFund           string `json:"drawFlowFund"`
+			DrawFlowFundRj         string `json:"drawFlowFundRj"`
+			DrawPdfUrl             string `json:"drawPdfUrl"`
+			DrawPdfUrlPls          string `json:"drawPdfUrlPls"`
+			EstimateDrawTime       string `json:"estimateDrawTime"`
+			IsGetKjpdf             int    `json:"isGetKjpdf"`
+			IsGetXlpdf             int    `json:"isGetXlpdf"`
+			LotteryDrawNum         string `json:"lotteryDrawNum"`
+			LotteryDrawResult      string `json:"lotteryDrawResult"`
+			LotteryDrawStatus      int    `json:"lotteryDrawStatus"`
+			LotteryDrawStatusNo    string `json:"lotteryDrawStatusNo"`
+			LotteryDrawTime        string `json:"lotteryDrawTime"`
+			LotteryEquipmentCount  int    `json:"lotteryEquipmentCount"`
+			LotteryGameName        string `json:"lotteryGameName"`
+			LotteryGameNum         string `json:"lotteryGameNum"`
+			LotteryGamePronum      int    `json:"lotteryGamePronum"`
+			LotteryNotice          int    `json:"lotteryNotice"`
+			LotteryNoticeShowFlag  int    `json:"lotteryNoticeShowFlag"`
+			LotteryPaidBeginTime   string `json:"lotteryPaidBeginTime"`
+			LotteryPaidEndTime     string `json:"lotteryPaidEndTime"`
+			LotteryPromotionFlag   int    `json:"lotteryPromotionFlag"`
+			LotteryPromotionFlagRj int    `json:"lotteryPromotionFlagRj"`
+			LotterySaleBeginTime   string `json:"lotterySaleBeginTime"`
+			//LotterySaleEndTimeUnix  map[interface{}]interface{} `json:"lotterySaleEndTimeUnix"`
 			LotterySaleEndtime      string        `json:"lotterySaleEndtime"`
 			LotterySuspendedFlag    int           `json:"lotterySuspendedFlag"`
 			LotteryUnsortDrawresult string        `json:"lotteryUnsortDrawresult"`
@@ -208,29 +208,29 @@ type SevenStar struct {
 			} `json:"prizeLevelList"`
 		} `json:"lastPoolDraw"`
 		List []struct {
-			DrawFlowFund            string        `json:"drawFlowFund"`
-			DrawFlowFundRj          string        `json:"drawFlowFundRj"`
-			DrawPdfUrl              string        `json:"drawPdfUrl"`
-			EstimateDrawTime        string        `json:"estimateDrawTime"`
-			IsGetKjpdf              int           `json:"isGetKjpdf"`
-			IsGetXlpdf              int           `json:"isGetXlpdf"`
-			LotteryDrawNum          string        `json:"lotteryDrawNum"`
-			LotteryDrawResult       string        `json:"lotteryDrawResult"`
-			LotteryDrawStatus       int           `json:"lotteryDrawStatus"`
-			LotteryDrawStatusNo     string        `json:"lotteryDrawStatusNo"`
-			LotteryDrawTime         string        `json:"lotteryDrawTime"`
-			LotteryEquipmentCount   int           `json:"lotteryEquipmentCount"`
-			LotteryGameName         string        `json:"lotteryGameName"`
-			LotteryGameNum          string        `json:"lotteryGameNum"`
-			LotteryGamePronum       int           `json:"lotteryGamePronum"`
-			LotteryNotice           int           `json:"lotteryNotice"`
-			LotteryNoticeShowFlag   int           `json:"lotteryNoticeShowFlag"`
-			LotteryPaidBeginTime    string        `json:"lotteryPaidBeginTime"`
-			LotteryPaidEndTime      string        `json:"lotteryPaidEndTime"`
-			LotteryPromotionFlag    int           `json:"lotteryPromotionFlag"`
-			LotteryPromotionFlagRj  int           `json:"lotteryPromotionFlagRj"`
-			LotterySaleBeginTime    string        `json:"lotterySaleBeginTime"`
-			LotterySaleEndTimeUnix  int           `json:"lotterySaleEndTimeUnix"`
+			DrawFlowFund           string `json:"drawFlowFund"`
+			DrawFlowFundRj         string `json:"drawFlowFundRj"`
+			DrawPdfUrl             string `json:"drawPdfUrl"`
+			EstimateDrawTime       string `json:"estimateDrawTime"`
+			IsGetKjpdf             int    `json:"isGetKjpdf"`
+			IsGetXlpdf             int    `json:"isGetXlpdf"`
+			LotteryDrawNum         string `json:"lotteryDrawNum"`
+			LotteryDrawResult      string `json:"lotteryDrawResult"`
+			LotteryDrawStatus      int    `json:"lotteryDrawStatus"`
+			LotteryDrawStatusNo    string `json:"lotteryDrawStatusNo"`
+			LotteryDrawTime        string `json:"lotteryDrawTime"`
+			LotteryEquipmentCount  int    `json:"lotteryEquipmentCount"`
+			LotteryGameName        string `json:"lotteryGameName"`
+			LotteryGameNum         string `json:"lotteryGameNum"`
+			LotteryGamePronum      int    `json:"lotteryGamePronum"`
+			LotteryNotice          int    `json:"lotteryNotice"`
+			LotteryNoticeShowFlag  int    `json:"lotteryNoticeShowFlag"`
+			LotteryPaidBeginTime   string `json:"lotteryPaidBeginTime"`
+			LotteryPaidEndTime     string `json:"lotteryPaidEndTime"`
+			LotteryPromotionFlag   int    `json:"lotteryPromotionFlag"`
+			LotteryPromotionFlagRj int    `json:"lotteryPromotionFlagRj"`
+			LotterySaleBeginTime   string `json:"lotterySaleBeginTime"`
+			//LotterySaleEndTimeUnix  map[interface{}]interface{} `json:"lotterySaleEndTimeUnix"`
 			LotterySaleEndtime      string        `json:"lotterySaleEndtime"`
 			LotterySuspendedFlag    int           `json:"lotterySuspendedFlag"`
 			LotteryUnsortDrawresult string        `json:"lotteryUnsortDrawresult"`

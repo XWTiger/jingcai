@@ -69,7 +69,7 @@ func BindRouters(g *gin.Engine) {
 	bbsGroup := r.Group("/bbs")
 
 	r.POST("/shop", shop.ShopRegistry)
-	r.Use(user.Authorize())
+	//r.Use(user.Authorize())
 	{
 		userGroup.Use(user.Authorize())
 		userGroup.POST("/bill/notify", user.BillClearNotify)
