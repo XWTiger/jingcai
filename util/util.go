@@ -97,6 +97,13 @@ func GetTodayYYHHMMSS() string {
 
 }
 
+func GetTodayYYHHMMSSFrom(time time.Time) string {
+	now := time
+	dateEnd := fmt.Sprintf("%d-%s-%s", now.Year(), getNum(int(now.Month())), getNum(int(now.Day())))
+	return dateEnd
+
+}
+
 // 获取组合6的所有类型
 func Permute(nums []int) [][]int {
 	res := make([][]int, 0)

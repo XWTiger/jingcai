@@ -35,236 +35,236 @@ type SuperLottery struct {
 	Success      bool   `json:"success"`
 	Value        struct {
 		LastPoolDraw struct {
-			LotteryDrawNum       string `json:"lotteryDrawNum"`
-			LotteryDrawResult    string `json:"lotteryDrawResult"`
-			LotteryDrawTime      string `json:"lotteryDrawTime"`
-			LotteryGameName      string `json:"lotteryGameName"`
-			LotteryGameNum       string `json:"lotteryGameNum"`
-			PoolBalanceAfterdraw string `json:"poolBalanceAfterdraw"`
+			LotteryDrawNum       string `json:"lotteryDrawNum,omitempty"`
+			LotteryDrawResult    string `json:"lotteryDrawResult,omitempty"`
+			LotteryDrawTime      string `json:"lotteryDrawTime,omitempty"`
+			LotteryGameName      string `json:"lotteryGameName,omitempty"`
+			LotteryGameNum       string `json:"lotteryGameNum,omitempty"`
+			PoolBalanceAfterdraw string `json:"poolBalanceAfterdraw,omitempty"`
 			PrizeLevelList       []struct {
-				AwardType        int    `json:"awardType"`
-				Group            string `json:"group"`
-				LotteryCondition string `json:"lotteryCondition"`
-				PrizeLevel       string `json:"prizeLevel"`
-				Sort             int    `json:"sort"`
-				StakeAmount      string `json:"stakeAmount"`
-				StakeCount       string `json:"stakeCount"`
-				TotalPrizeamount string `json:"totalPrizeamount"`
-			} `json:"prizeLevelList"`
-		} `json:"lastPoolDraw"`
+				AwardType        int    `json:"awardType,omitempty"`
+				Group            string `json:"group,omitempty"`
+				LotteryCondition string `json:"lotteryCondition,omitempty"`
+				PrizeLevel       string `json:"prizeLevel,omitempty"`
+				Sort             int    `json:"sort,omitempty"`
+				StakeAmount      string `json:"stakeAmount,omitempty"`
+				StakeCount       string `json:"stakeCount,omitempty"`
+				TotalPrizeamount string `json:"totalPrizeamount,omitempty"`
+			} `json:"prizeLevelList,omitempty"`
+		} `json:"lastPoolDraw,omitempty"`
 		List []struct {
-			DrawFlowFund           string `json:"drawFlowFund"`
-			DrawFlowFundRj         string `json:"drawFlowFundRj"`
-			DrawPdfUrl             string `json:"drawPdfUrl"`
-			EstimateDrawTime       string `json:"estimateDrawTime"`
-			IsGetKjpdf             int    `json:"isGetKjpdf"`
-			IsGetXlpdf             int    `json:"isGetXlpdf"`
-			LotteryDrawNum         string `json:"lotteryDrawNum"`
-			LotteryDrawResult      string `json:"lotteryDrawResult"`
-			LotteryDrawStatus      int    `json:"lotteryDrawStatus"`
-			LotteryDrawStatusNo    string `json:"lotteryDrawStatusNo"`
-			LotteryDrawTime        string `json:"lotteryDrawTime"`
-			LotteryEquipmentCount  int    `json:"lotteryEquipmentCount"`
-			LotteryGameName        string `json:"lotteryGameName"`
-			LotteryGameNum         string `json:"lotteryGameNum"`
-			LotteryGamePronum      int    `json:"lotteryGamePronum"`
-			LotteryNotice          int    `json:"lotteryNotice"`
-			LotteryNoticeShowFlag  int    `json:"lotteryNoticeShowFlag"`
-			LotteryPaidBeginTime   string `json:"lotteryPaidBeginTime"`
-			LotteryPaidEndTime     string `json:"lotteryPaidEndTime"`
-			LotteryPromotionFlag   int    `json:"lotteryPromotionFlag"`
-			LotteryPromotionFlagRj int    `json:"lotteryPromotionFlagRj"`
-			LotterySaleBeginTime   string `json:"lotterySaleBeginTime"`
+			DrawFlowFund           string `json:"drawFlowFund,omitempty"`
+			DrawFlowFundRj         string `json:"drawFlowFundRj,omitempty"`
+			DrawPdfUrl             string `json:"drawPdfUrl,omitempty"`
+			EstimateDrawTime       string `json:"estimateDrawTime,omitempty"`
+			IsGetKjpdf             int    `json:"isGetKjpdf,omitempty"`
+			IsGetXlpdf             int    `json:"isGetXlpdf,omitempty"`
+			LotteryDrawNum         string `json:"lotteryDrawNum,omitempty"`
+			LotteryDrawResult      string `json:"lotteryDrawResult,omitempty"`
+			LotteryDrawStatus      int    `json:"lotteryDrawStatus,omitempty"`
+			LotteryDrawStatusNo    string `json:"lotteryDrawStatusNo,omitempty"`
+			LotteryDrawTime        string `json:"lotteryDrawTime,omitempty"`
+			LotteryEquipmentCount  int    `json:"lotteryEquipmentCount,omitempty"`
+			LotteryGameName        string `json:"lotteryGameName,omitempty"`
+			LotteryGameNum         string `json:"lotteryGameNum,omitempty"`
+			LotteryGamePronum      int    `json:"lotteryGamePronum,omitempty"`
+			LotteryNotice          int    `json:"lotteryNotice,omitempty"`
+			LotteryNoticeShowFlag  int    `json:"lotteryNoticeShowFlag,omitempty"`
+			LotteryPaidBeginTime   string `json:"lotteryPaidBeginTime,omitempty"`
+			LotteryPaidEndTime     string `json:"lotteryPaidEndTime,omitempty"`
+			LotteryPromotionFlag   int    `json:"lotteryPromotionFlag,omitempty"`
+			LotteryPromotionFlagRj int    `json:"lotteryPromotionFlagRj,omitempty"`
+			LotterySaleBeginTime   string `json:"lotterySaleBeginTime,omitempty"`
 			//LotterySaleEndTimeUnix  int           `json:"lotterySaleEndTimeUnix"`
-			LotterySaleEndtime      string        `json:"lotterySaleEndtime"`
-			LotterySuspendedFlag    int           `json:"lotterySuspendedFlag"`
-			LotteryUnsortDrawresult string        `json:"lotteryUnsortDrawresult"`
-			MatchList               []interface{} `json:"matchList"`
-			PdfType                 int           `json:"pdfType"`
-			PoolBalanceAfterdraw    string        `json:"poolBalanceAfterdraw"`
-			PoolBalanceAfterdrawRj  string        `json:"poolBalanceAfterdrawRj"`
+			LotterySaleEndtime      string        `json:"lotterySaleEndtime,omitempty"`
+			LotterySuspendedFlag    int           `json:"lotterySuspendedFlag,omitempty"`
+			LotteryUnsortDrawresult string        `json:"lotteryUnsortDrawresult,omitempty"`
+			MatchList               []interface{} `json:"matchList,omitempty"`
+			PdfType                 int           `json:"pdfType,omitempty"`
+			PoolBalanceAfterdraw    string        `json:"poolBalanceAfterdraw,omitempty"`
+			PoolBalanceAfterdrawRj  string        `json:"poolBalanceAfterdrawRj,omitempty"`
 			PrizeLevelList          []struct {
-				AwardType        int    `json:"awardType"`
-				Group            string `json:"group"`
-				LotteryCondition string `json:"lotteryCondition"`
-				PrizeLevel       string `json:"prizeLevel"`
-				Sort             int    `json:"sort"`
-				StakeAmount      string `json:"stakeAmount"`
-				StakeCount       string `json:"stakeCount"`
-				TotalPrizeamount string `json:"totalPrizeamount"`
-			} `json:"prizeLevelList"`
-			PrizeLevelListRj  []interface{} `json:"prizeLevelListRj"`
-			RuleType          int           `json:"ruleType"`
-			SurplusAmount     string        `json:"surplusAmount"`
-			SurplusAmountRj   string        `json:"surplusAmountRj"`
-			TermList          []interface{} `json:"termList"`
-			TermResultList    []interface{} `json:"termResultList"`
-			TotalSaleAmount   string        `json:"totalSaleAmount"`
-			TotalSaleAmountRj string        `json:"totalSaleAmountRj"`
-			Verify            int           `json:"verify"`
+				AwardType        int    `json:"awardType,omitempty"`
+				Group            string `json:"group,omitempty"`
+				LotteryCondition string `json:"lotteryCondition,omitempty"`
+				PrizeLevel       string `json:"prizeLevel,omitempty"`
+				Sort             int    `json:"sort,omitempty"`
+				StakeAmount      string `json:"stakeAmount,omitempty"`
+				StakeCount       string `json:"stakeCount,omitempty"`
+				TotalPrizeamount string `json:"totalPrizeamount,omitempty"`
+			} `json:"prizeLevelList,omitempty"`
+			PrizeLevelListRj  []interface{} `json:"prizeLevelListRj,omitempty"`
+			RuleType          int           `json:"ruleType,omitempty"`
+			SurplusAmount     string        `json:"surplusAmount,omitempty"`
+			SurplusAmountRj   string        `json:"surplusAmountRj,omitempty"`
+			TermList          []interface{} `json:"termList,omitempty"`
+			TermResultList    []interface{} `json:"termResultList,omitempty"`
+			TotalSaleAmount   string        `json:"totalSaleAmount,omitempty"`
+			TotalSaleAmountRj string        `json:"totalSaleAmountRj,omitempty"`
+			Verify            int           `json:"verify,omitempty"`
 			VtoolsConfig      struct {
-			} `json:"vtoolsConfig"`
-		} `json:"list"`
-		PageNo   int `json:"pageNo"`
-		PageSize int `json:"pageSize"`
-		Pages    int `json:"pages"`
-		Total    int `json:"total"`
-	} `json:"value"`
+			} `json:"vtoolsConfig,omitempty"`
+		} `json:"list,omitempty"`
+		PageNo   int `json:"pageNo,omitempty"`
+		PageSize int `json:"pageSize,omitempty"`
+		Pages    int `json:"pages,omitempty"`
+		Total    int `json:"total,omitempty"`
+	} `json:"value,omitempty"`
 }
 
 // 排列5
 type Plw struct {
-	DataFrom     string `json:"dataFrom"`
-	EmptyFlag    bool   `json:"emptyFlag"`
-	ErrorCode    string `json:"errorCode"`
-	ErrorMessage string `json:"errorMessage"`
-	Success      bool   `json:"success"`
+	DataFrom     string `json:"dataFrom,omitempty"`
+	EmptyFlag    bool   `json:"emptyFlag,omitempty"`
+	ErrorCode    string `json:"errorCode,omitempty"`
+	ErrorMessage string `json:"errorMessage,omitempty"`
+	Success      bool   `json:"success,omitempty"`
 	Value        struct {
 		List []struct {
-			DrawFlowFund           string `json:"drawFlowFund"`
-			DrawFlowFundRj         string `json:"drawFlowFundRj"`
-			DrawPdfUrl             string `json:"drawPdfUrl"`
-			DrawPdfUrlPls          string `json:"drawPdfUrlPls"`
-			EstimateDrawTime       string `json:"estimateDrawTime"`
-			IsGetKjpdf             int    `json:"isGetKjpdf"`
-			IsGetXlpdf             int    `json:"isGetXlpdf"`
-			LotteryDrawNum         string `json:"lotteryDrawNum"`
-			LotteryDrawResult      string `json:"lotteryDrawResult"`
-			LotteryDrawStatus      int    `json:"lotteryDrawStatus"`
-			LotteryDrawStatusNo    string `json:"lotteryDrawStatusNo"`
-			LotteryDrawTime        string `json:"lotteryDrawTime"`
-			LotteryEquipmentCount  int    `json:"lotteryEquipmentCount"`
-			LotteryGameName        string `json:"lotteryGameName"`
-			LotteryGameNum         string `json:"lotteryGameNum"`
-			LotteryGamePronum      int    `json:"lotteryGamePronum"`
-			LotteryNotice          int    `json:"lotteryNotice"`
-			LotteryNoticeShowFlag  int    `json:"lotteryNoticeShowFlag"`
-			LotteryPaidBeginTime   string `json:"lotteryPaidBeginTime"`
-			LotteryPaidEndTime     string `json:"lotteryPaidEndTime"`
-			LotteryPromotionFlag   int    `json:"lotteryPromotionFlag"`
-			LotteryPromotionFlagRj int    `json:"lotteryPromotionFlagRj"`
-			LotterySaleBeginTime   string `json:"lotterySaleBeginTime"`
+			DrawFlowFund           string `json:"drawFlowFund,omitempty"`
+			DrawFlowFundRj         string `json:"drawFlowFundRj,omitempty"`
+			DrawPdfUrl             string `json:"drawPdfUrl,omitempty"`
+			DrawPdfUrlPls          string `json:"drawPdfUrlPls,omitempty"`
+			EstimateDrawTime       string `json:"estimateDrawTime,omitempty"`
+			IsGetKjpdf             int    `json:"isGetKjpdf,omitempty"`
+			IsGetXlpdf             int    `json:"isGetXlpdf,omitempty"`
+			LotteryDrawNum         string `json:"lotteryDrawNum,omitempty"`
+			LotteryDrawResult      string `json:"lotteryDrawResult,omitempty"`
+			LotteryDrawStatus      int    `json:"lotteryDrawStatus,omitempty"`
+			LotteryDrawStatusNo    string `json:"lotteryDrawStatusNo,omitempty"`
+			LotteryDrawTime        string `json:"lotteryDrawTime,omitempty"`
+			LotteryEquipmentCount  int    `json:"lotteryEquipmentCount,omitempty"`
+			LotteryGameName        string `json:"lotteryGameName,omitempty"`
+			LotteryGameNum         string `json:"lotteryGameNum,omitempty"`
+			LotteryGamePronum      int    `json:"lotteryGamePronum,omitempty"`
+			LotteryNotice          int    `json:"lotteryNotice,omitempty"`
+			LotteryNoticeShowFlag  int    `json:"lotteryNoticeShowFlag,omitempty"`
+			LotteryPaidBeginTime   string `json:"lotteryPaidBeginTime,omitempty"`
+			LotteryPaidEndTime     string `json:"lotteryPaidEndTime,omitempty"`
+			LotteryPromotionFlag   int    `json:"lotteryPromotionFlag,omitempty"`
+			LotteryPromotionFlagRj int    `json:"lotteryPromotionFlagRj,omitempty"`
+			LotterySaleBeginTime   string `json:"lotterySaleBeginTime,omitempty"`
 			//LotterySaleEndTimeUnix  map[interface{}]interface{} `json:"lotterySaleEndTimeUnix"`
-			LotterySaleEndtime      string        `json:"lotterySaleEndtime"`
-			LotterySuspendedFlag    int           `json:"lotterySuspendedFlag"`
-			LotteryUnsortDrawresult string        `json:"lotteryUnsortDrawresult"`
-			MatchList               []interface{} `json:"matchList"`
-			PdfType                 int           `json:"pdfType"`
-			PoolBalanceAfterdraw    string        `json:"poolBalanceAfterdraw"`
-			PoolBalanceAfterdrawRj  string        `json:"poolBalanceAfterdrawRj"`
+			LotterySaleEndtime      string        `json:"lotterySaleEndtime,omitempty"`
+			LotterySuspendedFlag    int           `json:"lotterySuspendedFlag,omitempty"`
+			LotteryUnsortDrawresult string        `json:"lotteryUnsortDrawresult,omitempty"`
+			MatchList               []interface{} `json:"matchList,omitempty"`
+			PdfType                 int           `json:"pdfType,omitempty"`
+			PoolBalanceAfterdraw    string        `json:"poolBalanceAfterdraw,omitempty"`
+			PoolBalanceAfterdrawRj  string        `json:"poolBalanceAfterdrawRj,omitempty"`
 			PrizeLevelList          []struct {
-				AwardType        int    `json:"awardType"`
-				Group            string `json:"group"`
-				LotteryCondition string `json:"lotteryCondition"`
-				PrizeLevel       string `json:"prizeLevel"`
-				Sort             int    `json:"sort"`
-				StakeAmount      string `json:"stakeAmount"`
-				StakeCount       string `json:"stakeCount"`
-				TotalPrizeamount string `json:"totalPrizeamount"`
-			} `json:"prizeLevelList"`
-			PrizeLevelListRj  []interface{} `json:"prizeLevelListRj"`
-			RuleType          int           `json:"ruleType"`
-			SurplusAmount     string        `json:"surplusAmount"`
-			SurplusAmountRj   string        `json:"surplusAmountRj"`
-			TermList          []interface{} `json:"termList"`
-			TermResultList    []interface{} `json:"termResultList"`
-			TotalSaleAmount   string        `json:"totalSaleAmount"`
-			TotalSaleAmountRj string        `json:"totalSaleAmountRj"`
-			Verify            int           `json:"verify"`
+				AwardType        int    `json:"awardType,omitempty"`
+				Group            string `json:"group,omitempty"`
+				LotteryCondition string `json:"lotteryCondition,omitempty"`
+				PrizeLevel       string `json:"prizeLevel,omitempty"`
+				Sort             int    `json:"sort,omitempty"`
+				StakeAmount      string `json:"stakeAmount,omitempty"`
+				StakeCount       string `json:"stakeCount,omitempty"`
+				TotalPrizeamount string `json:"totalPrizeamount,omitempty"`
+			} `json:"prizeLevelList,omitempty"`
+			PrizeLevelListRj  []interface{} `json:"prizeLevelListRj,omitempty"`
+			RuleType          int           `json:"ruleType,omitempty"`
+			SurplusAmount     string        `json:"surplusAmount,omitempty"`
+			SurplusAmountRj   string        `json:"surplusAmountRj,omitempty"`
+			TermList          []interface{} `json:"termList,omitempty"`
+			TermResultList    []interface{} `json:"termResultList,omitempty"`
+			TotalSaleAmount   string        `json:"totalSaleAmount,omitempty"`
+			TotalSaleAmountRj string        `json:"totalSaleAmountRj,omitempty"`
+			Verify            int           `json:"verify,omitempty"`
 			VtoolsConfig      struct {
-			} `json:"vtoolsConfig"`
-		} `json:"list"`
-		PageNo   int `json:"pageNo"`
-		PageSize int `json:"pageSize"`
-		Pages    int `json:"pages"`
-		Total    int `json:"total"`
-	} `json:"value"`
+			} `json:"vtoolsConfig,omitempty"`
+		} `json:"list,omitempty"`
+		PageNo   int `json:"pageNo,omitempty"`
+		PageSize int `json:"pageSize,omitempty"`
+		Pages    int `json:"pages,omitempty"`
+		Total    int `json:"total,omitempty"`
+	} `json:"value,omitempty"`
 }
 
 // 七星彩
 type SevenStar struct {
-	DataFrom     string `json:"dataFrom"`
-	EmptyFlag    bool   `json:"emptyFlag"`
-	ErrorCode    string `json:"errorCode"`
-	ErrorMessage string `json:"errorMessage"`
-	Success      bool   `json:"success"`
+	DataFrom     string `json:"dataFrom,omitempty"`
+	EmptyFlag    bool   `json:"emptyFlag,omitempty"`
+	ErrorCode    string `json:"errorCode,omitempty"`
+	ErrorMessage string `json:"errorMessage,omitempty"`
+	Success      bool   `json:"success,omitempty"`
 	Value        struct {
 		LastPoolDraw struct {
-			LotteryDrawNum       string `json:"lotteryDrawNum"`
-			LotteryDrawResult    string `json:"lotteryDrawResult"`
-			LotteryDrawTime      string `json:"lotteryDrawTime"`
-			LotteryGameName      string `json:"lotteryGameName"`
-			LotteryGameNum       string `json:"lotteryGameNum"`
-			PoolBalanceAfterdraw string `json:"poolBalanceAfterdraw"`
+			LotteryDrawNum       string `json:"lotteryDrawNum,omitempty"`
+			LotteryDrawResult    string `json:"lotteryDrawResult,omitempty"`
+			LotteryDrawTime      string `json:"lotteryDrawTime,omitempty"`
+			LotteryGameName      string `json:"lotteryGameName,omitempty"`
+			LotteryGameNum       string `json:"lotteryGameNum,omitempty"`
+			PoolBalanceAfterdraw string `json:"poolBalanceAfterdraw,omitempty"`
 			PrizeLevelList       []struct {
-				AwardType        int    `json:"awardType"`
-				Group            string `json:"group"`
-				LotteryCondition string `json:"lotteryCondition"`
-				PrizeLevel       string `json:"prizeLevel"`
-				Sort             int    `json:"sort"`
-				StakeAmount      string `json:"stakeAmount"`
-				StakeCount       string `json:"stakeCount"`
-				TotalPrizeamount string `json:"totalPrizeamount"`
-			} `json:"prizeLevelList"`
-		} `json:"lastPoolDraw"`
+				AwardType        int    `json:"awardType,omitempty"`
+				Group            string `json:"group,omitempty"`
+				LotteryCondition string `json:"lotteryCondition,omitempty"`
+				PrizeLevel       string `json:"prizeLevel,omitempty"`
+				Sort             int    `json:"sort,omitempty"`
+				StakeAmount      string `json:"stakeAmount,omitempty"`
+				StakeCount       string `json:"stakeCount,omitempty"`
+				TotalPrizeamount string `json:"totalPrizeamount,omitempty"`
+			} `json:"prizeLevelList,omitempty"`
+		} `json:"lastPoolDraw,omitempty"`
 		List []struct {
-			DrawFlowFund           string `json:"drawFlowFund"`
-			DrawFlowFundRj         string `json:"drawFlowFundRj"`
-			DrawPdfUrl             string `json:"drawPdfUrl"`
-			EstimateDrawTime       string `json:"estimateDrawTime"`
-			IsGetKjpdf             int    `json:"isGetKjpdf"`
-			IsGetXlpdf             int    `json:"isGetXlpdf"`
-			LotteryDrawNum         string `json:"lotteryDrawNum"`
-			LotteryDrawResult      string `json:"lotteryDrawResult"`
-			LotteryDrawStatus      int    `json:"lotteryDrawStatus"`
-			LotteryDrawStatusNo    string `json:"lotteryDrawStatusNo"`
-			LotteryDrawTime        string `json:"lotteryDrawTime"`
-			LotteryEquipmentCount  int    `json:"lotteryEquipmentCount"`
-			LotteryGameName        string `json:"lotteryGameName"`
-			LotteryGameNum         string `json:"lotteryGameNum"`
-			LotteryGamePronum      int    `json:"lotteryGamePronum"`
-			LotteryNotice          int    `json:"lotteryNotice"`
-			LotteryNoticeShowFlag  int    `json:"lotteryNoticeShowFlag"`
-			LotteryPaidBeginTime   string `json:"lotteryPaidBeginTime"`
-			LotteryPaidEndTime     string `json:"lotteryPaidEndTime"`
-			LotteryPromotionFlag   int    `json:"lotteryPromotionFlag"`
-			LotteryPromotionFlagRj int    `json:"lotteryPromotionFlagRj"`
-			LotterySaleBeginTime   string `json:"lotterySaleBeginTime"`
+			DrawFlowFund           string `json:"drawFlowFund,omitempty"`
+			DrawFlowFundRj         string `json:"drawFlowFundRj,omitempty"`
+			DrawPdfUrl             string `json:"drawPdfUrl,omitempty"`
+			EstimateDrawTime       string `json:"estimateDrawTime,omitempty"`
+			IsGetKjpdf             int    `json:"isGetKjpdf,omitempty"`
+			IsGetXlpdf             int    `json:"isGetXlpdf,omitempty"`
+			LotteryDrawNum         string `json:"lotteryDrawNum,omitempty"`
+			LotteryDrawResult      string `json:"lotteryDrawResult,omitempty"`
+			LotteryDrawStatus      int    `json:"lotteryDrawStatus,omitempty"`
+			LotteryDrawStatusNo    string `json:"lotteryDrawStatusNo,omitempty"`
+			LotteryDrawTime        string `json:"lotteryDrawTime,omitempty"`
+			LotteryEquipmentCount  int    `json:"lotteryEquipmentCount,omitempty"`
+			LotteryGameName        string `json:"lotteryGameName,omitempty"`
+			LotteryGameNum         string `json:"lotteryGameNum,omitempty"`
+			LotteryGamePronum      int    `json:"lotteryGamePronum,omitempty"`
+			LotteryNotice          int    `json:"lotteryNotice,omitempty"`
+			LotteryNoticeShowFlag  int    `json:"lotteryNoticeShowFlag,omitempty"`
+			LotteryPaidBeginTime   string `json:"lotteryPaidBeginTime,omitempty"`
+			LotteryPaidEndTime     string `json:"lotteryPaidEndTime,omitempty"`
+			LotteryPromotionFlag   int    `json:"lotteryPromotionFlag,omitempty"`
+			LotteryPromotionFlagRj int    `json:"lotteryPromotionFlagRj,omitempty"`
+			LotterySaleBeginTime   string `json:"lotterySaleBeginTime,omitempty"`
 			//LotterySaleEndTimeUnix  map[interface{}]interface{} `json:"lotterySaleEndTimeUnix"`
-			LotterySaleEndtime      string        `json:"lotterySaleEndtime"`
-			LotterySuspendedFlag    int           `json:"lotterySuspendedFlag"`
-			LotteryUnsortDrawresult string        `json:"lotteryUnsortDrawresult"`
-			MatchList               []interface{} `json:"matchList"`
-			PdfType                 int           `json:"pdfType"`
-			PoolBalanceAfterdraw    string        `json:"poolBalanceAfterdraw"`
-			PoolBalanceAfterdrawRj  string        `json:"poolBalanceAfterdrawRj"`
+			LotterySaleEndtime      string        `json:"lotterySaleEndtime,omitempty"`
+			LotterySuspendedFlag    int           `json:"lotterySuspendedFlag,omitempty"`
+			LotteryUnsortDrawresult string        `json:"lotteryUnsortDrawresult,omitempty"`
+			MatchList               []interface{} `json:"matchList,omitempty"`
+			PdfType                 int           `json:"pdfType,omitempty"`
+			PoolBalanceAfterdraw    string        `json:"poolBalanceAfterdraw,omitempty"`
+			PoolBalanceAfterdrawRj  string        `json:"poolBalanceAfterdrawRj,omitempty"`
 			PrizeLevelList          []struct {
-				AwardType        int    `json:"awardType"`
-				Group            string `json:"group"`
-				LotteryCondition string `json:"lotteryCondition"`
-				PrizeLevel       string `json:"prizeLevel"`
-				Sort             int    `json:"sort"`
-				StakeAmount      string `json:"stakeAmount"`
-				StakeCount       string `json:"stakeCount"`
-				TotalPrizeamount string `json:"totalPrizeamount"`
-			} `json:"prizeLevelList"`
-			PrizeLevelListRj  []interface{} `json:"prizeLevelListRj"`
-			RuleType          int           `json:"ruleType"`
-			SurplusAmount     string        `json:"surplusAmount"`
-			SurplusAmountRj   string        `json:"surplusAmountRj"`
-			TermList          []interface{} `json:"termList"`
-			TermResultList    []interface{} `json:"termResultList"`
-			TotalSaleAmount   string        `json:"totalSaleAmount"`
-			TotalSaleAmountRj string        `json:"totalSaleAmountRj"`
-			Verify            int           `json:"verify"`
+				AwardType        int    `json:"awardType,omitempty"`
+				Group            string `json:"group,omitempty"`
+				LotteryCondition string `json:"lotteryCondition,omitempty"`
+				PrizeLevel       string `json:"prizeLevel,omitempty"`
+				Sort             int    `json:"sort,omitempty"`
+				StakeAmount      string `json:"stakeAmount,omitempty"`
+				StakeCount       string `json:"stakeCount,omitempty"`
+				TotalPrizeamount string `json:"totalPrizeamount,omitempty"`
+			} `json:"prizeLevelList,omitempty"`
+			PrizeLevelListRj  []interface{} `json:"prizeLevelListRj,omitempty"`
+			RuleType          int           `json:"ruleType,omitempty"`
+			SurplusAmount     string        `json:"surplusAmount,omitempty"`
+			SurplusAmountRj   string        `json:"surplusAmountRj,omitempty"`
+			TermList          []interface{} `json:"termList,omitempty"`
+			TermResultList    []interface{} `json:"termResultList,omitempty"`
+			TotalSaleAmount   string        `json:"totalSaleAmount,omitempty"`
+			TotalSaleAmountRj string        `json:"totalSaleAmountRj,omitempty"`
+			Verify            int           `json:"verify,omitempty"`
 			VtoolsConfig      struct {
-			} `json:"vtoolsConfig"`
-		} `json:"list"`
-		PageNo   int `json:"pageNo"`
-		PageSize int `json:"pageSize"`
-		Pages    int `json:"pages"`
-		Total    int `json:"total"`
-	} `json:"value"`
+			} `json:"vtoolsConfig,omitempty"`
+		} `json:"list,omitempty"`
+		PageNo   int `json:"pageNo,omitempty"`
+		PageSize int `json:"pageSize,omitempty"`
+		Pages    int `json:"pages,omitempty"`
+		Total    int `json:"total,omitempty"`
+	} `json:"value,omitempty"`
 }
 
 var LotteryStatistics = cache2go.Cache("lottery-statistics")

@@ -308,6 +308,7 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 	now := time.Now()
 	//校验是否在售票时间内
 	finishedTime := getFinishedTime(order)
+	fmt.Println("dead time ==============>", util.GetTodayYYHHMMSSFrom(finishedTime))
 	if now.UnixMicro() > finishedTime.UnixMicro() {
 		common.FailedReturn(c, "现在已经不在营业时间")
 		return
@@ -316,6 +317,10 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 	order.Bonus = 0
 	order.BetUpload = false
 	var userInfo = user.FetUserInfo(c)
+	if userInfo == (user.User{}) {
+		common.FailedReturn(c, "用户未登录/不存在")
+		return
+	}
 	order.UserID = userInfo.ID
 	order.UUID = GetOrderId(&order)
 	//校验字段
