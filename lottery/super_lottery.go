@@ -84,9 +84,9 @@ type SuperLottery struct {
 			PoolBalanceAfterdraw    string        `json:"poolBalanceAfterdraw,omitempty"`
 			PoolBalanceAfterdrawRj  string        `json:"poolBalanceAfterdrawRj,omitempty"`
 			PrizeLevelList          []struct {
-				AwardType        int    `json:"awardType,omitempty"`
-				Group            string `json:"group,omitempty"`
-				LotteryCondition string `json:"lotteryCondition,omitempty"`
+				AwardType int    `json:"awardType,omitempty"`
+				Group     string `json:"group,omitempty"`
+				//LotteryCondition string `json:"lotteryCondition,omitempty"`
 				PrizeLevel       string `json:"prizeLevel,omitempty"`
 				Sort             int    `json:"sort,omitempty"`
 				StakeAmount      string `json:"stakeAmount,omitempty"`

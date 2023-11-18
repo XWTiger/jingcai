@@ -97,9 +97,8 @@ func GetTodayYYHHMMSS() string {
 
 }
 
-func GetTodayYYHHMMSSFrom(time time.Time) string {
-	now := time
-	dateEnd := fmt.Sprintf("%d-%s-%s", now.Year(), getNum(int(now.Month())), getNum(int(now.Day())))
+func GetTodayYYHHMMSSFrom(dataTime time.Time) string {
+	dateEnd := dataTime.Format("2006-01-02 15:04:05")
 	return dateEnd
 
 }

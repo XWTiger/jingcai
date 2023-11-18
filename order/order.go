@@ -2443,7 +2443,7 @@ func CreatePLW(ord *Order) error {
 		}
 	} else {
 		numArr := strings.Split(ord.Content, " ")
-		if ord.PL3Way != ALL_C {
+		if ord.LotteryType == P5 && ord.PL3Way == PL_SIGNAL {
 			if len(numArr) != tp {
 				return errors.New("选号存在问题")
 			}
@@ -2632,7 +2632,7 @@ func AddPlwCheck(p int, when *time.Time) {
 				}
 				orders := GetOrderByLotteryType("P5")
 				//用于映射是否有这个期号
-				var mapper map[string]int
+				var mapper map[string]int = make(map[string]int, 0)
 				for i, s := range result.Value.List {
 					_, ok := mapper[s.LotteryDrawNum]
 					if !ok {
