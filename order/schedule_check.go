@@ -74,7 +74,7 @@ func OrderCheckInit() {
 		case FOOTBALL:
 			if job.Time.Unix() > time.Now().Unix() {
 				CheckLottery(job.Time)
-			} else if counts[0] <= 0 {
+			} else if counts[0] <= 0 && !job.Status {
 
 				CheckLottery(now.Add(time.Minute * 5))
 				counts[0] = 1
@@ -83,7 +83,7 @@ func OrderCheckInit() {
 		case P3:
 			if job.Time.Unix() > time.Now().Unix() {
 				AddPlwCheck(3, &job.Time)
-			} else if counts[1] <= 0 {
+			} else if counts[1] <= 0 && !job.Status {
 				AddPlwCheck(3, &nowAdd)
 				counts[1] = 1
 			}
@@ -91,7 +91,7 @@ func OrderCheckInit() {
 		case BASKETBALL:
 			if job.Time.Unix() > time.Now().Unix() {
 				CheckBasketBallLottery(job.Time)
-			} else if counts[2] <= 0 {
+			} else if counts[2] <= 0 && !job.Status {
 				now := time.Now()
 				CheckBasketBallLottery(now.Add(time.Minute * 5))
 				counts[2] = 1
@@ -100,7 +100,7 @@ func OrderCheckInit() {
 		case SEVEN_STAR:
 			if job.Time.Unix() > time.Now().Unix() {
 				AddSevenStarCheck(&job.Time)
-			} else if counts[3] <= 0 {
+			} else if counts[3] <= 0 && !job.Status {
 				AddSevenStarCheck(&nowAdd)
 				counts[3] = 1
 			}
@@ -108,7 +108,7 @@ func OrderCheckInit() {
 		case SUPER_LOTTO:
 			if job.Time.Unix() > time.Now().Unix() {
 				AddSuperLottoCheck(&job.Time)
-			} else if counts[4] <= 0 {
+			} else if counts[4] <= 0 && !job.Status {
 				AddSuperLottoCheck(&nowAdd)
 				counts[4] = 1
 			}
@@ -116,7 +116,7 @@ func OrderCheckInit() {
 		case P5:
 			if job.Time.Unix() > time.Now().Unix() {
 				AddPlwCheck(5, &job.Time)
-			} else if counts[5] <= 0 {
+			} else if counts[5] <= 0 && !job.Status {
 				AddPlwCheck(5, &nowAdd)
 				counts[5] = 1
 			}
@@ -124,7 +124,7 @@ func OrderCheckInit() {
 		case ALL_WIN:
 			if job.Time.Unix() > time.Now().Unix() {
 				AllWinCheck(job.Time)
-			} else if counts[6] <= 0 {
+			} else if counts[6] <= 0 && !job.Status {
 				AllWinCheck(nowAdd)
 				counts[6] = 1
 			}

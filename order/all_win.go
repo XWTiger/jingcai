@@ -289,12 +289,12 @@ func AllWinList(c *gin.Context) {
 		mysql.DB.Model(AllWin{}).Where(&AllWin{
 			Timeout:  false,
 			ParentId: 0,
-		}).Where("id in (?)", allWinIds).Find(&all)
+		}).Where("id in (?)", allWinIds).Where("TIMESTAMPDIFF(SECOND, now(), dead_time) > 0 ").Find(&all)
 	} else {
 		mysql.DB.Model(AllWin{}).Where(&AllWin{
 			Timeout:  false,
 			ParentId: 0,
-		}).Find(&all)
+		}).Where("TIMESTAMPDIFF(SECOND, now(), dead_time) > 0 ").Find(&all)
 	}
 	var count int64
 	mysql.DB.Model(Order{}).Where("lottery_type=? and all_win_id > 0", param).Count(&count)
