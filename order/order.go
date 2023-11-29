@@ -2587,6 +2587,8 @@ func AddPlwCheck(p int, when *time.Time) {
 							}
 							//TODO 组合3和组合6计算
 							o.AllMatchFinished = true
+						} else {
+							continue
 						}
 						if o.Win == true {
 							o.BonusStatus = NO_PAY
@@ -2799,6 +2801,8 @@ func AddSuperLottoCheck(when *time.Time) {
 							}
 							o.Win = false
 						}
+					} else {
+						continue
 					}
 					o.AllMatchFinished = true
 					if o.Win == true {
@@ -2924,6 +2928,8 @@ func AddSevenStarCheck(when *time.Time) {
 							}
 							o.Win = false
 						}
+					} else {
+						continue
 					}
 					o.AllMatchFinished = true
 					if o.Win == true {
