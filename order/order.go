@@ -464,9 +464,19 @@ func checkSuperLotto(ord *Order) error {
 	if len(ord.Content) <= 0 {
 		return errors.New("选号不能为空")
 	}
-	buffer := strings.Split(ord.Content, " ")
-	if len(buffer) != 7 {
-		return errors.New("选号存在问题")
+	//判断是否多注
+	if strings.Contains(ord.Content, ",") {
+		buffer := strings.Split(ord.Content, ",")
+		for _, s := range buffer {
+			if len(s) != 7 {
+				return errors.New("选号存在问题")
+			}
+		}
+	} else {
+		buffer := strings.Split(ord.Content, " ")
+		if len(buffer) != 7 {
+			return errors.New("选号存在问题")
+		}
 	}
 
 	if len(ord.IssueId) <= 0 {

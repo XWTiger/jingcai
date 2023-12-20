@@ -508,6 +508,7 @@ func getFinishedTime(order Order) time.Time {
 
 	case FOOTBALL:
 	case BASKETBALL:
+		fmt.Println("match date =================>", order.Matches[0].TimeDate.Format("2006-01-02 15:04:05"))
 		return common.GetMatchFinishedTime(order.Matches[0].TimeDate)
 	case P3:
 	case P5:
