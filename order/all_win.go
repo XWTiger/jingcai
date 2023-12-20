@@ -289,12 +289,12 @@ func AllWinList(c *gin.Context) {
 		mysql.DB.Model(AllWin{}).Where(&AllWin{
 			Timeout:  false,
 			ParentId: 0,
-		}).Where("id in (?)", allWinIds).Where("TIMESTAMPDIFF(SECOND, now(), dead_time) > 0 ").Find(&all)
+		}).Where("id in (?)", allWinIds).Where("TIMESTAMPDIFF(SECOND, now(), finished_time) > 0 ").Find(&all)
 	} else {
 		mysql.DB.Model(AllWin{}).Where(&AllWin{
 			Timeout:  false,
 			ParentId: 0,
-		}).Where("TIMESTAMPDIFF(SECOND, now(), dead_time) > 0 ").Find(&all)
+		}).Where("TIMESTAMPDIFF(SECOND, now(), finished_time) > 0 ").Find(&all)
 	}
 	var count int64
 	mysql.DB.Model(Order{}).Where("lottery_type=? and all_win_id > 0", param).Count(&count)
@@ -436,6 +436,7 @@ func AllWinCreateHandler(c *gin.Context) {
 				Bonus:            order.Bonus,
 				PayWay:           body.PayWay,
 				AllMatchFinished: order.AllMatchFinished,
+				DeadTime:         order.DeadTime,
 			}
 			payErr := user.CheckScoreOrDoBill(userInfo.ID, userOrder.ShouldPay, true, tx)
 			if payErr != nil {
@@ -447,7 +448,7 @@ func AllWinCreateHandler(c *gin.Context) {
 			tx.Save(&userOrder)
 			var allWin = AllWin{
 				Timeout:       false,
-				FinishedTime:  common.GetMatchFinishedTime(order.Matches[0].TimeDate),
+				FinishedTime:  order.DeadTime,
 				ParentId:      initAll.ID,
 				UserId:        order.UserID,
 				OrderId:       userOrder.UUID,

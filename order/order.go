@@ -468,7 +468,8 @@ func checkSuperLotto(ord *Order) error {
 	if strings.Contains(ord.Content, ",") {
 		buffer := strings.Split(ord.Content, ",")
 		for _, s := range buffer {
-			if len(s) != 7 {
+			temp := strings.Split(s, " ")
+			if len(temp) != 7 {
 				return errors.New("选号存在问题")
 			}
 		}
