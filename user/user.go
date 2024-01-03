@@ -858,3 +858,83 @@ func GetShopOwnerInfo(c *gin.Context) {
 	common.SuccessReturn(c, owner)
 
 }
+
+// 修改密码对象
+type UserChangePasswordDTO struct {
+	//新密码
+	NewPassWord string
+
+	//老密码
+	OldPassWord string
+
+	//手机验证码（忘记密码，手机验证才用）
+	Code string
+
+	//手机号（忘记密码，手机验证才用）
+	Phone string
+}
+
+func GetUserInfoByPhoneNum(num string) (User, error) {
+	var user User
+	mysql.DB.Where(&User{Phone: num}).First(&user)
+	if common.IsEmpty(user) {
+		return user, errors.New("用户不存在")
+	}
+	return user, nil
+}
+
+// @Summary 修改密码
+// @Description 修改密码-手机校验
+// @Tags user  用户
+// @Accept json
+// @Produce json
+// @Success 200 {object} common.BaseResponse
+// @failure 500 {object} common.BaseResponse
+// @param param body UserDTO true "用户对象, socre 可以不传"
+// @Router /api/user/passwordByPhoneCode [post]
+func ChangePasswordByPhoneCodeHandler(c *gin.Context) {
+	var upd UserChangePasswordDTO
+	c.BindJSON(&upd)
+	//TODO 校验手机code 拿到手机号
+	//通过手机号拿到用户信息
+
+	user, err := GetUserInfoByPhoneNum("")
+	if err != nil {
+		common.FailedReturn(c, err.Error())
+		return
+	}
+	salt := uuid.NewV4().String()[0:16]
+	pwd, err := common.EnPwdCode([]byte(user.Secret), []byte(salt))
+	if err != nil {
+		log.Error("加密密码失败", err)
+		common.FailedReturn(c, "加密密码失败")
+		return
+	}
+
+	mysql.DB.Model(user).Where(user).Update("secret", pwd).Update("Salt", salt)
+}
+
+// @Summary 修改密码
+// @Description 修改密码
+// @Tags user  用户
+// @Accept json
+// @Produce json
+// @Success 200 {object} common.BaseResponse
+// @failure 500 {object} common.BaseResponse
+// @param param body UserChangePasswordDTO true "需改密码对象"
+// @Router /api/user/password [post]
+func ChangePasswordHandler(c *gin.Context) {
+	var upd UserChangePasswordDTO
+	c.BindJSON(&upd)
+	var user = getUserInfo(c)
+	salt := uuid.NewV4().String()[0:16]
+	pwd, err := common.EnPwdCode([]byte(user.Secret), []byte(salt))
+	if err != nil {
+
+		log.Error("加密密码失败", err)
+		common.FailedReturn(c, "加密密码失败")
+		return
+	}
+
+	mysql.DB.Model(user).Where(user).Update("secret", pwd).Update("Salt", salt)
+}

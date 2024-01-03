@@ -92,6 +92,10 @@ func CommentHandler(c *gin.Context) {
 	}
 	validatior.Validator(c, comment)
 	var userInfo = user.FetUserInfo(c)
+	if common.IsEmpty(userInfo) {
+		common.FailedReturn(c, "用户不存在")
+		return
+	}
 	comment.UserId = userInfo.ID
 	comment.ShowStatus = true
 	if err := mysql.DB.Model(Comment{}).Save(&comment).Error; err != nil {

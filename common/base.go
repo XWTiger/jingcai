@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/muesli/cache2go"
 	"net/http"
+	"reflect"
 	"strconv"
 	"time"
 )
@@ -139,4 +140,15 @@ func GetDateStartAndEnd(time time.Time) (string, string) {
 	var dateStart string
 	dateStart = fmt.Sprintf("%d-%s-%s 00:00:00", now.Year(), getNum(int(now.Month())), getNum(int(now.Day())))
 	return dateStart, dateEnd
+}
+
+func IsEmpty(value any) bool {
+	if value == nil {
+		return true
+	}
+
+	if value == reflect.Zero(reflect.TypeOf(value)) {
+		return true
+	}
+	return false
 }
