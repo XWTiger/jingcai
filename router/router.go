@@ -1,9 +1,12 @@
 package router
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"github.com/swaggo/swag"
 	"jingcai/admin"
 	"jingcai/advise"
 	"jingcai/bbs"
@@ -209,4 +212,20 @@ func pong(c *gin.Context) {
 		}*/
 
 	//fmt.Println(sum)
+
+	var obj map[string]interface{}
+	cont, _ := swag.ReadDoc("swagger")
+	json.Unmarshal([]byte(cont), &obj)
+	fmt.Println("===========================")
+	val := obj["paths"].(map[string]interface{})
+	for k, v := range val {
+		fmt.Println(k)
+		valin := v.(map[string]interface{})
+		if valin["get"] != nil {
+			detail := valin["get"].(map[string]interface{})
+			fmt.Println(detail["description"])
+
+		}
+	}
+
 }
