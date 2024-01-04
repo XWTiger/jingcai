@@ -100,12 +100,13 @@ func BindRouters(g *gin.Engine) {
 	}
 
 	{
-		bbsGroup.POST("/commit", bbs.CommitHandler)
+		bbsGroup.GET("/comment/list", bbs.ListComment)
 		bbsGroup.GET("/list", bbs.ListHandler)
+		bbsGroup.GET("/comment/response", bbs.GetResponseByCommentId)
+		bbsGroup.Use(user.Authorize())
+		bbsGroup.POST("/commit", bbs.CommitHandler)
 		bbsGroup.POST("/response", bbs.ResponseHandler)
 		bbsGroup.POST("/comment", bbs.CommentHandler)
-		bbsGroup.GET("/comment/list", bbs.ListComment)
-		bbsGroup.GET("/comment/response", bbs.GetResponseByCommentId)
 	}
 	//订单
 	orderGroup := r.Group("/order")

@@ -88,10 +88,12 @@ func CommentHandler(c *gin.Context) {
 	err := c.BindJSON(&comment)
 	if err != nil {
 		common.FailedReturn(c, "获取参数失败")
+		log.Error(err)
 		return
 	}
 	validatior.Validator(c, comment)
 	var userInfo = user.FetUserInfo(c)
+	log.Info("comment user info ========>", userInfo)
 	if common.IsEmpty(userInfo) {
 		common.FailedReturn(c, "用户不存在")
 		return

@@ -584,12 +584,15 @@ func AllWinCheck(when time.Time) {
 								mysql.DB.Model(AllWin{}).Save(partner)
 							}
 						}
+
 					} else {
 						if allWin.FinishedTime.Second()-time.Now().Second() < 0 {
 							allWin.Timeout = true
 						}
 					}
-					if err := mysql.DB.Model(AllWin{}).Save(allWin).Error; err != nil {
+					if err := mysql.DB.Model(AllWin{Model: gorm.Model{
+						ID: allWin.ID,
+					}}).Where("id=?", allWin.ID).Save(allWin).Error; err != nil {
 						log.Error(err, "更新发起者状态失败")
 						continue
 					}
