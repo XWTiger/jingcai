@@ -26,6 +26,7 @@ type HttpConfig struct {
 	DbUser          string `yaml:"DbUser"`        //用户
 	DbSpecial       string `yaml:"DbSpecial"`     // 数据库密码
 	CreeperSwitch   bool   `yaml:"CreeperSwitch"` // 爬虫开关
+	AuditSwitch     bool   `yaml:"AuditSwitch"`   //审计日志
 }
 
 type Config struct {
@@ -53,6 +54,7 @@ func Init() *Config {
 				DbUser:          "root",
 				DbSpecial:       "123456",
 				CreeperSwitch:   true,
+				AuditSwitch:     true,
 			},
 			LogConf: &alog.Config{
 				Path:        "/var/log/jingcai/jingcai.log",
@@ -79,6 +81,7 @@ func Init() *Config {
 				TargetPort:      8080,
 				TargetScheme:    "http",
 				CreeperSwitch:   true,
+				AuditSwitch:     true,
 			},
 			LogConf: &alog.Config{
 				Path:        "/var/log/jingcai/jingcai.log",

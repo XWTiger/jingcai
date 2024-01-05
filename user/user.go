@@ -883,7 +883,7 @@ func GetUserInfoByPhoneNum(num string) (User, error) {
 	return user, nil
 }
 
-// @Summary 修改密码
+// @Summary 手机重置密码
 // @Description 修改密码-手机校验
 // @Tags user  用户
 // @Accept json

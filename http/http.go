@@ -15,7 +15,7 @@ func Init(c *config.Config) func() {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 	//bind router
-	router.BindRouters(r)
+	router.BindRouters(r, c)
 	addr := fmt.Sprintf("%s:%d", c.HttpConf.Host, c.HttpConf.Port)
 	srv := &http.Server{
 		Addr:         addr,

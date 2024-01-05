@@ -1733,7 +1733,7 @@ const docTemplate = `{
                 "tags": [
                     "user  用户"
                 ],
-                "summary": "修改密码",
+                "summary": "手机重置密码",
                 "parameters": [
                     {
                         "description": "用户对象, socre 可以不传",

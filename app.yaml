@@ -30,6 +30,7 @@ Server:
   DbUser:  tiger
   DbSpecial: 123456
   CreeperSwitch: false
+  AuditSwitch: true
 Log:
   # configure the path where the logs are written
   # the default is /var/log/dbagent/proxy.log

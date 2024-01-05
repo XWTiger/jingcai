@@ -9,9 +9,11 @@ import (
 	"github.com/swaggo/swag"
 	"jingcai/admin"
 	"jingcai/advise"
+	"jingcai/audit"
 	"jingcai/bbs"
 	"jingcai/cache"
 	"jingcai/common"
+	"jingcai/config"
 	"jingcai/files"
 	"jingcai/lottery"
 	"jingcai/order"
@@ -34,11 +36,16 @@ import (
 // @BasePath  /api/v1
 
 // @securityDefinitions.basic  BasicAuth
-func BindRouters(g *gin.Engine) {
+func BindRouters(g *gin.Engine, config *config.Config) {
 
 	g.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	g.GET("/ping", pong)
 	r := g.Group("/api")
+	if config.HttpConf.AuditSwitch {
+		if config.HttpConf.AuditSwitch {
+			r.Use(audit.AuditHandler())
+		}
+	}
 	shopGroup := r.Group("/shop")
 	userGroup := r.Group("/user")
 	r.GET("/salt", common.Salt)
@@ -134,6 +141,7 @@ func BindRouters(g *gin.Engine) {
 }
 
 // @Description 状态检测
+// @Summery 状态检测
 // @Accept json
 // @Produce json
 // @Success 200 {object} string

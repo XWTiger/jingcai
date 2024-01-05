@@ -6,6 +6,7 @@ import (
 	"golang.org/x/net/context"
 	"gopkg.in/yaml.v3"
 	"jingcai/admin"
+	"jingcai/audit"
 	"jingcai/bbs"
 	"jingcai/config"
 	"jingcai/creeper"
@@ -32,6 +33,7 @@ func main() {
 	//start server
 	clean := ihttp.Init(conf)
 	files.Init(conf)
+
 	//connect mysql
 	sc := make(chan os.Signal, 1)
 	if myErr := mysql.InitDB(conf); myErr != nil {
@@ -45,6 +47,8 @@ func main() {
 	if conf.HttpConf.CreeperSwitch {
 		go admin.InitCronForCreep(ctx)
 	}
+	//init audit log
+	audit.InitAudit()
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM) //syscall.SIGHUP
 	for {
 		sig := <-sc
@@ -75,4 +79,5 @@ func initTables() {
 	mysql.DB.AutoMigrate(&user.User{})
 	mysql.DB.AutoMigrate(&user.ScoreUserNotify{})
 	mysql.DB.AutoMigrate(&order.JobExecution{})
+	mysql.DB.AutoMigrate(&audit.AuditLog{})
 }
