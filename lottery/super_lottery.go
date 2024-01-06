@@ -493,3 +493,88 @@ func GetSevenStarIssueId() (int, error) {
 	issueId, err := strconv.Atoi(result.Value.List[0].LotteryDrawNum)
 	return issueId, nil
 }
+
+type LottoStatistics struct {
+	//足球
+	FootBallCount string
+	//大乐透
+	SuperLotteryCount string
+	//七星彩
+	SevenStarCount string
+	//排列五
+	PlwCount string
+	//排列3
+	Pl3 string
+	//篮球
+	BasketBallCount string
+}
+
+func lottoStatisticsNew() LottoStatistics {
+	return LottoStatistics{
+		FootBallCount:     "精彩进行中",
+		SuperLotteryCount: "上亿奖池",
+		Pl3:               "千万奖池",
+		PlwCount:          "千万奖池",
+		SevenStarCount:    "上亿奖池",
+		BasketBallCount:   "火热进行中",
+	}
+}
+
+// @Summary 获取首页乐透概览
+// @Description 获取首页乐透概览
+// @Tags lotto 其它彩票
+// @Accept json
+// @Produce json
+// @Success 200 {object} common.BaseResponse
+// @failure 500 {object} common.BaseResponse
+// @Router /lottery-api/statistics [get]
+func LotteryStatisticsHandler(c *gin.Context) {
+	statics := lottoStatisticsNew()
+	if LotteryStatistics.Exists(SEVEN_STAR_POOL) {
+		item, err := LotteryStatistics.Value(SEVEN_STAR_POOL)
+		if err != nil {
+			log.Error(err)
+		} else {
+			statics.SevenStarCount = item.Data().(string)
+		}
+	}
+
+	if LotteryStatistics.Exists(PLW_POOL) {
+		item, err := LotteryStatistics.Value(PLW_POOL)
+		if err != nil {
+			log.Error(err)
+		} else {
+			statics.PlwCount = item.Data().(string)
+			statics.Pl3 = item.Data().(string)
+		}
+	}
+
+	if LotteryStatistics.Exists(SUPER_LOTTERY_POOL) {
+		item, err := LotteryStatistics.Value(SUPER_LOTTERY_POOL)
+		if err != nil {
+			log.Error(err)
+		} else {
+			statics.SuperLotteryCount = item.Data().(string)
+		}
+	}
+
+	if LotteryStatistics.Exists(FOOT_BALL_COUNT) {
+		item, err := LotteryStatistics.Value(FOOT_BALL_COUNT)
+		if err != nil {
+			log.Error(err)
+		} else {
+			statics.FootBallCount = item.Data().(string)
+		}
+	}
+
+	if LotteryStatistics.Exists(BASKET_BALL_COUNT) {
+		item, err := LotteryStatistics.Value(BASKET_BALL_COUNT)
+		if err != nil {
+			log.Error(err)
+		} else {
+			statics.BasketBallCount = item.Data().(string)
+		}
+	}
+
+	common.SuccessReturn(c, statics)
+}

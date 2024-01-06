@@ -57,6 +57,7 @@ func BindRouters(g *gin.Engine, config *config.Config) {
 		lott.GET("/seven-star", lottery.SevenStarFun)
 		lott.GET("/plw", lottery.PlwFun)
 		lott.GET("/super-lottery", lottery.SuperLotteryFun)
+		lott.GET("/statistics", lottery.LotteryStatisticsHandler)
 	}
 
 	//广告类接口

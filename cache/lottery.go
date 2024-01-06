@@ -42,7 +42,7 @@ func Set(c *gin.Context) {
 		c.Bind(&body)
 		for k, v := range body {
 			if !lottery.LotteryStatistics.Exists(k) {
-				lottery.LotteryStatistics.Add(k, 4*time.Hour, v)
+				lottery.LotteryStatistics.Add(k, 6*time.Hour, v)
 			}
 		}
 		common.SuccessReturn(c, uuid)
