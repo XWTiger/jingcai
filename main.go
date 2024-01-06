@@ -48,7 +48,9 @@ func main() {
 		go admin.InitCronForCreep(ctx)
 	}
 	//init audit log
-	audit.InitAudit()
+	if conf.HttpConf.AuditSwitch {
+		audit.InitAudit()
+	}
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM) //syscall.SIGHUP
 	for {
 		sig := <-sc
