@@ -877,7 +877,7 @@ type UserChangePasswordDTO struct {
 func GetUserInfoByPhoneNum(num string) (User, error) {
 	var user User
 	mysql.DB.Where(&User{Phone: num}).First(&user)
-	if common.IsEmpty(user) {
+	if user == (User{}) {
 		return user, errors.New("用户不存在")
 	}
 	return user, nil

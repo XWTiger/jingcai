@@ -2,6 +2,7 @@ package creeper
 
 import (
 	"gorm.io/gorm"
+	"strings"
 )
 
 type Content struct {
@@ -40,4 +41,16 @@ type Condition struct {
 type Creeper interface {
 	Creep() []Content
 	Key() string
+}
+
+// 过滤特有字段（分收费68球币,已有3人查看）
+func (c *Content) FilterStrInSummery() {
+
+	start := strings.Index(c.Summery, "收费")
+
+	end := strings.LastIndex(c.Summery, "查看")
+
+	if start > 0 && end > 0 {
+		c.Summery = c.Summery[start:end]
+	}
 }

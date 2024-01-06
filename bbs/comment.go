@@ -94,7 +94,7 @@ func CommentHandler(c *gin.Context) {
 	validatior.Validator(c, comment)
 	var userInfo = user.FetUserInfo(c)
 	log.Info("comment user info ========>", userInfo)
-	if common.IsEmpty(userInfo) {
+	if userInfo == (user.User{}) {
 		common.FailedReturn(c, "用户不存在")
 		return
 	}

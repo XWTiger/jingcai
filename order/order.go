@@ -602,21 +602,28 @@ func checkSevenStar(ord *Order) error {
 // @param pageSize  query int true "每页大小"
 // @Router /api/order [get]
 func OrderList(c *gin.Context) {
-	var user = user.FetUserInfo(c)
+	var userInfo = user.FetUserInfo(c)
+	if userInfo == (user.User{}) {
+		log.Error("用户不存在")
+	}
 	saveType := c.Query("saveType")
 	lotteryType := c.Query("lotteryType")
 	page, _ := strconv.Atoi(c.Query("pageNo"))
 	pageSize, _ := strconv.Atoi(c.Query("pageSize"))
 
 	var param = Order{
-		SaveType:    saveType,
-		LotteryType: lotteryType,
-		UserID:      user.ID,
+		UserID: 2,
+	}
+	if saveType != "" {
+		param.SaveType = saveType
+	}
+	if lotteryType != "" {
+		param.LotteryType = lotteryType
 	}
 	var list = make([]Order, 0)
 	var resultList = make([]OrderVO, 0)
 	var count int64
-	mysql.DB.Model(&param).Where(&param).Order("created_at desc").Count(&count).Offset(page * pageSize).Limit(pageSize).Find(&list)
+	mysql.DB.Debug().Model(&param).Where(&param).Order("created_at desc").Count(&count).Offset((page - 1) * pageSize).Limit(pageSize).Find(&list)
 
 	for index, order := range list {
 		//如果是足球和篮球 就把比赛回填回来

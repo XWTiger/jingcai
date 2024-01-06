@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/muesli/cache2go"
 	"net/http"
-	"reflect"
 	"strconv"
 	"time"
 )
@@ -142,13 +141,38 @@ func GetDateStartAndEnd(time time.Time) (string, string) {
 	return dateStart, dateEnd
 }
 
-func IsEmpty(value any) bool {
-	if value == nil {
-		return true
+/*func IsEmpty(obj interface{}) bool {
+	value := reflect.ValueOf(obj).Elem() // 获取指针对应的值
+	if value.Kind() == reflect.Ptr && !value.IsNil() {
+		return false // 如果是非nil指针类型则不为空
+	} else if value.NumField() > 0 {
+		for i := 0; i < value.NumField(); i++ {
+			field := value.Type().Field(i)
+			// 只有当字段没有被标记为omitempty时才进行判断
+			if field.Tag != "omitempty" && !isZero(value.Field(i)) {
+				return false // 存在非空字段则不为空
+			}
+		}
 	}
 
-	if value == reflect.Zero(reflect.TypeOf(value)) {
-		return true
-	}
-	return false
+	return true
 }
+
+func isZero(v reflect.Value) bool {
+	switch v.Kind() {
+	case reflect.String:
+		return v.Len() == 0
+	case reflect.Bool:
+		return !v.Bool()
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return v.Int() == 0
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return v.Uint() == 0
+	case reflect.Float32, reflect.Float64:
+		return v.Float() == 0
+	case reflect.Interface, reflect.Map, reflect.Slice, reflect.Array:
+		return v.IsNil()
+	default:
+		panic("unsupported type")
+	}
+}*/

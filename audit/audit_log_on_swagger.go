@@ -7,7 +7,6 @@ import (
 	"github.com/muesli/cache2go"
 	"github.com/swaggo/swag"
 	"gorm.io/gorm"
-	"jingcai/common"
 	"jingcai/mysql"
 	"jingcai/user"
 	"regexp"
@@ -164,7 +163,7 @@ func getSumery(path string) string {
 		}
 	}
 	info := fullPathMapper[path]
-	if common.IsEmpty(info) {
+	if info != nil {
 		return ""
 	}
 	return info.Summery
