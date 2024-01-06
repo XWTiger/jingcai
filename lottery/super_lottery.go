@@ -24,7 +24,7 @@ const FOOT_BALL_COUNT = "foot_ball_count"
 const SEVEN_STAR_POOL = "seven_star_pool"
 const SEVEN_START_URL = "https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry?gameNo=04&provinceId=0&isVerify=1&termLimits=13"
 const PLW_URL = "https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListPlwV1.qry?gameNo=350133&provinceId=0&isVerify=1&termLimits=5"
-const SUPER_LOTTO_URL = "https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry?gameNo=04&provinceId=0&isVerify=1&termLimits=13"
+const SUPER_LOTTO_URL = "https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry?gameNo=85&provinceId=0&isVerify=1&termLimits=10"
 
 // 大乐透
 type SuperLottery struct {
@@ -563,7 +563,7 @@ func LotteryStatisticsHandler(c *gin.Context) {
 		if err != nil {
 			log.Error(err)
 		} else {
-			statics.FootBallCount = fmt.Sprintf("%d", item.Data())
+			statics.FootBallCount = fmt.Sprintf("%d", int(item.Data().(float64)))
 		}
 	}
 
@@ -572,7 +572,7 @@ func LotteryStatisticsHandler(c *gin.Context) {
 		if err != nil {
 			log.Error(err)
 		} else {
-			statics.BasketBallCount = fmt.Sprintf("%d", item.Data())
+			statics.BasketBallCount = fmt.Sprintf("%d", int(item.Data().(float64)))
 		}
 	}
 
