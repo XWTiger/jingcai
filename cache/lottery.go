@@ -41,6 +41,7 @@ func Set(c *gin.Context) {
 		var body map[string]interface{}
 		c.Bind(&body)
 		for k, v := range body {
+			log.Info("================>", k, v)
 			if !lottery.LotteryStatistics.Exists(k) {
 				lottery.LotteryStatistics.Add(k, 6*time.Hour, v)
 			}

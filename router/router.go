@@ -1,12 +1,10 @@
 package router
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	"github.com/swaggo/swag"
 	"jingcai/admin"
 	"jingcai/advise"
 	"jingcai/audit"
@@ -148,81 +146,9 @@ func BindRouters(g *gin.Engine, config *config.Config) {
 // @Success 200 {object} string
 // @Router /ping [get]
 func pong(c *gin.Context) {
-	/*num, _ := strconv.Atoi("01")
-	fmt.Println(num)
-	pwd, _ := common.DePwdCode("rBhpl45Z3NpBxYhMuAuIqA==", []byte("c5b55acf-b0d4-43"))
-	fmt.Println(string(pwd))
-	var user2 user.User
-	mysql.DB.Model(&user.User{Model: gorm.Model{
-		ID: 1,
-	}}).Find(&user2)
-	fmt.Println(user2.Name)
-	*/
-	/*arr := []int{1, 2, 3}
-	result := util.Permute(arr)
-	for _, ints := range result {
-		fmt.Println(ints)
-	}*/
-	/*arr := []int{1, 2, 2}
-	arr2 := []int{3, 1, 3}
-	arr3 := []int{4, 4, 1}
-	fmt.Println(util.GetCombine3(arr))
-	fmt.Println(util.GetCombine3(arr2))
-	fmt.Println(util.GetCombine3(arr3))
-	c.String(http.StatusOK, "pong")*/
-	/*fmt.Println(order.GetOrderId(&order.Order{
+	fmt.Println(fmt.Sprintf("%d", 42))
 
-		LotteryType: order.P3,
-		Share:       true,
-	}))*/
-	/*var all = [][]string{{"0", "1"}, {"0", "1"}, {"0", "1"}}
-	var childs = make([]string, 0)
-	var sb = make([]byte, 0)
-	util.GetZxGsb(0, all, &sb, &childs)
-	fmt.Println(childs[0])*/
-
-	/*	var all = []int{7, 7, 4, 1, 2, 3}
-		result := util.PermuteAnm(all, 5)
-		var sum = 0
-
-		var duplicate = make([][]int, 0)
-		for _, ints := range result {
-			var exist = false
-			for _, value := range duplicate {
-				tmp := fmt.Sprintf("%d%d%d%d%d", value[0], value[1], value[2], value[3], value[4])
-				tmp2 := fmt.Sprintf("%d%d%d%d%d", ints[0], ints[1], ints[2], ints[3], ints[4])
-				//fmt.Println(tmp2)
-				if strings.Compare(tmp2, tmp) == 0 {
-					exist = true
-					break
-				}
-			}
-			if !exist {
-				duplicate = append(duplicate, ints)
-			}
-		}
-		fmt.Println(len(duplicate))
-		for _, ints := range result {
-			var count = 0
-			for _, val := range ints {
-				if val == 7 {
-					count++
-					if count == 2 {
-						break
-					}
-				}
-
-			}
-			if count == 2 {
-
-				sum++
-				fmt.Println(ints)
-			}
-		}*/
-
-	//fmt.Println(sum)
-
-	var obj map[string]interface{}
+	/*var obj map[string]interface{}
 	cont, _ := swag.ReadDoc("swagger")
 	json.Unmarshal([]byte(cont), &obj)
 	fmt.Println("===========================")
@@ -235,6 +161,6 @@ func pong(c *gin.Context) {
 			fmt.Println(detail["description"])
 
 		}
-	}
+	}*/
 
 }

@@ -563,7 +563,7 @@ func LotteryStatisticsHandler(c *gin.Context) {
 		if err != nil {
 			log.Error(err)
 		} else {
-			statics.FootBallCount = item.Data().(string)
+			statics.FootBallCount = fmt.Sprintf("%d", item.Data())
 		}
 	}
 
@@ -572,7 +572,7 @@ func LotteryStatisticsHandler(c *gin.Context) {
 		if err != nil {
 			log.Error(err)
 		} else {
-			statics.BasketBallCount = item.Data().(string)
+			statics.BasketBallCount = fmt.Sprintf("%d", item.Data())
 		}
 	}
 
