@@ -51,6 +51,6 @@ func (c *Content) FilterStrInSummery() {
 	end := strings.LastIndex(c.Summery, "查看")
 
 	if start > 0 && end > 0 {
-		c.Summery = c.Summery[start:end]
+		c.Summery = c.Summery[:start] + "..."
 	}
 }
