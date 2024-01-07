@@ -612,7 +612,7 @@ func OrderList(c *gin.Context) {
 	pageSize, _ := strconv.Atoi(c.Query("pageSize"))
 
 	var param = Order{
-		UserID: 2,
+		UserID: userInfo.ID,
 	}
 	if saveType != "" {
 		param.SaveType = saveType
