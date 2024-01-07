@@ -46,9 +46,9 @@ type Creeper interface {
 // 过滤特有字段（分收费68球币,已有3人查看）
 func (c *Content) FilterStrInSummery() {
 
-	start := strings.Index(c.Summery, "收费")
+	start := strings.LastIndex(c.Summery, "收费")
 
-	end := strings.LastIndex(c.Summery, "查看")
+	end := strings.LastIndex(c.Summery, "人查看")
 
 	if start > 0 && end > 0 {
 		c.Summery = c.Summery[:start] + "..."
