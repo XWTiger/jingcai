@@ -175,9 +175,12 @@ func AdminOrderList(c *gin.Context) {
 		common.FailedReturn(c, "该接口只提供给管理员")
 		return
 	}
-	var param = Order{
-		SaveType:    saveType,
-		LotteryType: lotteryType,
+	var param = Order{}
+	if saveType != "" {
+		param.SaveType = saveType
+	}
+	if lotteryType != "" {
+		param.LotteryType = lotteryType
 	}
 	var list = make([]Order, 0)
 	var resultList = make([]*OrderVO, 0)
