@@ -211,7 +211,7 @@ func StatisticsCount(c *gin.Context) {
 // @failure 500 {object} common.BaseResponse
 // @param pageNo query int   true  "页码"
 // @param pageSize query int  true  "每页条数"
-// @param userId query int   true  "用户id"
+// @param userId query int   false  "用户id"
 // @Router /api/shop/users [get]
 func QueryShopUser(c *gin.Context) {
 	param := c.Query("userId")
