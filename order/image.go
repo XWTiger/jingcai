@@ -158,14 +158,13 @@ func UploadBets(c *gin.Context) {
 // @Produce json
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
-// @param saveType  query string false "保存类型 TEMP（临时保存） TOMASTER（提交到店）  ALLWIN（合买）"
 // @param lotteryType  query string false "足彩（FOOTBALL） 大乐透（SUPER_LOTTO）  排列三（P3） 篮球(BASKETBALL) 七星彩（SEVEN_STAR） 排列五（P5）"
 // @param pageNo  query int true "页码"
 // @param pageSize  query int true "每页大小"
 // @Router /api/super/order [get]
 func AdminOrderList(c *gin.Context) {
 	var userInfo = user.FetUserInfo(c)
-	saveType := c.Query("saveType")
+
 	lotteryType := c.Query("lotteryType")
 	page, _ := strconv.Atoi(c.Query("pageNo"))
 	pageSize, _ := strconv.Atoi(c.Query("pageSize"))
@@ -176,21 +175,20 @@ func AdminOrderList(c *gin.Context) {
 		return
 	}
 	var param = Order{}
-	if saveType != "" {
-		param.SaveType = saveType
-	}
+
 	if lotteryType != "" {
 		param.LotteryType = lotteryType
 	}
 	var list = make([]Order, 0)
 	var resultList = make([]*OrderVO, 0)
-	query := mysql.DB.Model(param).Where("all_win_id > 0 and pay_status = true and (orders.save_type='TOMASTER' or  orders.save_type='ALLWIN')").Joins("INNER JOIN all_wins on orders.all_win_id = all_wins.id and all_wins.`parent_id`=0  and all_wins.`status` = true")
+	query := mysql.DB.Model(param).Where("all_win_id > 0 and pay_status = true  and (orders.save_type='TOMASTER' or  orders.save_type='ALLWIN')").Joins("INNER JOIN all_wins on orders.all_win_id = all_wins.id and all_wins.`parent_id`=0  and all_wins.`status` = true")
 	query2 := mysql.DB.Model(param).Select("orders.* ").Where("orders.deleted_at is null and pay_status = true and (orders.save_type='TOMASTER' or  orders.save_type='ALLWIN')")
 	var count int64
-	mysql.DB.Raw("? union ? ", query, query2).Count(&count)
-	mysql.DB.Raw("? union ? ", query, query2).Order("orders.create_at desc").Offset((page - 1) * pageSize).Limit(pageSize).Scan(&list)
 
-	for index, order := range list {
+	mysql.DB.Raw("? union ? ", query, query2).Count(&count)
+	mysql.DB.Debug().Raw("? union ? ", query, query2).Order("orders.create_at desc").Offset((page - 1) * pageSize).Limit(pageSize).Find(&list)
+	start := (page - 1) * pageSize
+	for index, order := range list[start:(start + pageSize)] {
 		var mathParam = Match{
 			OrderId: list[index].UUID,
 		}
