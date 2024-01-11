@@ -3,7 +3,6 @@ package order
 import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"jingcai/cache"
 	"jingcai/common"
 	"jingcai/mysql"
 	"jingcai/user"
@@ -38,9 +37,6 @@ type UploadBet struct {
 
 	//图片地址
 	Url []string `validate:"required"`
-
-	//查询id
-	LotteryUuid string `validate:"required" gorm:"-:all"`
 
 	//赔率是否和购买赔率不一致， 不一致就
 	OddChange bool
@@ -88,24 +84,7 @@ func UploadBets(c *gin.Context) {
 		common.FailedReturn(c, "订单查询失败")
 		return
 	}
-	//校验
-	switch order.LotteryType {
-	case FOOTBALL:
-		_, err := cache.GetOnTimeFootballMatch(betImgObj.LotteryUuid)
-		if err == nil {
-			common.FailedReturn(c, "非法参数")
-			return
-		}
-		break
-	case BASKETBALL:
-		_, err := cache.GetOnTimeBasketBallMatch(order.LotteryUuid)
-		if err == nil {
-			common.FailedReturn(c, "非法参数")
-			return
-		}
-		break
 
-	}
 	//调整赔率
 	if betImgObj.OddChange && len(betImgObj.MatchOdds) > 0 {
 		var matchs = betImgObj.MatchOdds
@@ -185,8 +164,8 @@ func AdminOrderList(c *gin.Context) {
 	var query2 *gorm.DB
 
 	if lotteryType != "" {
-		query = mysql.DB.Model(param).Where("all_win_id > 0 and pay_status = true  and (orders.save_type='TOMASTER' or  orders.save_type='ALLWIN')").Joins("INNER JOIN all_wins on orders.all_win_id = all_wins.id and all_wins.`parent_id`=0  and all_wins.`status` = true" + " and orders.lottery_type=" + lotteryType)
-		query2 = mysql.DB.Model(param).Select("orders.* ").Where("orders.deleted_at is null and pay_status = true and (orders.save_type='TOMASTER' or  orders.save_type='ALLWIN')" + " and orders.lottery_type=" + lotteryType)
+		query = mysql.DB.Model(param).Where("all_win_id > 0 and pay_status = true  and (orders.save_type='TOMASTER' or  orders.save_type='ALLWIN')").Joins("INNER JOIN all_wins on orders.all_win_id = all_wins.id and all_wins.`parent_id`=0  and all_wins.`status` = true" + " and orders.lottery_type='" + lotteryType + "'")
+		query2 = mysql.DB.Model(param).Select("orders.* ").Where("orders.deleted_at is null and pay_status = true and (orders.save_type='TOMASTER' or  orders.save_type='ALLWIN')" + " and orders.lottery_type='" + lotteryType + "'")
 	} else {
 		query = mysql.DB.Model(param).Where("all_win_id > 0 and pay_status = true  and (orders.save_type='TOMASTER' or  orders.save_type='ALLWIN')").Joins("INNER JOIN all_wins on orders.all_win_id = all_wins.id and all_wins.`parent_id`=0  and all_wins.`status` = true")
 		query2 = mysql.DB.Model(param).Select("orders.* ").Where("orders.deleted_at is null and pay_status = true and (orders.save_type='TOMASTER' or  orders.save_type='ALLWIN')")
@@ -197,10 +176,10 @@ func AdminOrderList(c *gin.Context) {
 	mysql.DB.Debug().Raw("? union ? ", query, query2).Order("orders.create_at desc").Offset((page - 1) * pageSize).Limit(pageSize).Find(&list)
 	start := (page - 1) * pageSize
 	var end int
-	if start+pageSize > len(list) {
-		end = start + pageSize
-	} else {
+	if (start + pageSize) > len(list) {
 		end = len(list)
+	} else {
+		end = start + pageSize
 	}
 
 	for index, order := range list[start:end] {
