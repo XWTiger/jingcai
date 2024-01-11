@@ -27,7 +27,7 @@ Server:
   IdleTimeout: 120
   ImagePrefix: /api/download/
   DbAddress: 127.0.0.1
-  DbUser:  tiger
+  DbUser:  root
   DbSpecial: 123456
   CreeperSwitch: false
   AuditSwitch: true

@@ -3,13 +3,11 @@ package main
 import (
 	_ "github.com/swaggo/files"
 	_ "github.com/swaggo/gin-swagger"
-	"golang.org/x/net/context"
 	"gopkg.in/yaml.v3"
-	"jingcai/admin"
 	"jingcai/audit"
-	"jingcai/bbs"
+
 	"jingcai/config"
-	"jingcai/creeper"
+
 	_ "jingcai/docs"
 	"jingcai/files"
 	ihttp "jingcai/http"
@@ -42,11 +40,7 @@ func main() {
 		os.Exit(1)
 	}
 	initTables()
-	order.OrderCheckInit()
-	ctx, cancel := context.WithCancel(context.Background())
-	if conf.HttpConf.CreeperSwitch {
-		go admin.InitCronForCreep(ctx)
-	}
+
 	//init audit log
 	if conf.HttpConf.AuditSwitch {
 		audit.InitAudit()
@@ -58,14 +52,13 @@ func main() {
 		mysql.SqlDB.Close()
 		break
 	}
-	cancel()
+
 	clean()
 
 }
 
 func initTables() {
 	log.Info("======== check mysql tables =============")
-	mysql.DB.AutoMigrate(&order.AllWin{})
 	mysql.DB.AutoMigrate(&order.Order{})
 	mysql.DB.AutoMigrate(&order.Match{})
 	mysql.DB.AutoMigrate(&user.Bill{})
@@ -73,13 +66,10 @@ func initTables() {
 	mysql.DB.AutoMigrate(&order.Bet{})
 	mysql.DB.AutoMigrate(&order.FootView{})
 	mysql.DB.AutoMigrate(&files.FileStore{})
-	mysql.DB.AutoMigrate(&order.OrderImage{})
-	mysql.DB.AutoMigrate(&bbs.Comment{})
-	mysql.DB.AutoMigrate(&bbs.Response{})
-	mysql.DB.AutoMigrate(&creeper.Content{})
+
 	mysql.DB.AutoMigrate(&shop.Shop{})
 	mysql.DB.AutoMigrate(&user.User{})
 	mysql.DB.AutoMigrate(&user.ScoreUserNotify{})
-	mysql.DB.AutoMigrate(&order.JobExecution{})
+
 	mysql.DB.AutoMigrate(&audit.AuditLog{})
 }

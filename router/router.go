@@ -8,12 +8,11 @@ import (
 	"jingcai/admin"
 	"jingcai/advise"
 	"jingcai/audit"
-	"jingcai/bbs"
-	"jingcai/cache"
+
 	"jingcai/common"
 	"jingcai/config"
 	"jingcai/files"
-	"jingcai/lottery"
+
 	"jingcai/order"
 	"jingcai/shop"
 	"jingcai/user"
@@ -49,20 +48,9 @@ func BindRouters(g *gin.Engine, config *config.Config) {
 	r.GET("/salt", common.Salt)
 	r.GET("/notify", advise.Query)
 	r.GET("/tiger-dragon-list", order.TigerDragonList)
-	r.POST("/cache", cache.Set)
-	lott := g.Group("/lottery-api")
-	{
-		lott.GET("/seven-star", lottery.SevenStarFun)
-		lott.GET("/plw", lottery.PlwFun)
-		lott.GET("/super-lottery", lottery.SuperLotteryFun)
-		lott.GET("/statistics", lottery.LotteryStatisticsHandler)
-	}
 
 	//广告类接口
-	adGroup := r.Group("/advertising")
-	{
-		adGroup.GET("/win-list", order.GetWinUserList)
-	}
+	//adGroup := r.Group("/advertising")
 
 	//r.GET("/ws", websocket.OrderWebSocket)
 	{
@@ -73,7 +61,6 @@ func BindRouters(g *gin.Engine, config *config.Config) {
 	}
 
 	r.GET("/download/:name", files.DownLoad)
-	bbsGroup := r.Group("/bbs")
 
 	r.POST("/shop", shop.ShopRegistry)
 	r.Use(user.Authorize())
@@ -92,10 +79,9 @@ func BindRouters(g *gin.Engine, config *config.Config) {
 		s.Use(user.AdminCheck())
 		s.GET("/complains", admin.ListComplain)
 		s.POST("/notify", advise.Create)
-		s.POST("/check/lottery_check", order.AddCheckForManual)
+
 		s.POST("/add-score", user.AddScore)
-		s.GET("/order", order.AdminOrderList)
-		s.POST("/bets", order.UploadBets)
+
 		s.GET("/statistics", shop.StatisticsCount)
 		s.POST("/substract-score", user.BillClear)
 		s.GET("/bills", shop.ShopBills)
@@ -108,29 +94,10 @@ func BindRouters(g *gin.Engine, config *config.Config) {
 
 	}
 
-	{
-		bbsGroup.GET("/comment/list", bbs.ListComment)
-		bbsGroup.GET("/list", bbs.ListHandler)
-		bbsGroup.GET("/comment/response", bbs.GetResponseByCommentId)
-		bbsGroup.Use(user.Authorize())
-		bbsGroup.POST("/commit", bbs.CommitHandler)
-		bbsGroup.POST("/response", bbs.ResponseHandler)
-		bbsGroup.POST("/comment", bbs.CommentHandler)
-	}
 	//订单
 	orderGroup := r.Group("/order")
 	{
 		orderGroup.POST("", order.OrderCreate)
-		orderGroup.GET("", order.OrderList)
-		orderGroup.GET("/bets", order.GetBetByOrder)
-		orderGroup.GET("/all_win", order.AllWinList)
-		orderGroup.POST("/all_win", order.AllWinCreateHandler)
-		orderGroup.POST("/follow", order.FollowOrder)
-		orderGroup.GET("/shared", order.SharedOrderList)
-	}
-	adminGroup := r.Group("/admin")
-	{
-		adminGroup.GET("/creep", admin.CreepHandler)
 
 	}
 
