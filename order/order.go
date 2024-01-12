@@ -138,7 +138,8 @@ type OrderVO struct {
 	//图片
 	Images []OrderImage
 	//如果是合买
-	AllWin []AllWin
+	AllWin       []AllWinVO
+	AllWinOrders []Order
 }
 type Order struct {
 	CreatedAt time.Time
@@ -201,7 +202,7 @@ type Order struct {
 	PayWay string
 
 	//如果是大乐透 七星彩 排列3 5 需要填期号
-	IssueId string `validate:"required" message："需要期号"`
+	IssueId string `validate:"required" message:"需要期号"`
 	//SIGNAL（单注）   C6 （组合6） C3 （组合3）
 	PL3Way string
 
@@ -600,6 +601,7 @@ func checkSevenStar(ord *Order) error {
 // @param lotteryType  query string false "足彩（FOOTBALL） 大乐透（SUPER_LOTTO）  排列三（P3） 篮球(BASKETBALL) 七星彩（SEVEN_STAR） 排列五（P5）"
 // @param pageNo  query int true "页码"
 // @param pageSize  query int true "每页大小"
+// @param win  query bool false "是否只查赢的"
 // @Router /api/order [get]
 func OrderList(c *gin.Context) {
 	var userInfo = user.FetUserInfo(c)
@@ -608,6 +610,7 @@ func OrderList(c *gin.Context) {
 	}
 	saveType := c.Query("saveType")
 	lotteryType := c.Query("lotteryType")
+	flag := c.Query("win")
 	page, _ := strconv.Atoi(c.Query("pageNo"))
 	pageSize, _ := strconv.Atoi(c.Query("pageSize"))
 
@@ -619,6 +622,9 @@ func OrderList(c *gin.Context) {
 	}
 	if lotteryType != "" {
 		param.LotteryType = lotteryType
+	}
+	if flag != "" {
+		param.Win = true
 	}
 	var list = make([]Order, 0)
 	var resultList = make([]OrderVO, 0)
@@ -728,6 +734,45 @@ func SharedOrderList(c *gin.Context) {
 		}
 	}
 	common.SuccessReturn(c, common.PageCL{page, pageSize, int(count), list})
+}
+func FindOrderVOById(uuid string, searchMatch bool) OrderVO {
+	var param = Order{
+		UUID: uuid,
+	}
+	var order Order
+	mysql.DB.Model(&param).Where(&param).First(&order)
+	var mathParam = Match{
+		OrderId: order.UUID,
+	}
+	if searchMatch && (strings.Compare(FOOTBALL, order.LotteryType) == 0 || strings.Compare(BASKETBALL, order.LotteryType) == 0) {
+		var matchList = make([]Match, 0)
+		mysql.DB.Model(&mathParam).Where(&mathParam).Find(&matchList)
+		order.Matches = matchList
+		for _, match := range matchList {
+			var detailParam = LotteryDetail{
+				ParentId: match.ID,
+			}
+			var detailList = make([]LotteryDetail, 0)
+			mysql.DB.Model(&detailParam).Where(&detailParam).Find(&detailList)
+			match.Combines = detailList
+		}
+	}
+	images := getImageByOrderId(uuid)
+
+	vo := OrderVO{
+		Order:  &order,
+		Images: images,
+	}
+	if order.AllWinId > 0 {
+		vo.AllWinOrders = GetAllOrderByAllWinId(order.AllWinId)
+	}
+	return vo
+
+}
+func GetAllOrderByAllWinId(allWinId uint) []Order {
+	var orders []Order
+	mysql.DB.Model(Order{AllWinId: allWinId}).Find(&orders)
+	return orders
 }
 
 func FindById(uuid string, searchMatch bool) Order {

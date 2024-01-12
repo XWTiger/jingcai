@@ -8,6 +8,7 @@ import (
 	"jingcai/admin"
 	"jingcai/audit"
 	"jingcai/bbs"
+	"jingcai/claim"
 	"jingcai/config"
 	"jingcai/creeper"
 	_ "jingcai/docs"
@@ -82,4 +83,5 @@ func initTables() {
 	mysql.DB.AutoMigrate(&user.ScoreUserNotify{})
 	mysql.DB.AutoMigrate(&order.JobExecution{})
 	mysql.DB.AutoMigrate(&audit.AuditLog{})
+	mysql.DB.AutoMigrate(&claim.Claim{})
 }

@@ -611,7 +611,6 @@ type Score struct {
 // @Summary 积分加账
 // @Description 积分加账
 // @Tags owner 店主
-// @Tags user  用户
 // @Accept json
 // @Produce json
 // @Success 200 {object} common.BaseResponse
@@ -937,4 +936,43 @@ func ChangePasswordHandler(c *gin.Context) {
 	}
 
 	mysql.DB.Model(user).Where(user).Update("secret", pwd).Update("Salt", salt)
+}
+
+func AddScoreInner(score float32, userId uint, ownerId uint, way string, tx *gorm.DB) error {
+	var lock sync.Mutex
+
+	lock.Lock()
+
+	var user User
+	if err := tx.Model(User{}).Where(&User{Model: gorm.Model{
+		ID: userId,
+	}, From: ownerId,
+	}).First(&user).Error; err != nil {
+		lock.Unlock()
+		tx.Rollback()
+		return errors.New("该用户不是您的用户!")
+	}
+
+	if err := tx.Model(User{}).Where(&User{Model: gorm.Model{
+		ID: userId,
+	}}).Update("score", user.Score+score).Error; err != nil {
+		tx.Rollback()
+		lock.Unlock()
+		return errors.New("更新订单失败")
+	}
+	var bill = Bill{
+		Num:    score,
+		UserId: userId,
+		Type:   way,
+		Option: ADD,
+	}
+	bill.ShopId = user.From
+	if billerr := tx.Model(Bill{}).Save(&bill).Error; billerr != nil {
+		tx.Rollback()
+		lock.Unlock()
+		return errors.New("创建账单失败")
+
+	}
+	lock.Unlock()
+	return nil
 }

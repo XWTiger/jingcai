@@ -1,6 +1,7 @@
 package order
 
 import (
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	uuid "github.com/satori/go.uuid"
@@ -164,6 +165,17 @@ type AllWinCreate struct {
 
 	//出票保底份数
 	LeastTimes int
+}
+
+func GetAllWinById(id uint) (AllWinVO, error) {
+	var all AllWin
+	mysql.DB.Model(AllWin{Model: gorm.Model{
+		ID: id,
+	}}).Find(&all)
+	if all == (AllWin{}) {
+		return AllWinVO{}, errors.New("查询失败")
+	}
+	return all.GetVO(), nil
 }
 
 func (a AllWin) GetVO() AllWinVO {

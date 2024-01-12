@@ -10,6 +10,7 @@ import (
 	"jingcai/audit"
 	"jingcai/bbs"
 	"jingcai/cache"
+	"jingcai/claim"
 	"jingcai/common"
 	"jingcai/config"
 	"jingcai/files"
@@ -83,6 +84,7 @@ func BindRouters(g *gin.Engine, config *config.Config) {
 		userGroup.GET("/bill/notify", user.BillClearNotifyList)
 		userGroup.GET("/owner", user.GetShopOwnerInfo)
 		userGroup.POST("/password", user.ChangePasswordHandler)
+		userGroup.POST("/claims", claim.UserClaim)
 	}
 	r.POST("/user/complain", user.UserComplain)
 	r.GET("/user/info", user.GetUserInfo)
@@ -100,6 +102,8 @@ func BindRouters(g *gin.Engine, config *config.Config) {
 		s.POST("/substract-score", user.BillClear)
 		s.GET("/bills", shop.ShopBills)
 		s.GET("/bill/notify", user.BillClearShopNotifyList)
+		s.GET("/claims", claim.ClaimList)
+		s.POST("/claims", claim.UpdateClaim)
 	}
 
 	{
