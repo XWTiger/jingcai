@@ -672,7 +672,7 @@ func AddScore(c *gin.Context) {
 	}
 	tx.Commit()
 	lock.Unlock()
-	common.FailedReturn(c, "上分成功")
+	common.SuccessReturn(c, "上分成功")
 }
 
 // @Summary 清账接口
