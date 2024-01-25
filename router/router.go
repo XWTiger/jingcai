@@ -69,7 +69,6 @@ func BindRouters(g *gin.Engine, config *config.Config) {
 	{
 		userGroup.POST("", user.UserCreateHandler)
 		userGroup.POST("/login", user.Login)
-		userGroup.POST("/logout", user.Logout)
 		userGroup.POST("/passwordByPhoneCode", user.ChangePasswordByPhoneCodeHandler)
 	}
 
@@ -80,6 +79,7 @@ func BindRouters(g *gin.Engine, config *config.Config) {
 	r.Use(user.Authorize())
 	{
 		userGroup.Use(user.Authorize())
+		userGroup.POST("/logout", user.Logout)
 		userGroup.POST("/bill/notify", user.BillClearNotify)
 		userGroup.GET("/bill/notify", user.BillClearNotifyList)
 		userGroup.GET("/owner", user.GetShopOwnerInfo)

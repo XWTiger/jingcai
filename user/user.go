@@ -401,13 +401,17 @@ type Complain struct {
 // @Produce json
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
-// @param param body TokenVO true "token对象"
 // @Router /api/user/logout [post]
 func Logout(c *gin.Context) {
-	var tokenVO TokenVO
-	c.BindJSON(&tokenVO)
-	if tokenVO.Token != "" {
-		userCahe.Delete(tokenVO.Token)
+
+	var token string
+	token = c.Query("token") // 访问令牌
+	if token == "" {
+		token = c.GetHeader("token")
+	}
+
+	if token != "" {
+		userCahe.Delete(token)
 	}
 	common.SuccessReturn(c, "注销成功")
 }

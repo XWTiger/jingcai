@@ -173,7 +173,7 @@ func AdminOrderList(c *gin.Context) {
 	var count int64
 
 	mysql.DB.Raw("? union ? ", query, query2).Count(&count)
-	mysql.DB.Debug().Raw("? union ? ", query, query2).Order("orders.create_at desc").Offset((page - 1) * pageSize).Limit(pageSize).Find(&list)
+	mysql.DB.Raw("? union ? ", query, query2).Order("orders.create_at desc").Offset((page - 1) * pageSize).Limit(pageSize).Find(&list)
 	if len(list) <= 0 {
 		common.SuccessReturn(c, &common.PageCL{
 			PageNo:   page,

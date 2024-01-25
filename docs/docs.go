@@ -1738,17 +1738,6 @@ const docTemplate = `{
                     "user  用户"
                 ],
                 "summary": "注销登录",
-                "parameters": [
-                    {
-                        "description": "token对象",
-                        "name": "param",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/user.TokenVO"
-                        }
-                    }
-                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -2935,14 +2924,6 @@ const docTemplate = `{
                 "userId": {
                     "description": "用户id",
                     "type": "integer"
-                }
-            }
-        },
-        "user.TokenVO": {
-            "type": "object",
-            "properties": {
-                "token": {
-                    "type": "string"
                 }
             }
         },
