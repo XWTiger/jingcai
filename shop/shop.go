@@ -242,8 +242,14 @@ func QueryShopUser(c *gin.Context) {
 		pageN, _ := strconv.Atoi(pageNo)
 		pageS, _ := strconv.Atoi(pageSize)
 		var userInfos []user.User
-		mysql.DB.Model(user.User{}).Where(&user.User{From: shopInfo.ID}).Offset((pageN - 1) * pageS).Limit(pageS).Find(&userInfos)
-		common.SuccessReturn(c, userInfos)
+		var count int64
+		mysql.DB.Model(user.User{}).Where(&user.User{From: shopInfo.ID}).Count(&count).Offset((pageN - 1) * pageS).Limit(pageS).Find(&userInfos)
+		common.SuccessReturn(c, common.PageCL{
+			pageN,
+			pageS,
+			int(count),
+			userInfos,
+		})
 		return
 	}
 
