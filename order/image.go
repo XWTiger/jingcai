@@ -174,6 +174,14 @@ func AdminOrderList(c *gin.Context) {
 
 	mysql.DB.Raw("? union ? ", query, query2).Count(&count)
 	mysql.DB.Debug().Raw("? union ? ", query, query2).Order("orders.create_at desc").Offset((page - 1) * pageSize).Limit(pageSize).Find(&list)
+	if len(list) <= 0 {
+		common.SuccessReturn(c, &common.PageCL{
+			PageNo:   page,
+			PageSize: pageSize,
+			Total:    int(count),
+			Content:  resultList,
+		})
+	}
 	start := (page - 1) * pageSize
 	var end int
 	if (start + pageSize) > len(list) {
@@ -184,21 +192,24 @@ func AdminOrderList(c *gin.Context) {
 
 	for index, order := range list[start:end] {
 		var mathParam = Match{
-			OrderId: list[index].UUID,
+			OrderId: list[start+index].UUID,
 		}
-		var matchList = make([]Match, 0)
-		mysql.DB.Model(&mathParam).Find(&matchList)
-		list[index].Matches = matchList
-		for _, match := range matchList {
-			var detailParam = LotteryDetail{
-				ParentId: match.ID,
+		if strings.Compare(order.LotteryType, FOOTBALL) == 0 || strings.Compare(order.LotteryType, BASKETBALL) == 0 {
+			var matchList = make([]Match, 0)
+			mysql.DB.Model(&mathParam).Find(&matchList)
+			list[start+index].Matches = matchList
+			for _, match := range matchList {
+				var detailParam = LotteryDetail{
+					ParentId: match.ID,
+				}
+				var detailList = make([]LotteryDetail, 0)
+				mysql.DB.Model(&detailParam).Find(&detailList)
+				match.Combines = detailList
 			}
-			var detailList = make([]LotteryDetail, 0)
-			mysql.DB.Model(&detailParam).Find(&detailList)
-			match.Combines = detailList
 		}
+
 		resultList = append(resultList, &OrderVO{
-			Order:  &list[index],
+			Order:  &list[start+index],
 			Images: getImageByOrderId(order.UUID),
 		})
 	}

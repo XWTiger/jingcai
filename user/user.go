@@ -267,12 +267,12 @@ func UserCreateHandler(c *gin.Context) {
 	}
 	var sharedId uint
 	if shardUserId == "" {
-		sharedId = 0
+		sharedId = 1
 	} else {
 		ind, err := strconv.Atoi(shardUserId)
 		if err != nil {
 			log.Error(err)
-			sharedId = 0
+			sharedId = 1
 		} else {
 			sharedId = uint(ind)
 		}
@@ -636,7 +636,7 @@ func AddScore(c *gin.Context) {
 	var user User
 	if err := tx.Model(User{}).Where(&User{Model: gorm.Model{
 		ID: score.UserId,
-	}, From: userSelf.ID,
+	}, FromUser: userSelf.ID,
 	}).First(&user).Error; err != nil {
 		lock.Unlock()
 		tx.Rollback()
