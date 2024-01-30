@@ -19,6 +19,7 @@ const (
 	MAX  = "max"
 )
 
+// `validate:"required" message:"需要期号" regular: "正则"`
 func Validator(c *gin.Context, dest any) error {
 
 	s := reflect.TypeOf(dest)
@@ -78,6 +79,8 @@ func Validator(c *gin.Context, dest any) error {
 					return errors.New(fmt.Sprintf("%s %s", s.Field(i).Name, " 必填"))
 				}
 				break
+			case reflect.Bool:
+				fmt.Println(" value: ", v.Field(i).Bool())
 			}
 
 		}
