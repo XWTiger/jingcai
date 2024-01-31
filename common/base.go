@@ -93,7 +93,7 @@ func Salt(c *gin.Context) {
 	CacheJingCai.Add(decodePubKey, SALT_OUT_TIME, privateKey)
 	SuccessReturn(c, decodePubKey)
 }
-func getNum(num int) string {
+func GetNum(num int) string {
 
 	if num < 10 {
 		return fmt.Sprintf("0%d", num)
@@ -106,10 +106,10 @@ func GetMatchFinishedTime(time2 time.Time) time.Time {
 	now := time.Now()
 	var dateEnd string
 	if now.Weekday() == 0 || now.Weekday() == 6 {
-		dateEnd = fmt.Sprintf("%d-%s-%s 22:55:00", now.Year(), getNum(int(now.Month())), getNum(int(now.Day())))
+		dateEnd = fmt.Sprintf("%d-%s-%s 22:55:00", now.Year(), GetNum(int(now.Month())), GetNum(int(now.Day())))
 
 	} else {
-		dateEnd = fmt.Sprintf("%d-%s-%s 21:55:00", now.Year(), getNum(int(now.Month())), getNum(int(now.Day())))
+		dateEnd = fmt.Sprintf("%d-%s-%s 21:55:00", now.Year(), GetNum(int(now.Month())), GetNum(int(now.Day())))
 	}
 
 	time1, err := time.ParseInLocation("2006-01-02 15:04:05", dateEnd, time.Local)
@@ -130,14 +130,14 @@ func GetDateStartAndEnd(time time.Time) (string, string) {
 	now := time
 	var dateEnd string
 	if now.Weekday() == 0 || now.Weekday() == 6 {
-		dateEnd = fmt.Sprintf("%d-%s-%s 22:55:00", now.Year(), getNum(int(now.Month())), getNum(int(now.Day())))
+		dateEnd = fmt.Sprintf("%d-%s-%s 22:55:00", now.Year(), GetNum(int(now.Month())), GetNum(int(now.Day())))
 
 	} else {
-		dateEnd = fmt.Sprintf("%d-%s-%s 21:55:00", now.Year(), getNum(int(now.Month())), getNum(int(now.Day())))
+		dateEnd = fmt.Sprintf("%d-%s-%s 21:55:00", now.Year(), GetNum(int(now.Month())), GetNum(int(now.Day())))
 	}
 
 	var dateStart string
-	dateStart = fmt.Sprintf("%d-%s-%s 00:00:00", now.Year(), getNum(int(now.Month())), getNum(int(now.Day())))
+	dateStart = fmt.Sprintf("%d-%s-%s 00:00:00", now.Year(), GetNum(int(now.Month())), GetNum(int(now.Day())))
 	return dateStart, dateEnd
 }
 

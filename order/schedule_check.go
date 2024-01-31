@@ -164,7 +164,8 @@ func (check Job) Execute() error {
 // 时间（2023223141）+ userId（000001） + 订单类型（0-5）+ 是否分享（00/01）
 func GetOrderId(order *Order) string {
 	now := time.Now()
-	strDate := fmt.Sprintf("%d%d%d%d%d%d", now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second())
+	y, m, d := now.Date()
+	strDate := fmt.Sprintf("%d%s%s%s%s%d", y, common.GetNum(int(m)), common.GetNum(d), common.GetNum(now.Hour()), common.GetNum(now.Minute()), now.Second())
 	usrId := util.GetPaddingId(order.UserID)
 	var typ string
 	switch order.LotteryType {
