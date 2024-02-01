@@ -171,7 +171,6 @@ func GetOrderId(order *Order) string {
 	switch order.LotteryType {
 	case FOOTBALL:
 		//01
-
 		typ = "01"
 		break
 	case BASKETBALL:
@@ -202,6 +201,8 @@ func GetOrderId(order *Order) string {
 		share = "00"
 	}
 
-	return fmt.Sprintf("%s%s%s%s", strDate, usrId, typ, share)
+	orderId := fmt.Sprintf("%s%s%s%s", strDate, usrId, typ, share)
+	log.Error("order id ===========>" + orderId)
+	return orderId
 
 }

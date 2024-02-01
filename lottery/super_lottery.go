@@ -42,9 +42,9 @@ type SuperLottery struct {
 			LotteryGameNum       string `json:"lotteryGameNum,omitempty"`
 			PoolBalanceAfterdraw string `json:"poolBalanceAfterdraw,omitempty"`
 			PrizeLevelList       []struct {
-				AwardType        int    `json:"awardType,omitempty"`
-				Group            string `json:"group,omitempty"`
-				LotteryCondition string `json:"lotteryCondition,omitempty"`
+				AwardType int    `json:"awardType,omitempty"`
+				Group     string `json:"group,omitempty"`
+				//LotteryCondition string `json:"lotteryCondition,omitempty"`
 				PrizeLevel       string `json:"prizeLevel,omitempty"`
 				Sort             int    `json:"sort,omitempty"`
 				StakeAmount      string `json:"stakeAmount,omitempty"`
@@ -153,14 +153,14 @@ type Plw struct {
 			PoolBalanceAfterdraw    string        `json:"poolBalanceAfterdraw,omitempty"`
 			PoolBalanceAfterdrawRj  string        `json:"poolBalanceAfterdrawRj,omitempty"`
 			PrizeLevelList          []struct {
-				AwardType        int         `json:"awardType,omitempty"`
-				Group            string      `json:"group,omitempty"`
-				LotteryCondition interface{} `json:"lotteryCondition,omitempty"`
-				PrizeLevel       string      `json:"prizeLevel,omitempty"`
-				Sort             int         `json:"sort,omitempty"`
-				StakeAmount      string      `json:"stakeAmount,omitempty"`
-				StakeCount       string      `json:"stakeCount,omitempty"`
-				TotalPrizeamount string      `json:"totalPrizeamount,omitempty"`
+				AwardType int    `json:"awardType,omitempty"`
+				Group     string `json:"group,omitempty"`
+				//LotteryCondition interface{} `json:"-"`
+				PrizeLevel       string `json:"prizeLevel,omitempty"`
+				Sort             int    `json:"sort,omitempty"`
+				StakeAmount      string `json:"stakeAmount,omitempty"`
+				StakeCount       string `json:"stakeCount,omitempty"`
+				TotalPrizeamount string `json:"totalPrizeamount,omitempty"`
 			} `json:"prizeLevelList,omitempty"`
 			PrizeLevelListRj  []interface{} `json:"prizeLevelListRj,omitempty"`
 			RuleType          int           `json:"ruleType,omitempty"`
@@ -197,9 +197,9 @@ type SevenStar struct {
 			LotteryGameNum       string `json:"lotteryGameNum,omitempty"`
 			PoolBalanceAfterdraw string `json:"poolBalanceAfterdraw,omitempty"`
 			PrizeLevelList       []struct {
-				AwardType        int    `json:"awardType,omitempty"`
-				Group            string `json:"group,omitempty"`
-				LotteryCondition string `json:"lotteryCondition,omitempty"`
+				AwardType int    `json:"awardType,omitempty"`
+				Group     string `json:"group,omitempty"`
+				//LotteryCondition interface{} `json:"-"`
 				PrizeLevel       string `json:"prizeLevel,omitempty"`
 				Sort             int    `json:"sort,omitempty"`
 				StakeAmount      string `json:"stakeAmount,omitempty"`
@@ -239,9 +239,9 @@ type SevenStar struct {
 			PoolBalanceAfterdraw    string        `json:"poolBalanceAfterdraw,omitempty"`
 			PoolBalanceAfterdrawRj  string        `json:"poolBalanceAfterdrawRj,omitempty"`
 			PrizeLevelList          []struct {
-				AwardType        int    `json:"awardType,omitempty"`
-				Group            string `json:"group,omitempty"`
-				LotteryCondition string `json:"lotteryCondition,omitempty"`
+				AwardType int    `json:"awardType,omitempty"`
+				Group     string `json:"group,omitempty"`
+				//LotteryCondition string `json:"lotteryCondition,omitempty"`
 				PrizeLevel       string `json:"prizeLevel,omitempty"`
 				Sort             int    `json:"sort,omitempty"`
 				StakeAmount      string `json:"stakeAmount,omitempty"`

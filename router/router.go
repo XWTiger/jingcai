@@ -150,7 +150,7 @@ func BindRouters(g *gin.Engine, config *config.Config) {
 // @Success 200 {object} string
 // @Router /ping [get]
 func pong(c *gin.Context) {
-	fmt.Println(fmt.Sprintf("%d", 42))
+	fmt.Println(order.GetOrderId(&order.Order{UserID: 1, LotteryType: "FOOTBALL", Share: true}))
 
 	/*var obj map[string]interface{}
 	cont, _ := swag.ReadDoc("swagger")
