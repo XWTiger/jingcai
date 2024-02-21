@@ -49,7 +49,7 @@ type MatchOdd struct {
 	MatchId string `validate:"required"`
 	//足球类型 枚举：SFP（胜负平）、BF（比分）、ZJQ(总进球)、BQSFP（半全场胜负平）
 	//篮球类型 枚举：HDC （胜负）、 HILO（大小分）、 MNL（让分胜负）、 WNM（胜分差）
-	Type string `validate:"required"`
+	Type string //`validate:"required"`
 	//让球 胜平负才有，篮球就是让分
 	GoalLine string
 
@@ -79,11 +79,24 @@ func UploadBets(c *gin.Context) {
 		return
 	}
 	tx := mysql.DB.Begin()
-	var order Order
-	if ordErr := tx.Model(&Order{}).Where(&Order{UUID: betImgObj.OrderId}).First(&order).Error; ordErr != nil {
-		common.FailedReturn(c, "订单查询失败")
-		return
-	}
+	//
+	//order := FindById(betImgObj.OrderId, true)
+	//var mapper map[string]Match
+	//if len(order.Matches) > 0 {
+	//	for _, match := range order.Matches {
+	//		mapper[match.MatchId] = match
+	//	}
+	//}
+	//
+	//if order.LotteryType == FOOTBALL || order.LotteryType == BASKETBALL {
+	//
+	//	for i, modd := range betImgObj.MatchOdds {
+	//		v, ok := mapper[modd.MatchId]
+	//		if ok {
+	//			betImgObj.MatchOdds[i].Type = v.Combines
+	//		}
+	//	}
+	//}
 
 	//调整赔率
 	if betImgObj.OddChange && len(betImgObj.MatchOdds) > 0 {
@@ -119,7 +132,7 @@ func UploadBets(c *gin.Context) {
 	for _, s := range betImgObj.Url {
 		images = append(images, OrderImage{
 			Url:      s,
-			ParentId: order.UUID,
+			ParentId: betImgObj.OrderId,
 		})
 	}
 	if imageErr := tx.Create(&images).Error; imageErr != nil {
@@ -196,14 +209,14 @@ func AdminOrderList(c *gin.Context) {
 		}
 		if strings.Compare(order.LotteryType, FOOTBALL) == 0 || strings.Compare(order.LotteryType, BASKETBALL) == 0 {
 			var matchList = make([]Match, 0)
-			mysql.DB.Model(&mathParam).Find(&matchList)
+			mysql.DB.Model(&mathParam).Where("order_id=?", list[start+index].UUID).Find(&matchList)
 			list[start+index].Matches = matchList
 			for _, match := range matchList {
 				var detailParam = LotteryDetail{
 					ParentId: match.ID,
 				}
 				var detailList = make([]LotteryDetail, 0)
-				mysql.DB.Model(&detailParam).Find(&detailList)
+				mysql.DB.Model(&detailParam).Where("parent_id=?", match.ID).Find(&detailList)
 				match.Combines = detailList
 			}
 		}

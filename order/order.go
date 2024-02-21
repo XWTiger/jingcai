@@ -638,14 +638,14 @@ func OrderList(c *gin.Context) {
 				OrderId: list[index].UUID,
 			}
 			var matchList = make([]Match, 0)
-			mysql.DB.Model(&mathParam).Where(&mathParam).Find(&matchList)
+			mysql.DB.Model(&mathParam).Where("order_id=?", order.UUID).Find(&matchList)
 			list[index].Matches = matchList
 			for idx, match := range matchList {
 				var detailParam = LotteryDetail{
 					ParentId: match.ID,
 				}
 				var detailList = make([]LotteryDetail, 0)
-				mysql.DB.Model(&detailParam).Where(&detailParam).Find(&detailList)
+				mysql.DB.Model(&detailParam).Where("parent_id=?", match.ID).Find(&detailList)
 				matchList[idx].Combines = detailList
 			}
 		}
@@ -653,7 +653,7 @@ func OrderList(c *gin.Context) {
 		//如果是参加别人的合买 就把票查回来
 		if strings.Compare(order.SaveType, ALL_WIN) == 0 {
 			var initAllWin AllWin
-			mysql.DB.Model(AllWin{}).Where(&AllWin{
+			mysql.DB.Model(&AllWin{
 				Model: gorm.Model{
 					ID: list[index].AllWinId,
 				},

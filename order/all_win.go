@@ -281,13 +281,14 @@ func AllWinList(c *gin.Context) {
 	var list []Order
 	var pageN, pageS int
 	allVo := make([]AllWinVO, 0)
+	var count int64
 	if len(param) > 0 {
 		if pageNo == "" || pageSize == "" {
-			mysql.DB.Model(Order{}).Where("lottery_type=? and all_win_id > 0", param).Find(&list)
+			mysql.DB.Model(Order{}).Where("lottery_type=? and all_win_id > 0", param).Count(&count).Find(&list)
 		} else {
 			pageN, _ = strconv.Atoi(pageNo)
 			pageS, _ = strconv.Atoi(pageSize)
-			mysql.DB.Model(Order{}).Where("lottery_type=? and all_win_id > 0", param).Offset((pageN - 1) * pageS).Limit(pageS).Find(&list)
+			mysql.DB.Model(Order{}).Where("lottery_type=? and all_win_id > 0", param).Count(&count).Offset((pageN - 1) * pageS).Limit(pageS).Find(&list)
 		}
 
 		if len(list) <= 0 {
@@ -301,15 +302,13 @@ func AllWinList(c *gin.Context) {
 		mysql.DB.Model(AllWin{}).Where(&AllWin{
 			Timeout:  false,
 			ParentId: 0,
-		}).Where("id in (?)", allWinIds).Where("TIMESTAMPDIFF(SECOND, now(), finished_time) > 0 ").Find(&all)
+		}).Where("id in (?)", allWinIds).Where("TIMESTAMPDIFF(SECOND, now(), finished_time) > 0 ").Count(&count).Find(&all)
 	} else {
 		mysql.DB.Model(AllWin{}).Where(&AllWin{
 			Timeout:  false,
 			ParentId: 0,
-		}).Where("TIMESTAMPDIFF(SECOND, now(), finished_time) > 0 ").Find(&all)
+		}).Where("TIMESTAMPDIFF(SECOND, now(), finished_time) > 0 ").Count(&count).Find(&all)
 	}
-	var count int64
-	mysql.DB.Model(Order{}).Where("lottery_type=? and all_win_id > 0", param).Count(&count)
 	for _, win := range all {
 		allVo = append(allVo, win.GetVO())
 	}
