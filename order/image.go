@@ -6,6 +6,7 @@ import (
 	"jingcai/common"
 	"jingcai/mysql"
 	"jingcai/user"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -52,7 +53,17 @@ type MatchOdd struct {
 	Type string //`validate:"required"`
 	//让球 胜平负才有，篮球就是让分
 	GoalLine string
-
+	//=================足球=========================
+	//比分， 类型BF才有 s00s00 s05s02
+	//半全场胜平负， 类型BQSFP  aa hh
+	//总进球数， 类型ZJQ s0 - s7
+	//胜负平， 类型SFP hada主负 hadd主平 hadh 主胜  hhada客负 hhadd客平 hhadh 客胜
+	//=================篮球=========================
+	//让分胜负， 类型HDC a 负，  h 胜
+	//大小分，类型HILO l 小， h 大
+	//胜负，类型MNL a 主负， h 主胜
+	//胜分差，类型WNM l1 客胜1-5分  l2 6-10分 ... l6 26+分， w1 主胜1-5分 ... w6 26+分
+	ScoreVsScore string `validate:"required"`
 	//赔率
 	Odds float32
 }
@@ -106,6 +117,7 @@ func UploadBets(c *gin.Context) {
 			var matchPo Match
 			if err := tx.Model(Match{}).Where(&Match{
 				MatchId: matchs[i].MatchId,
+				OrderId: betImgObj.OrderId,
 			}).Find(&matchPo).Error; err != nil {
 				log.Error(err)
 				log.Error("查不到订单比赛记录")
@@ -113,14 +125,20 @@ func UploadBets(c *gin.Context) {
 				tx.Rollback()
 				return
 			}
-			var lottery LotteryDetail
+			var lottery []LotteryDetail
 			if lerr := tx.Model(LotteryDetail{}).Where(&LotteryDetail{ParentId: matchPo.ID}).Find(&lottery).Error; lerr != nil {
 				log.Error("更新赔率 没有查询到票的信息")
 				common.FailedReturn(c, "更新赔率 没有查询到票的信息！！")
 				tx.Rollback()
 				return
 			}
-			tx.Save(lottery)
+			for i2, detail := range lottery {
+				if matchs[i].Type == detail.Type && matchs[i].ScoreVsScore == detail.ScoreVsScore {
+					lottery[i2].Odds = matchs[i].Odds
+					tx.Save(&lottery[i2])
+				}
+			}
+
 		}
 	}
 	//保存图片
@@ -141,6 +159,64 @@ func UploadBets(c *gin.Context) {
 		return
 	}
 	tx.Commit()
+}
+
+// @Summary 调整足球篮球赔率接口
+// @Description 调整足球篮球赔率接口
+// @Tags owner 店主
+// @Accept json
+// @Produce json
+// @Success 200 {object} common.BaseResponse
+// @failure 500 {object} common.BaseResponse
+// @param bets  body UploadBet true "管理员提交票对象"
+// @Router /api/super/matches/odds [post]
+func UpdateOddHandler(c *gin.Context) {
+	var userInfo = user.FetUserInfo(c)
+	if strings.Compare(userInfo.Role, user.ADMIN) != 0 {
+		common.FailedReturn(c, "该接口只提供给管理员")
+		return
+	}
+	var betImgObj UploadBet
+	err := c.BindJSON(&betImgObj)
+	if err != nil {
+		common.FailedReturn(c, "参数错误")
+		return
+	}
+
+	//调整赔率
+	if betImgObj.OddChange && len(betImgObj.MatchOdds) > 0 {
+		tx := mysql.DB.Begin()
+		var matchs = betImgObj.MatchOdds
+
+		for i := 0; i < len(matchs); i++ {
+			var matchPo Match
+			if err := tx.Model(Match{}).Where(&Match{
+				MatchId: matchs[i].MatchId,
+				OrderId: betImgObj.OrderId,
+			}).Find(&matchPo).Error; err != nil {
+				log.Error(err)
+				log.Error("查不到订单比赛记录")
+				common.FailedReturn(c, "查不到比赛记录！！")
+				tx.Rollback()
+				return
+			}
+			var lottery []LotteryDetail
+			if lerr := tx.Model(LotteryDetail{}).Where(&LotteryDetail{ParentId: matchPo.ID}).Find(&lottery).Error; lerr != nil {
+				log.Error("更新赔率 没有查询到票的信息")
+				common.FailedReturn(c, "更新赔率 没有查询到票的信息！！")
+				tx.Rollback()
+				return
+			}
+			for i2, detail := range lottery {
+				if matchs[i].Type == detail.Type && matchs[i].ScoreVsScore == detail.ScoreVsScore {
+					lottery[i2].Odds = matchs[i].Odds
+					tx.Save(&lottery[i2])
+				}
+			}
+
+		}
+		tx.Commit()
+	}
 }
 
 // @Summary 管理员订单查询接口
@@ -195,6 +271,9 @@ func AdminOrderList(c *gin.Context) {
 			Content:  resultList,
 		})
 	}
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].CreatedAt.UnixMicro() > list[j].CreatedAt.UnixMicro()
+	})
 	start := (page - 1) * pageSize
 	var end int
 	if (start + pageSize) > len(list) {
@@ -211,13 +290,13 @@ func AdminOrderList(c *gin.Context) {
 			var matchList = make([]Match, 0)
 			mysql.DB.Model(&mathParam).Where("order_id=?", list[start+index].UUID).Find(&matchList)
 			list[start+index].Matches = matchList
-			for _, match := range matchList {
+			for i, match := range matchList {
 				var detailParam = LotteryDetail{
 					ParentId: match.ID,
 				}
 				var detailList = make([]LotteryDetail, 0)
 				mysql.DB.Model(&detailParam).Where("parent_id=?", match.ID).Find(&detailList)
-				match.Combines = detailList
+				matchList[i].Combines = detailList
 			}
 		}
 

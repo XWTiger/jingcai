@@ -1170,6 +1170,46 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/super/matches/odds": {
+            "post": {
+                "description": "调整足球篮球赔率接口",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "owner 店主"
+                ],
+                "summary": "调整足球篮球赔率接口",
+                "parameters": [
+                    {
+                        "description": "管理员提交票对象",
+                        "name": "bets",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/order.UploadBet"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/super/notify": {
             "post": {
                 "description": "创建通告",
@@ -2578,7 +2618,7 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "matchId",
-                "type"
+                "scoreVsScore"
             ],
             "properties": {
                 "goalLine": {
@@ -2591,6 +2631,10 @@ const docTemplate = `{
                 "odds": {
                     "description": "赔率",
                     "type": "number"
+                },
+                "scoreVsScore": {
+                    "description": "=================足球=========================\n比分， 类型BF才有 s00s00 s05s02\n半全场胜平负， 类型BQSFP  aa hh\n总进球数， 类型ZJQ s0 - s7\n胜负平， 类型SFP hada主负 hadd主平 hadh 主胜  hhada客负 hhadd客平 hhadh 客胜\n=================篮球=========================\n让分胜负， 类型HDC a 负，  h 胜\n大小分，类型HILO l 小， h 大\n胜负，类型MNL a 主负， h 主胜\n胜分差，类型WNM l1 客胜1-5分  l2 6-10分 ... l6 26+分， w1 主胜1-5分 ... w6 26+分",
+                    "type": "string"
                 },
                 "type": {
                     "description": "足球类型 枚举：SFP（胜负平）、BF（比分）、ZJQ(总进球)、BQSFP（半全场胜负平）\n篮球类型 枚举：HDC （胜负）、 HILO（大小分）、 MNL（让分胜负）、 WNM（胜分差）",

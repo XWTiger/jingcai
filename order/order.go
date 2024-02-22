@@ -2794,16 +2794,17 @@ func AddSuperLottoCheck(when *time.Time) {
 						content := getArr(o.Content)
 						releaseNum := result.Value.List[index].LotteryDrawResult
 						for _, s := range content {
-							if strings.Compare(s, releaseNum) == 0 {
+							yes, count := NoOrderHeaderCompare(5, 5, s, releaseNum)
+							index := []int{5, 6}
+							state, countR := NoOrderCompareTailDirectNum(index, 1, s, releaseNum)
+							if count == 5 && countR == 2 {
 								//一等奖
 								o.Bonus = o.Bonus + 5000000
 								o.Win = true
 								o.Way = "一等奖"
 								continue
 							}
-							yes, count := randomNumBeforeDirect(5, 5, s, releaseNum)
-							index := []int{5, 6}
-							state, countR := CompareDirectNum(index, 1, s, releaseNum)
+
 							if yes && state {
 								//前5相同 后面两个任意一个相同
 								o.Bonus = o.Bonus + 2000000
@@ -3040,6 +3041,26 @@ func randomNumBeforeDirect(length int, num int, userNum string, releaseNum strin
 	return false, count
 }
 
+// 前区对比号码（顺序不限），length 对比前面多少个数  是否满足num个
+func NoOrderHeaderCompare(length int, num int, userNum string, releaseNum string) (bool, int) {
+
+	var count = 0
+	numBuffer := strings.Split(userNum, " ")
+	releaseBuffer := strings.Split(releaseNum, " ")
+	for i := 0; i < length; i++ {
+		for j := 0; j < 5; j++ {
+			if util.PaddingZeroCompare(numBuffer[i], releaseBuffer[j]) {
+				count += 1
+			}
+		}
+
+	}
+	if count >= num {
+		return true, count
+	}
+	return false, count
+}
+
 // 对比号码， length 个数  是否满足num个
 func CompareDirectNum(index []int, number int, userNum string, releaseNum string) (bool, int) {
 	//前5任意数量的数值相同
@@ -3051,6 +3072,25 @@ func CompareDirectNum(index []int, number int, userNum string, releaseNum string
 		if util.PaddingZeroCompare(numBuffer[index[i]], releaseBuffer[index[i]]) {
 			count += 1
 		}
+	}
+	if count >= number {
+		return true, count
+	}
+	return false, count
+}
+
+// 后区对比号码（没有顺序）， length 个数  是否满足num个
+func NoOrderCompareTailDirectNum(index []int, number int, userNum string, releaseNum string) (bool, int) {
+	var count = 0
+	numBuffer := strings.Split(userNum, " ")
+	releaseBuffer := strings.Split(releaseNum, " ")
+	for i := 0; i < len(index); i++ {
+		for j := 0; j < 5; j++ {
+			if util.PaddingZeroCompare(numBuffer[index[i]], releaseBuffer[j]) {
+				count += 1
+			}
+		}
+
 	}
 	if count >= number {
 		return true, count

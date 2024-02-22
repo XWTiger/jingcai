@@ -104,6 +104,7 @@ func BindRouters(g *gin.Engine, config *config.Config) {
 		s.GET("/bill/notify", user.BillClearShopNotifyList)
 		s.GET("/claims", claim.ClaimList)
 		s.POST("/claims", claim.UpdateClaim)
+		s.POST("/matches/odds", order.UpdateOddHandler)
 	}
 
 	{

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	uuid "github.com/satori/go.uuid"
+	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 	"jingcai/common"
 	"jingcai/mysql"
@@ -49,10 +49,10 @@ type AllWin struct {
 	BuyNumber int
 
 	//应付
-	ShouldPay float32
+	ShouldPay float32 `gorm:"type: decimal(20,6)"`
 
 	//奖金
-	Bonus float32
+	Bonus float32 `gorm:"type: decimal(20,6)"`
 
 	//SHARE(公开) AFTER_END(截至后公开)  JOIN（购买后可见）
 	ShowType string
@@ -431,7 +431,6 @@ func AllWinCreateHandler(c *gin.Context) {
 			}
 			var userOrder = Order{
 				CreatedAt:        time.Now(),
-				UUID:             uuid.NewV4().String(),
 				Times:            order.Times,
 				Way:              order.Way,
 				LotteryType:      order.LotteryType,
@@ -449,6 +448,7 @@ func AllWinCreateHandler(c *gin.Context) {
 				AllMatchFinished: order.AllMatchFinished,
 				DeadTime:         order.DeadTime,
 			}
+			GetOrderId(&userOrder)
 			payErr := user.CheckScoreOrDoBill(userInfo.ID, userOrder.ShouldPay, true, tx)
 			if payErr != nil {
 				log.Error("user id: ", userInfo.ID, "扣款失败")
@@ -574,12 +574,15 @@ func AllWinCheck(when time.Time) {
 						if allWin.FinishedTime.Second()-time.Now().Second() < 0 {
 							allWin.Timeout = true
 						}
-						var number = allWin.Number - (count + allWin.BuyNumber)
+						var number = allWin.Number - (count + allWin.BuyNumber) //剩余多少份没买
 						if allWin.LeastTimes > number && number > 0 && allWin.FinishedTime.Second()-time.Now().Second() < 0 {
 							//到期，需要保底 退换多扣的
-							shouldReturn := float32(allWin.LeastTimes-number) * float32(allWin.ShouldPay/float32(allWin.Number))
-							returnErr := user.ReturnScore(allWin.UserId, shouldReturn)
+							value := decimal.NewFromFloat32(allWin.ShouldPay).Div(decimal.NewFromInt32(int32(allWin.Number)))
+							result := value.Mul(decimal.NewFromInt(int64(allWin.LeastTimes - number)))
+							shouldReturn, _ := result.Float64()
+							returnErr := user.ReturnScore(allWin.UserId, float32(shouldReturn))
 							if returnErr != nil {
+								log.Error(returnErr)
 								log.Error("user id: ", allWin.UserId, "退还失败, 金额：", shouldReturn, "订单号：", allWin.ParentOrderId)
 								continue
 							}

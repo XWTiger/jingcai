@@ -23,6 +23,8 @@ require (
 	gorm.io/gorm v1.25.5
 )
 
+require github.com/shopspring/decimal v1.3.1 // indirect
+
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/PuerkitoBio/goquery v1.8.0 // indirect

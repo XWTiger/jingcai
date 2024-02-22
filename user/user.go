@@ -58,7 +58,7 @@ type User struct {
 	//支付宝号
 	Ali string
 	//余额
-	Score float32
+	Score float32 `gorm:"type: decimal(20,6)"`
 	//头像地址
 	HeaderImageUrl string
 
@@ -536,14 +536,13 @@ func ReturnScore(userId uint, score float32) error {
 		mu.Unlock()
 		return errors.New("用户查询失败")
 	}
-	if score > user.Score {
-		return errors.New("积分不足，无法进行后续操作")
-	}
+
 	user.Score = user.Score + score
 	tx.Model(&user).Update("score", user.Score)
 
 	mu.Unlock()
 	tx.Commit()
+	log.Info("退还成功， 金额：", score)
 	return nil
 }
 
