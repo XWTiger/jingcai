@@ -147,7 +147,9 @@ type Order struct {
 	UUID      string         `gorm:"primary_key"`
 	//倍数
 	Times int `validate:"required"`
-	//过关
+	//过关 足球，篮球 2x1,3x1;
+	// 大乐透：胆拖（DT，DTQQ 前区胆拖、 DTHQ 后区胆拖、 DTSQ 双区胆拖）,复式（FS， 前区复式 FSQQ、后区复式 FSHQ、双区复式 FSSQ
+	// 七星彩：复式(FSSTAR)
 	Way string
 	//足彩（FOOTBALL） 大乐透（SUPER_LOTTO）  排列三（P3） 篮球(BASKETBALL) 七星彩（SEVEN_STAR） 排列五（P5）
 	LotteryType string
@@ -165,7 +167,18 @@ type Order struct {
 	LotteryUuid string `validate:"required" gorm:"-:all"`
 
 	//数字内容 空格分隔 多组用英文逗号,
+	//==========大乐透========
+	//复式前区大于5个数字，后区 大于2个,只有QQ 为前区复式 ， 只有HQ 为后区复式  都有为双区复式
+	//复式：
+	// QQ:01 02 04 05 11 12 35 33,HQ:06 07 12
+	//胆拖：
+	// QQD:09,QQT:01 02 06 07 09,HQD:12 HQT:02 08
+	//==========七星彩=================
+	//复式：
+	//I1:3 4,I2:0 8,I3:8 9,I4:0 8,I5: 1 7,I6:3,I7:7 8
 	Content string
+	//追加
+	Append bool `gorm:"type:tinyint(1)"`
 
 	//保存类型 TEMP（临时保存） TOMASTER（提交到店）  合买(ALLWIN 舍弃)
 	SaveType string `validate:"required"`
@@ -204,6 +217,16 @@ type Order struct {
 	//如果是大乐透 七星彩 排列3 5 需要填期号
 	IssueId string `validate:"required" message:"需要期号"`
 	//SIGNAL（单注）   C6 （组合6） C3 （组合3）
+	//SIGNAL    一注
+	//C3      组合3
+	//C6组合6
+	//ZX_GSB 直选个十百
+	//CALL 直选全组合
+	//CALL_FS 直选 复式
+	//C3_FS 组选三 复式
+	//C3_DT 组选三 胆拖
+	//C3_FS 组选六 复式
+	//C3_DT 组选六 胆拖
 	PL3Way string
 
 	//是否已经出票？
@@ -498,6 +521,9 @@ func checkSuperLotto(ord *Order) error {
 
 	nums := getArr(ord.Content)
 	ord.ShouldPay = float32(len(nums) * 2 * ord.Times)
+	if ord.Append {
+		ord.ShouldPay += float32(len(nums))
+	}
 	if nil == nums || len(nums) <= 0 {
 		return errors.New("参数异常")
 	}
@@ -3098,7 +3124,7 @@ func NoOrderCompareTailDirectNum(index []int, number int, userNum string, releas
 	return false, count
 }
 
-func getArr(content string) []string {
+func getArr(content string, ty string, way string) []string {
 
 	if strings.Contains(content, ",") {
 		return strings.Split(content, ",")
