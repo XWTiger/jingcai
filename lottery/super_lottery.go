@@ -35,22 +35,13 @@ type SuperLottery struct {
 	Success      bool   `json:"success"`
 	Value        struct {
 		LastPoolDraw struct {
-			LotteryDrawNum       string `json:"lotteryDrawNum,omitempty"`
-			LotteryDrawResult    string `json:"lotteryDrawResult,omitempty"`
-			LotteryDrawTime      string `json:"lotteryDrawTime,omitempty"`
-			LotteryGameName      string `json:"lotteryGameName,omitempty"`
-			LotteryGameNum       string `json:"lotteryGameNum,omitempty"`
-			PoolBalanceAfterdraw string `json:"poolBalanceAfterdraw,omitempty"`
-			PrizeLevelList       []struct {
-				AwardType int    `json:"awardType,omitempty"`
-				Group     string `json:"group,omitempty"`
-				//LotteryCondition string `json:"lotteryCondition,omitempty"`
-				PrizeLevel       string `json:"prizeLevel,omitempty"`
-				Sort             int    `json:"sort,omitempty"`
-				StakeAmount      string `json:"stakeAmount,omitempty"`
-				StakeCount       string `json:"stakeCount,omitempty"`
-				TotalPrizeamount string `json:"totalPrizeamount,omitempty"`
-			} `json:"prizeLevelList,omitempty"`
+			LotteryDrawNum       string       `json:"lotteryDrawNum,omitempty"`
+			LotteryDrawResult    string       `json:"lotteryDrawResult,omitempty"`
+			LotteryDrawTime      string       `json:"lotteryDrawTime,omitempty"`
+			LotteryGameName      string       `json:"lotteryGameName,omitempty"`
+			LotteryGameNum       string       `json:"lotteryGameNum,omitempty"`
+			PoolBalanceAfterdraw string       `json:"poolBalanceAfterdraw,omitempty"`
+			PrizeLevelList       []PrizeLevel `json:"prizeLevelList,omitempty"`
 		} `json:"lastPoolDraw,omitempty"`
 		List []struct {
 			DrawFlowFund           string `json:"drawFlowFund,omitempty"`
@@ -83,26 +74,17 @@ type SuperLottery struct {
 			PdfType                 int           `json:"pdfType,omitempty"`
 			PoolBalanceAfterdraw    string        `json:"poolBalanceAfterdraw,omitempty"`
 			PoolBalanceAfterdrawRj  string        `json:"poolBalanceAfterdrawRj,omitempty"`
-			PrizeLevelList          []struct {
-				AwardType int    `json:"awardType,omitempty"`
-				Group     string `json:"group,omitempty"`
-				//LotteryCondition string `json:"lotteryCondition,omitempty"`
-				PrizeLevel       string `json:"prizeLevel,omitempty"`
-				Sort             int    `json:"sort,omitempty"`
-				StakeAmount      string `json:"stakeAmount,omitempty"`
-				StakeCount       string `json:"stakeCount,omitempty"`
-				TotalPrizeamount string `json:"totalPrizeamount,omitempty"`
-			} `json:"prizeLevelList,omitempty"`
-			PrizeLevelListRj  []interface{} `json:"prizeLevelListRj,omitempty"`
-			RuleType          int           `json:"ruleType,omitempty"`
-			SurplusAmount     string        `json:"surplusAmount,omitempty"`
-			SurplusAmountRj   string        `json:"surplusAmountRj,omitempty"`
-			TermList          []interface{} `json:"termList,omitempty"`
-			TermResultList    []interface{} `json:"termResultList,omitempty"`
-			TotalSaleAmount   string        `json:"totalSaleAmount,omitempty"`
-			TotalSaleAmountRj string        `json:"totalSaleAmountRj,omitempty"`
-			Verify            int           `json:"verify,omitempty"`
-			VtoolsConfig      struct {
+			PrizeLevelList          []PrizeLevel  `json:"prizeLevelList,omitempty"`
+			PrizeLevelListRj        []interface{} `json:"prizeLevelListRj,omitempty"`
+			RuleType                int           `json:"ruleType,omitempty"`
+			SurplusAmount           string        `json:"surplusAmount,omitempty"`
+			SurplusAmountRj         string        `json:"surplusAmountRj,omitempty"`
+			TermList                []interface{} `json:"termList,omitempty"`
+			TermResultList          []interface{} `json:"termResultList,omitempty"`
+			TotalSaleAmount         string        `json:"totalSaleAmount,omitempty"`
+			TotalSaleAmountRj       string        `json:"totalSaleAmountRj,omitempty"`
+			Verify                  int           `json:"verify,omitempty"`
+			VtoolsConfig            struct {
 			} `json:"vtoolsConfig,omitempty"`
 		} `json:"list,omitempty"`
 		PageNo   int `json:"pageNo,omitempty"`
@@ -152,26 +134,17 @@ type Plw struct {
 			PdfType                 int           `json:"pdfType,omitempty"`
 			PoolBalanceAfterdraw    string        `json:"poolBalanceAfterdraw,omitempty"`
 			PoolBalanceAfterdrawRj  string        `json:"poolBalanceAfterdrawRj,omitempty"`
-			PrizeLevelList          []struct {
-				AwardType int    `json:"awardType,omitempty"`
-				Group     string `json:"group,omitempty"`
-				//LotteryCondition interface{} `json:"-"`
-				PrizeLevel       string `json:"prizeLevel,omitempty"`
-				Sort             int    `json:"sort,omitempty"`
-				StakeAmount      string `json:"stakeAmount,omitempty"`
-				StakeCount       string `json:"stakeCount,omitempty"`
-				TotalPrizeamount string `json:"totalPrizeamount,omitempty"`
-			} `json:"prizeLevelList,omitempty"`
-			PrizeLevelListRj  []interface{} `json:"prizeLevelListRj,omitempty"`
-			RuleType          int           `json:"ruleType,omitempty"`
-			SurplusAmount     string        `json:"surplusAmount,omitempty"`
-			SurplusAmountRj   string        `json:"surplusAmountRj,omitempty"`
-			TermList          []interface{} `json:"termList,omitempty"`
-			TermResultList    []interface{} `json:"termResultList,omitempty"`
-			TotalSaleAmount   string        `json:"totalSaleAmount,omitempty"`
-			TotalSaleAmountRj string        `json:"totalSaleAmountRj,omitempty"`
-			Verify            int           `json:"verify,omitempty"`
-			VtoolsConfig      struct {
+			PrizeLevelList          []PrizeLevel  `json:"prizeLevelList,omitempty"`
+			PrizeLevelListRj        []interface{} `json:"prizeLevelListRj,omitempty"`
+			RuleType                int           `json:"ruleType,omitempty"`
+			SurplusAmount           string        `json:"surplusAmount,omitempty"`
+			SurplusAmountRj         string        `json:"surplusAmountRj,omitempty"`
+			TermList                []interface{} `json:"termList,omitempty"`
+			TermResultList          []interface{} `json:"termResultList,omitempty"`
+			TotalSaleAmount         string        `json:"totalSaleAmount,omitempty"`
+			TotalSaleAmountRj       string        `json:"totalSaleAmountRj,omitempty"`
+			Verify                  int           `json:"verify,omitempty"`
+			VtoolsConfig            struct {
 			} `json:"vtoolsConfig,omitempty"`
 		} `json:"list,omitempty"`
 		PageNo   int `json:"pageNo,omitempty"`
@@ -190,22 +163,13 @@ type SevenStar struct {
 	Success      bool   `json:"success,omitempty"`
 	Value        struct {
 		LastPoolDraw struct {
-			LotteryDrawNum       string `json:"lotteryDrawNum,omitempty"`
-			LotteryDrawResult    string `json:"lotteryDrawResult,omitempty"`
-			LotteryDrawTime      string `json:"lotteryDrawTime,omitempty"`
-			LotteryGameName      string `json:"lotteryGameName,omitempty"`
-			LotteryGameNum       string `json:"lotteryGameNum,omitempty"`
-			PoolBalanceAfterdraw string `json:"poolBalanceAfterdraw,omitempty"`
-			PrizeLevelList       []struct {
-				AwardType int    `json:"awardType,omitempty"`
-				Group     string `json:"group,omitempty"`
-				//LotteryCondition interface{} `json:"-"`
-				PrizeLevel       string `json:"prizeLevel,omitempty"`
-				Sort             int    `json:"sort,omitempty"`
-				StakeAmount      string `json:"stakeAmount,omitempty"`
-				StakeCount       string `json:"stakeCount,omitempty"`
-				TotalPrizeamount string `json:"totalPrizeamount,omitempty"`
-			} `json:"prizeLevelList,omitempty"`
+			LotteryDrawNum       string       `json:"lotteryDrawNum,omitempty"`
+			LotteryDrawResult    string       `json:"lotteryDrawResult,omitempty"`
+			LotteryDrawTime      string       `json:"lotteryDrawTime,omitempty"`
+			LotteryGameName      string       `json:"lotteryGameName,omitempty"`
+			LotteryGameNum       string       `json:"lotteryGameNum,omitempty"`
+			PoolBalanceAfterdraw string       `json:"poolBalanceAfterdraw,omitempty"`
+			PrizeLevelList       []PrizeLevel `json:"prizeLevelList,omitempty"`
 		} `json:"lastPoolDraw,omitempty"`
 		List []struct {
 			DrawFlowFund           string `json:"drawFlowFund,omitempty"`
@@ -238,26 +202,17 @@ type SevenStar struct {
 			PdfType                 int           `json:"pdfType,omitempty"`
 			PoolBalanceAfterdraw    string        `json:"poolBalanceAfterdraw,omitempty"`
 			PoolBalanceAfterdrawRj  string        `json:"poolBalanceAfterdrawRj,omitempty"`
-			PrizeLevelList          []struct {
-				AwardType int    `json:"awardType,omitempty"`
-				Group     string `json:"group,omitempty"`
-				//LotteryCondition string `json:"lotteryCondition,omitempty"`
-				PrizeLevel       string `json:"prizeLevel,omitempty"`
-				Sort             int    `json:"sort,omitempty"`
-				StakeAmount      string `json:"stakeAmount,omitempty"`
-				StakeCount       string `json:"stakeCount,omitempty"`
-				TotalPrizeamount string `json:"totalPrizeamount,omitempty"`
-			} `json:"prizeLevelList,omitempty"`
-			PrizeLevelListRj  []interface{} `json:"prizeLevelListRj,omitempty"`
-			RuleType          int           `json:"ruleType,omitempty"`
-			SurplusAmount     string        `json:"surplusAmount,omitempty"`
-			SurplusAmountRj   string        `json:"surplusAmountRj,omitempty"`
-			TermList          []interface{} `json:"termList,omitempty"`
-			TermResultList    []interface{} `json:"termResultList,omitempty"`
-			TotalSaleAmount   string        `json:"totalSaleAmount,omitempty"`
-			TotalSaleAmountRj string        `json:"totalSaleAmountRj,omitempty"`
-			Verify            int           `json:"verify,omitempty"`
-			VtoolsConfig      struct {
+			PrizeLevelList          []PrizeLevel  `json:"prizeLevelList,omitempty"`
+			PrizeLevelListRj        []interface{} `json:"prizeLevelListRj,omitempty"`
+			RuleType                int           `json:"ruleType,omitempty"`
+			SurplusAmount           string        `json:"surplusAmount,omitempty"`
+			SurplusAmountRj         string        `json:"surplusAmountRj,omitempty"`
+			TermList                []interface{} `json:"termList,omitempty"`
+			TermResultList          []interface{} `json:"termResultList,omitempty"`
+			TotalSaleAmount         string        `json:"totalSaleAmount,omitempty"`
+			TotalSaleAmountRj       string        `json:"totalSaleAmountRj,omitempty"`
+			Verify                  int           `json:"verify,omitempty"`
+			VtoolsConfig            struct {
 			} `json:"vtoolsConfig,omitempty"`
 		} `json:"list,omitempty"`
 		PageNo   int `json:"pageNo,omitempty"`
@@ -265,6 +220,17 @@ type SevenStar struct {
 		Pages    int `json:"pages,omitempty"`
 		Total    int `json:"total,omitempty"`
 	} `json:"value,omitempty"`
+}
+
+type PrizeLevel struct {
+	AwardType int    `json:"awardType,omitempty"`
+	Group     string `json:"group,omitempty"`
+	//LotteryCondition string `json:"lotteryCondition,omitempty"`
+	PrizeLevel       string `json:"prizeLevel,omitempty"`
+	Sort             int    `json:"sort,omitempty"`
+	StakeAmount      string `json:"stakeAmount,omitempty"`
+	StakeCount       string `json:"stakeCount,omitempty"`
+	TotalPrizeamount string `json:"totalPrizeamount,omitempty"`
 }
 
 var LotteryStatistics = cache2go.Cache("lottery-statistics")

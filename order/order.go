@@ -26,6 +26,19 @@ import (
 var log = ilog.Logger
 
 // 兑奖状态 NO_BONUS(未中奖) READY(已发放) NO_PAY(未发放)
+// 大乐透：DIRECT 直选/随机;胆拖（DT，DTQQ 前区胆拖、 DTHQ 后区胆拖、 DTSQ 双区胆拖）;复式（FS， 前区复式 FSQQ、后区复式 FSHQ、双区复式 FSSQ
+// 七星彩：复式(FSSTAR),DIRECT 直选/随机;
+// ==========大乐透========
+// 复式前区大于5个数字，后区 大于2个,只有QQ 为前区复式 ， 只有HQ 为后区复式  都有为双区复式
+// 复式：
+// QQ:01 02 04 05 11 12 35 33,HQ:06 07 12
+// 胆拖：
+// QQD:09,QQT:01 02 06 07 09,HQD:12 HQT:02 08
+// 后区胆拖
+// 03 05 08 09 11 13,HQD:12 HQT:02 08
+// ==========七星彩=================
+// 复式：
+// I1:3 4,I2:0 8,I3:8 9,I4:0 8,I5: 1 7,I6:3,I7:7 8
 const (
 	FOOTBALL    = "FOOTBALL"
 	SUPER_LOTTO = "SUPER_LOTTO"
@@ -53,6 +66,20 @@ const (
 	SCORE       = "SCORE"
 	RMB         = "RMB"
 	TEMP        = "TEMP"
+	FSQQ        = "FSQQ"   //前区复式
+	FSHQ        = "FSHQ"   //后区复式
+	FSSQ        = "FSSQ"   //双区复式
+	DTQQ        = "DTQQ"   //前区胆拖
+	DTHQ        = "DTHQ"   //后区胆拖
+	DTSQ        = "DTSQ"   //双区胆拖
+	DIRECT      = "DIRECT" //直选\随机
+	FSSTAR      = "FSSTAR" //按位复式
+	QQ          = "QQ"     //前区
+	HQ          = "HQ"     //后区
+	QQD         = "QQD"    //前区胆
+	QQT         = "QQT"    //前区拖
+	HQD         = "HQD"    //后区胆
+	HQT         = "HQT"    //后区拖
 )
 
 type Match struct {
@@ -148,8 +175,8 @@ type Order struct {
 	//倍数
 	Times int `validate:"required"`
 	//过关 足球，篮球 2x1,3x1;
-	// 大乐透：胆拖（DT，DTQQ 前区胆拖、 DTHQ 后区胆拖、 DTSQ 双区胆拖）,复式（FS， 前区复式 FSQQ、后区复式 FSHQ、双区复式 FSSQ
-	// 七星彩：复式(FSSTAR)
+	// 大乐透：DIRECT 直选/随机;胆拖（DT，DTQQ 前区胆拖、 DTHQ 后区胆拖、 DTSQ 双区胆拖）;复式（FS， 前区复式 FSQQ、后区复式 FSHQ、双区复式 FSSQ
+	// 七星彩：复式(FSSTAR),DIRECT 直选/随机;
 	Way string
 	//足彩（FOOTBALL） 大乐透（SUPER_LOTTO）  排列三（P3） 篮球(BASKETBALL) 七星彩（SEVEN_STAR） 排列五（P5）
 	LotteryType string
@@ -173,6 +200,8 @@ type Order struct {
 	// QQ:01 02 04 05 11 12 35 33,HQ:06 07 12
 	//胆拖：
 	// QQD:09,QQT:01 02 06 07 09,HQD:12 HQT:02 08
+	//后区胆拖
+	// 03 05 08 09 11 13,HQD:12 HQT:02 08
 	//==========七星彩=================
 	//复式：
 	//I1:3 4,I2:0 8,I3:8 9,I4:0 8,I5: 1 7,I6:3,I7:7 8
@@ -231,6 +260,8 @@ type Order struct {
 
 	//是否已经出票？
 	BetUpload bool
+
+	Comment string `grom:"type:varchar(64)"`
 }
 
 type Bet struct {
@@ -519,10 +550,12 @@ func checkSuperLotto(ord *Order) error {
 		return errors.New("购买期号不正确")
 	}
 
-	nums := getArr(ord.Content)
-	ord.ShouldPay = float32(len(nums) * 2 * ord.Times)
+	nums := getArr(ord.Content, ord.LotteryType, ord.Way)
+
 	if ord.Append {
-		ord.ShouldPay += float32(len(nums))
+		ord.ShouldPay += float32(len(nums) * 3 * ord.Times)
+	} else {
+		ord.ShouldPay = float32(len(nums) * 2 * ord.Times)
 	}
 	if nil == nums || len(nums) <= 0 {
 		return errors.New("参数异常")
@@ -2775,6 +2808,17 @@ func AddPlwCheck(p int, when *time.Time) {
 
 }
 
+// 通过 level:“一等奖” 获取奖金(append: 是否追加) 一等奖(追加) 二等奖(追加)
+func getStakeAmountByPrizeLevel(prizes []lottery.PrizeLevel, level string) int {
+	for _, s := range prizes {
+		if s.PrizeLevel == level {
+			newStr := strings.ReplaceAll(s.StakeAmount, ",", "")
+			v, _ := strconv.Atoi(newStr)
+			return v
+		}
+	}
+}
+
 func AddSuperLottoCheck(when *time.Time) {
 	log.Info("============= 大乐透对账任务开启==============")
 	var job Job
@@ -2816,33 +2860,47 @@ func AddSuperLottoCheck(when *time.Time) {
 			if len(orders) > 0 {
 				for _, o := range orders {
 					index, ok := mapper[o.IssueId]
+
 					if ok {
-						content := getArr(o.Content)
+						content := getArr(o.Content, o.LotteryType, o.Way)
 						releaseNum := result.Value.List[index].LotteryDrawResult
+
 						for _, s := range content {
 							yes, count := NoOrderHeaderCompare(5, 5, s, releaseNum)
-							index := []int{5, 6}
-							state, countR := NoOrderCompareTailDirectNum(index, 1, s, releaseNum)
+							indexR := []int{5, 6}
+							state, countR := NoOrderCompareTailDirectNum(indexR, 1, s, releaseNum)
 							if count == 5 && countR == 2 {
 								//一等奖
-								o.Bonus = o.Bonus + 5000000
+								bonus := getStakeAmountByPrizeLevel(result.Value.List[index].PrizeLevelList, "一等奖")
+								o.Bonus = o.Bonus + float32(bonus)
+								if o.Append {
+									//	一等奖(追加) 二等奖(追加)
+									bonusAppend := getStakeAmountByPrizeLevel(result.Value.List[index].PrizeLevelList, "一等奖(追加)")
+									o.Bonus = o.Bonus + float32(bonusAppend)
+								}
 								o.Win = true
-								o.Way = "一等奖"
+								o.Comment = "一等奖"
 								continue
 							}
 
 							if yes && state {
 								//前5相同 后面两个任意一个相同
-								o.Bonus = o.Bonus + 2000000
+								bonus := getStakeAmountByPrizeLevel(result.Value.List[index].PrizeLevelList, "二等奖")
+								o.Bonus = o.Bonus + float32(bonus)
+								if o.Append {
+									//	一等奖(追加) 二等奖(追加)
+									bonusAppend := getStakeAmountByPrizeLevel(result.Value.List[index].PrizeLevelList, "二等奖(追加)")
+									o.Bonus = o.Bonus + float32(bonusAppend)
+								}
 								o.Win = true
-								o.Way = fmt.Sprintf("%s + %s", o.Way, "二等奖")
+								o.Comment = "二等奖"
 								continue
 							}
 							if yes {
 								//五个前区号码相同
 								o.Bonus = o.Bonus + 10000
 								o.Win = true
-								o.Way = fmt.Sprintf("%s + %s", o.Way, "三等奖")
+								o.Comment = "三等奖"
 								continue
 							}
 
@@ -2850,7 +2908,7 @@ func AddSuperLottoCheck(when *time.Time) {
 							if count == 4 && countR == 2 {
 								o.Bonus = o.Bonus + 3000
 								o.Win = true
-								o.Way = fmt.Sprintf("%s + %s", o.Way, "四等奖")
+								o.Comment = "四等奖"
 								continue
 							}
 
@@ -2858,35 +2916,35 @@ func AddSuperLottoCheck(when *time.Time) {
 							if count == 4 && countR == 1 {
 								o.Bonus = o.Bonus + 300
 								o.Win = true
-								o.Way = fmt.Sprintf("%s + %s", o.Way, "五等奖")
+								o.Comment = "五等奖"
 								continue
 							}
 
 							if 3 == count && countR == 2 {
 								o.Bonus = o.Bonus + 200
 								o.Win = true
-								o.Way = fmt.Sprintf("%s + %s", o.Way, "六等奖")
+								o.Comment = "六等奖"
 								continue
 							}
 
 							if 4 == count {
 								o.Bonus = o.Bonus + 100
 								o.Win = true
-								o.Way = fmt.Sprintf("%s + %s", o.Way, "七等奖")
+								o.Comment = "七等奖"
 								continue
 							}
 
 							if 3 == count && countR == 1 {
 								o.Bonus = o.Bonus + 15
 								o.Win = true
-								o.Way = fmt.Sprintf("%s + %s", o.Way, "八等奖")
+								o.Comment = "八等奖"
 								continue
 							}
 
 							if 3 == count || (1 == count && 2 == countR) || (2 == count && 1 == countR) || countR == 2 {
 								o.Bonus = o.Bonus + 5
 								o.Win = true
-								o.Way = fmt.Sprintf("%s + %s", o.Way, "九等奖")
+								o.Comment = "九等奖"
 								continue
 							}
 							o.Win = false
@@ -2902,7 +2960,7 @@ func AddSuperLottoCheck(when *time.Time) {
 						o.BonusStatus = NO_BONUS
 					}
 
-					tx.Save(o)
+					tx.Save(&o)
 				}
 			}
 			tx.Commit()
@@ -3124,15 +3182,61 @@ func NoOrderCompareTailDirectNum(index []int, number int, userNum string, releas
 	return false, count
 }
 
-func getArr(content string, ty string, way string) []string {
+// 大乐透：DIRECT 直选/随机;胆拖（DT，DTQQ 前区胆拖、 DTHQ 后区胆拖、 DTSQ 双区胆拖）;复式（FS， 前区复式 FSQQ、后区复式 FSHQ、双区复式 FSSQ
+// 七星彩：复式(FSSTAR),DIRECT 直选/随机;
+// ==========大乐透========
+// 复式前区大于5个数字，后区 大于2个,只有QQ 为前区复式 ， 只有HQ 为后区复式  都有为双区复式
+// 复式：
+// QQ:01 02 04 05 11 12 35 33,HQ:06 07 12
+// 胆拖：
+// QQD:09,QQT:01 02 06 07 09,HQD:12 HQT:02 08
+// 后区胆拖
+// 03 05 08 09 11 13,HQD:12,HQT:02 08
+// ==========七星彩=================
+// 复式：
+// I1:3 4,I2:0 8,I3:8 9,I4:0 8,I5: 1 7,I6:3,I7:7 8
+func getArr(content string, ty string, way string) ([]string, error) {
 
-	if strings.Contains(content, ",") {
-		return strings.Split(content, ",")
-	} else {
-		var strs []string
-		strs = append(strs, content)
-		return strs
+	switch ty {
+	case P3:
+	case P5:
+		break
+	case SEVEN_STAR:
+		break
+	case SUPER_LOTTO:
+		switch way {
+		case DTQQ: //前区胆拖 QQD:09,QQT:01 02 06 07 09,01 02
+			var qqd, qqt, hq []string
+			if !(strings.Contains(content, QQD) && strings.Contains(content, QQT)) {
+				return nil, errors.New("前区胆拖数据错误")
+			}
+			arr := strings.Split(content, ",")
+			if len(arr) != 3 {
+				return nil, errors.New("前区胆拖数据错误")
+			}
+			qqdStr := strings.ReplaceAll(arr[0], "QQD:", "")
+			qqd = strings.Split(qqdStr, " ")
+			qqtStr := strings.ReplaceAll(arr[1], "QQT:", "")
+			qqt = strings.Split(qqtStr, " ")
+			hq = strings.Split(arr[2], " ")
+
+			break
+		case DIRECT:
+		default:
+			if strings.Contains(content, ",") {
+				return strings.Split(content, ","), nil
+			} else {
+				var strs []string
+				strs = append(strs, content)
+				return strs, nil
+			}
+			break
+
+		}
+
+		break
 	}
+
 }
 
 func GetPlAllNums(order *Order) ([]string, string) {
