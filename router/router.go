@@ -151,8 +151,14 @@ func BindRouters(g *gin.Engine, config *config.Config) {
 // @Success 200 {object} string
 // @Router /ping [get]
 func pong(c *gin.Context) {
-	fmt.Println(order.GetOrderId(&order.Order{UserID: 1, LotteryType: "FOOTBALL", Share: true}))
-
+	//fmt.Println(order.GetOrderId(&order.Order{UserID: 1, LotteryType: "FOOTBALL", Share: true}))
+	var tmp = [][]string{{"1", "2"}, {"3", "4"}, {"5", "6"}, {"7", "8"}, {"9", "10"}, {"11"}, {"12", "13"}}
+	var strace = []string{}
+	var res = [][]string{}
+	order.GetIndexCmn(0, tmp, &strace, &res)
+	for _, re := range res {
+		fmt.Println(re)
+	}
 	/*var obj map[string]interface{}
 	cont, _ := swag.ReadDoc("swagger")
 	json.Unmarshal([]byte(cont), &obj)

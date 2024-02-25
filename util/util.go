@@ -16,6 +16,25 @@ func Combine(n int, k int) [][]int {
 	return res
 }
 
+// 从n里面取出k个组合C(n,k) 传参是数组 和k
+func CombineArray(arr []string, k int) [][]string {
+	res := [][]int{}
+	// 记录回溯算法的递归路径
+	track := []int{}
+	backtrack(1, len(arr), k, &res, &track)
+	var result = make([][]string, len(res))
+	for i, re := range res {
+		fmt.Println(i)
+		var values []string
+		for _, v := range re {
+			values = append(values, arr[v-1])
+		}
+		result[i] = make([]string, len(values))
+		copy(result[i], values)
+	}
+	return result
+}
+
 func backtrack(start int, n int, k int, res *[][]int, track *[]int) {
 	// base case
 	if k == len(*track) {

@@ -80,6 +80,13 @@ const (
 	QQT         = "QQT"    //前区拖
 	HQD         = "HQD"    //后区胆
 	HQT         = "HQT"    //后区拖
+	I1          = "I1"     //七星彩 第一位
+	I2          = "I2"     //七星彩 第二位
+	I3          = "I3"     //七星彩 第三位
+	I4          = "I4"     //七星彩 第四位
+	I5          = "I5"     //七星彩 第五位
+	I6          = "I6"     //七星彩 第六位
+	I7          = "I7"     //七星彩 第七位
 )
 
 type Match struct {
@@ -550,7 +557,10 @@ func checkSuperLotto(ord *Order) error {
 		return errors.New("购买期号不正确")
 	}
 
-	nums := getArr(ord.Content, ord.LotteryType, ord.Way)
+	nums, err := getArr(ord.Content, ord.LotteryType, ord.Way)
+	if err != nil {
+		return err
+	}
 
 	if ord.Append {
 		ord.ShouldPay += float32(len(nums) * 3 * ord.Times)
@@ -615,7 +625,10 @@ func checkSevenStar(ord *Order) error {
 		return errors.New("购买期号不正确")
 	}
 
-	nums := getArr(ord.Content)
+	nums, err := getArr(ord.Content, ord.LotteryType, ord.Way)
+	if err != nil {
+		return nil
+	}
 	ord.ShouldPay = float32(len(nums) * 2 * ord.Times)
 	if nil == nums || len(nums) <= 0 {
 		return errors.New("参数异常")
@@ -2768,7 +2781,11 @@ func AddPlwCheck(p int, when *time.Time) {
 					for _, o := range orders {
 						index, ok := mapper[o.IssueId]
 						if ok {
-							content := getArr(o.Content)
+							content, err := getArr(o.Content, o.LotteryType, o.PL3Way)
+							if err != nil {
+								log.Error(err)
+								continue
+							}
 							releaseNum := result.Value.List[index].LotteryDrawResult
 							for _, s := range content {
 								if strings.Compare(s, releaseNum) == 0 {
@@ -2817,6 +2834,7 @@ func getStakeAmountByPrizeLevel(prizes []lottery.PrizeLevel, level string) int {
 			return v
 		}
 	}
+	return 0
 }
 
 func AddSuperLottoCheck(when *time.Time) {
@@ -2862,7 +2880,11 @@ func AddSuperLottoCheck(when *time.Time) {
 					index, ok := mapper[o.IssueId]
 
 					if ok {
-						content := getArr(o.Content, o.LotteryType, o.Way)
+						content, err := getArr(o.Content, o.LotteryType, o.Way)
+						if err != nil {
+							log.Error(err)
+							continue
+						}
 						releaseNum := result.Value.List[index].LotteryDrawResult
 
 						for _, s := range content {
@@ -3024,7 +3046,11 @@ func AddSevenStarCheck(when *time.Time) {
 				for _, o := range orders {
 					index, ok := mapper[o.IssueId]
 					if ok {
-						content := getArr(o.Content)
+						content, err := getArr(o.Content, o.LotteryType, o.Way)
+						if err != nil {
+							log.Error(err)
+							continue
+						}
 						releaseNum := result.Value.List[index].LotteryDrawResult
 						for _, s := range content {
 							if strings.Compare(s, releaseNum) == 0 {
@@ -3182,6 +3208,24 @@ func NoOrderCompareTailDirectNum(index []int, number int, userNum string, releas
 	return false, count
 }
 
+// 按位组合
+func GetIndexCmn(ii int, arr [][]string, trace *[]string, res *[][]string) {
+	if len(*trace) == 7 {
+		temp := make([]string, len(*trace))
+		copy(temp, *trace)
+		*res = append(*res, temp)
+		return
+	}
+	for i := ii; i < len(arr); i++ {
+		for j := 0; j < len(arr[i]); j++ {
+			*trace = append(*trace, arr[i][j])
+			GetIndexCmn(i+1, arr, trace, res)
+			// 撤销选择
+			*trace = (*trace)[:len(*trace)-1]
+		}
+	}
+}
+
 // 大乐透：DIRECT 直选/随机;胆拖（DT，DTQQ 前区胆拖、 DTHQ 后区胆拖、 DTSQ 双区胆拖）;复式（FS， 前区复式 FSQQ、后区复式 FSHQ、双区复式 FSSQ
 // 七星彩：复式(FSSTAR),DIRECT 直选/随机;
 // ==========大乐透========
@@ -3201,7 +3245,35 @@ func getArr(content string, ty string, way string) ([]string, error) {
 	case P3:
 	case P5:
 		break
-	case SEVEN_STAR:
+	case SEVEN_STAR: // I1:3 4,I2:0 8,I3:8 9,I4:0 8,I5: 1 7,I6:3,I7:7 8
+		switch way {
+		case FSSTAR:
+			arr := strings.Split(content, ",")
+			var tmp = [][]string{}
+			for _, s := range arr {
+				tmp = append(tmp, strings.Split(s[3:], " "))
+			}
+			var combines [][]string
+			var strace []string
+			GetIndexCmn(0, tmp, &strace, &combines)
+			var realNums []string
+			for _, combine := range combines {
+				realNums = append(realNums, strings.Join(combine, " "))
+			}
+			return realNums, nil
+		case DIRECT:
+		default:
+			if strings.Contains(content, ",") {
+				return strings.Split(content, ","), nil
+			} else {
+				var strs []string
+				strs = append(strs, content)
+				return strs, nil
+			}
+			break
+
+		}
+
 		break
 	case SUPER_LOTTO:
 		switch way {
@@ -3219,8 +3291,126 @@ func getArr(content string, ty string, way string) ([]string, error) {
 			qqtStr := strings.ReplaceAll(arr[1], "QQT:", "")
 			qqt = strings.Split(qqtStr, " ")
 			hq = strings.Split(arr[2], " ")
+			if len(qqd) <= 0 || len(qqt) < 0 || len(qqd)+len(qqt) <= 5 || len(hq) != 2 {
+				return nil, errors.New("前区胆拖数据错误,胆拖位数不对！")
+			}
 
-			break
+			k := 5 - len(qqd)
+			numArr := util.CombineArray(qqt, k)
+			var realNums []string
+			for _, v := range numArr {
+				numStr := qqdStr + strings.Join(v, " ") + " " + strings.Join(hq, " ")
+				realNums = append(realNums, numStr)
+			}
+			return realNums, nil
+		case DTHQ: //后区胆拖 01 02 03 04 05,HQD:01,HQT:12 11 10
+			var qq, hqt []string
+			arr := strings.Split(content, ",")
+			qq = strings.Split(arr[0], " ")
+			hqdStr := strings.ReplaceAll(arr[1], "HQD:", "")
+			hqtStr := strings.ReplaceAll(arr[2], "HQT:", "")
+			hqt = strings.Split(hqtStr, " ")
+			if len(qq) != 5 || len(hqdStr) != 2 || len(hqt) <= 1 {
+				return nil, errors.New("后区胆拖数据错误")
+			}
+			var realNums []string
+			for _, s := range hqt {
+				realStr := arr[0] + " " + hqdStr + " " + s
+				realNums = append(realNums, realStr)
+			}
+			return realNums, nil
+		case DTSQ: //QQD:09,QQT:01 02 06 07 09,HQD:01,HQT:12 11 10
+			var qqd, qqt, hqt []string
+			arr := strings.Split(content, ",")
+			qqdStr := strings.ReplaceAll(arr[0], "QQD:", "")
+			qqd = strings.Split(qqdStr, " ")
+			qqtStr := strings.ReplaceAll(arr[1], "QQT:", "")
+			qqt = strings.Split(qqtStr, " ")
+			hqdStr := strings.ReplaceAll(arr[2], "HQD:", "")
+			hqtStr := strings.ReplaceAll(arr[2], "HQT:", "")
+			hqt = strings.Split(hqtStr, " ")
+			if len(qqd)+len(qqt) <= 5 || len(hqt) <= 1 || len(hqdStr) != 2 {
+				return nil, errors.New("双区胆拖数据错误")
+			}
+			var realNums []string
+			kqq := 5 - len(qqd)
+			qqArr := util.CombineArray(qqt, kqq)
+			var buffer []string
+			for _, i := range qqArr {
+				str := qqdStr + " " + strings.Join(i, " ")
+				buffer = append(buffer, str)
+			}
+			for _, b := range buffer {
+				for _, s := range hqt {
+					realNum := b + " " + hqdStr + " " + s
+					realNums = append(realNums, realNum)
+				}
+			}
+			return realNums, nil
+		case FSQQ: //QQ:01 02 04 05 11 12 35 33,01 12
+			var qq, tail []string
+			arr := strings.Split(content, ",")
+			qqStr := strings.ReplaceAll(arr[0], "QQ:", "")
+			qq = strings.Split(qqStr, " ")
+			tail = strings.Split(arr[1], " ")
+			if len(qq) <= 5 {
+				return nil, errors.New("复式前区，位数不够！")
+			}
+			if len(tail) != 2 {
+				return nil, errors.New("复式前区，后区位数不够！")
+			}
+			res := util.CombineArray(qq, 5)
+			var realNums []string
+			for _, re := range res {
+				realStr := strings.Join(re, " ") + " " + strings.Join(tail, " ")
+				realNums = append(realNums, realStr)
+			}
+			return realNums, nil
+
+		case FSHQ: //01 02 03 05 09,HQ:06 07 12
+			var qq, tail []string
+			arr := strings.Split(content, ",")
+			tailStr := strings.ReplaceAll(arr[1], "HQ:", "")
+			tail = strings.Split(tailStr, " ")
+			qq = strings.Split(arr[0], " ")
+			if len(qq) != 5 {
+				return nil, errors.New("复式后区，前区位数不够2位！")
+			}
+			if len(tail) <= 2 {
+				return nil, errors.New("复式前区，后区位数不够3位！")
+			}
+			res := util.CombineArray(tail, 2)
+			var realNums []string
+			for _, re := range res {
+				realStr := arr[0] + " " + strings.Join(re, " ")
+				realNums = append(realNums, realStr)
+			}
+			return realNums, nil
+
+		case FSSQ: // QQ:01 02 04 05 11 12 35 33,HQ:06 07 12
+			var qq, tail []string
+			arr := strings.Split(content, ",")
+			qqStr := strings.ReplaceAll(arr[0], "QQ:", "")
+			qq = strings.Split(qqStr, " ")
+			tailStr := strings.ReplaceAll(arr[1], "HQ:", "")
+			tail = strings.Split(tailStr, " ")
+			if len(qq) <= 5 {
+				return nil, errors.New("复式双区，位数不够！")
+			}
+			if len(tail) <= 2 {
+				return nil, errors.New("复式双区，后区位数不够！")
+			}
+			resHeader := util.CombineArray(qq, 5)
+			resTail := util.CombineArray(tail, 2)
+			var realNums []string
+			for _, re := range resHeader {
+				for _, t := range resTail {
+					realStr := strings.Join(re, " ") + " " + strings.Join(t, " ")
+					realNums = append(realNums, realStr)
+				}
+
+			}
+			return realNums, nil
 		case DIRECT:
 		default:
 			if strings.Contains(content, ",") {
@@ -3236,7 +3426,7 @@ func getArr(content string, ty string, way string) ([]string, error) {
 
 		break
 	}
-
+	return make([]string, 0), nil
 }
 
 func GetPlAllNums(order *Order) ([]string, string) {
