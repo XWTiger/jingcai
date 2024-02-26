@@ -141,38 +141,95 @@ func GetDateStartAndEnd(time time.Time) (string, string) {
 	return dateStart, dateEnd
 }
 
-/*func IsEmpty(obj interface{}) bool {
-	value := reflect.ValueOf(obj).Elem() // 获取指针对应的值
-	if value.Kind() == reflect.Ptr && !value.IsNil() {
-		return false // 如果是非nil指针类型则不为空
-	} else if value.NumField() > 0 {
-		for i := 0; i < value.NumField(); i++ {
-			field := value.Type().Field(i)
-			// 只有当字段没有被标记为omitempty时才进行判断
-			if field.Tag != "omitempty" && !isZero(value.Field(i)) {
-				return false // 存在非空字段则不为空
+/*
+	func IsEmpty(obj interface{}) bool {
+		value := reflect.ValueOf(obj).Elem() // 获取指针对应的值
+		if value.Kind() == reflect.Ptr && !value.IsNil() {
+			return false // 如果是非nil指针类型则不为空
+		} else if value.NumField() > 0 {
+			for i := 0; i < value.NumField(); i++ {
+				field := value.Type().Field(i)
+				// 只有当字段没有被标记为omitempty时才进行判断
+				if field.Tag != "omitempty" && !isZero(value.Field(i)) {
+					return false // 存在非空字段则不为空
+				}
 			}
 		}
+
+		return true
 	}
 
-	return true
+	func isZero(v reflect.Value) bool {
+		switch v.Kind() {
+		case reflect.String:
+			return v.Len() == 0
+		case reflect.Bool:
+			return !v.Bool()
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			return v.Int() == 0
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			return v.Uint() == 0
+		case reflect.Float32, reflect.Float64:
+			return v.Float() == 0
+		case reflect.Interface, reflect.Map, reflect.Slice, reflect.Array:
+			return v.IsNil()
+		default:
+			panic("unsupported type")
+		}
+	}
+*/
+var dict = map[string]string{
+	"DIRECT":       "直选",
+	"P3":           "排列3",
+	"P5":           "排列5",
+	"ALL_WIN":      "合买",
+	"NO_BONUS":     "未中奖",
+	"BONUS_READY":  "已兑奖",
+	"BONUS_NO_PAY": "未兑奖",
+	"DTQQ":         "前区胆拖",
+	"DTHQ":         "后区胆拖",
+	"DTSQ":         "双区胆拖",
+	"FSQQ":         "前区复式",
+	"FSHQ":         "后区复式",
+	"FSSQ":         "双区复式",
+	"FSSTAR":       "按位复式",
+	"NO_PAY":       "未支付",
+	"SIGNAL":       "单注",
+	"C3":           "组合3",
+	"C6":           "组合6",
+	"ZX_GSB":       "直选",
+	"CALL":         "直选全组合",
+	"CALL_FS":      "直选复式",
+	"C3_FS":        "组选三复式",
+	"C3_DT":        "组选三胆拖",
+	"C6_FS":        "组选六复式",
+	"C6_DT":        "组选六胆拖",
+	"TOMASTER":     "提交到店",
+	"SCORE":        "积分",
+	"RMB":          "人民币",
+	"TEMP":         "临时保存",
+	"QQ":           "前区",
+	"HQ":           "后区",
+	"QQD":          "前区胆",
+	"QQT":          "前区拖",
+	"HQD":          "后区胆",
+	"HQT":          "后区拖",
+	"DIRECT_PLUS":  "直选多注",
+	"RANDOM":       "随机一注",
+	"RANDOM_PLUS":  "随机多注",
 }
 
-func isZero(v reflect.Value) bool {
-	switch v.Kind() {
-	case reflect.String:
-		return v.Len() == 0
-	case reflect.Bool:
-		return !v.Bool()
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return v.Int() == 0
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return v.Uint() == 0
-	case reflect.Float32, reflect.Float64:
-		return v.Float() == 0
-	case reflect.Interface, reflect.Map, reflect.Slice, reflect.Array:
-		return v.IsNil()
-	default:
-		panic("unsupported type")
-	}
-}*/
+func GetDictsByKey(key string) string {
+	return dict[key]
+}
+
+// @Summary 获取字典
+// @Description 键值对
+// @Accept json
+// @Produce json
+// @Success 200 {object} common.BaseResponse
+// @failure 500 {object} common.BaseResponse
+// @Router /api/dict [get]
+func Dict(c *gin.Context) {
+	SuccessReturn(c, dict)
+}

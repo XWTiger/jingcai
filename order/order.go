@@ -25,9 +25,8 @@ import (
 
 var log = ilog.Logger
 
-// 兑奖状态 NO_BONUS(未中奖) READY(已发放) NO_PAY(未发放)
-// 大乐透：DIRECT 直选/随机;胆拖（DT，DTQQ 前区胆拖、 DTHQ 后区胆拖、 DTSQ 双区胆拖）;复式（FS， 前区复式 FSQQ、后区复式 FSHQ、双区复式 FSSQ
-// 七星彩：复式(FSSTAR),DIRECT 直选/随机;
+// 大乐透：DIRECT 直选、DIRECT_PLUS 直选多注; RANDOM 随机一注、 RANDOM_PLUS 随机多注;胆拖（DT，DTQQ 前区胆拖、 DTHQ 后区胆拖、 DTSQ 双区胆拖）;复式（FS， 前区复式 FSQQ、后区复式 FSHQ、双区复式 FSSQ
+// 七星彩：复式(FSSTAR),DIRECT 直选、DIRECT_PLUS 直选多注 ; RANDOM 随机一注、RANDOM_PLUS 随机多注;
 // ==========大乐透========
 // 复式前区大于5个数字，后区 大于2个,只有QQ 为前区复式 ， 只有HQ 为后区复式  都有为双区复式
 // 复式：
@@ -39,54 +38,73 @@ var log = ilog.Logger
 // ==========七星彩=================
 // 复式：
 // I1:3 4,I2:0 8,I3:8 9,I4:0 8,I5: 1 7,I6:3,I7:7 8
+// ===========排列3、排列5=============
+// DIRECT（单注）   C6 （组选6） C3 （组选3）
+// DIRECT_PLUS    直选多注
+// RANDOM 随机一注
+// RANDOM_PLUS 随机多注
+// C3      组合3
+// C6 组合6
+// ZX_GSB 直选个十百
+// CALL 直选全组合
+// CALL_FS 直选 复式
+// C3_FS 组选三 复式
+// C3_DT 组选三 胆拖
+// C3_FS 组选六 复式
+// C3_DT 组选六 胆拖
 const (
-	FOOTBALL    = "FOOTBALL"
-	SUPER_LOTTO = "SUPER_LOTTO"
-	P3          = "P3"
-	P5          = "P5"
-	BASKETBALL  = "BASKETBALL"
-	SEVEN_STAR  = "SEVEN_STAR"
-	TOP         = 4 //前4
-	S_TOP       = 1 //连胜 1
-	ALL_WIN     = "ALLWIN"
-	NO_BONUS    = "NO_BONUS"
-	READY       = "READY"
-	NO_PAY      = "NO_PAY"
-	PL_SIGNAL   = "SIGNAL"
-	PL_C3       = "C3"      //组合3
-	PL_C6       = "C6"      //组合6
-	ZX_GSB      = "ZX_GSB"  // 直选个十百
-	ALL_C       = "CALL"    // 直选全组合
-	ALL_FS      = "CALL_FS" // 直选 复式
-	C3_FS       = "C3_FS"   //组选三 复式
-	C3_DT       = "C3_DT"   //组选三 胆拖
-	C6_FS       = "C3_FS"   //组选六 复式
-	C6_DT       = "C3_DT"   //组选六 胆拖
-	TOMASTER    = "TOMASTER"
-	SCORE       = "SCORE"
-	RMB         = "RMB"
-	TEMP        = "TEMP"
-	FSQQ        = "FSQQ"   //前区复式
-	FSHQ        = "FSHQ"   //后区复式
-	FSSQ        = "FSSQ"   //双区复式
-	DTQQ        = "DTQQ"   //前区胆拖
-	DTHQ        = "DTHQ"   //后区胆拖
-	DTSQ        = "DTSQ"   //双区胆拖
-	DIRECT      = "DIRECT" //直选\随机
-	FSSTAR      = "FSSTAR" //按位复式
-	QQ          = "QQ"     //前区
-	HQ          = "HQ"     //后区
-	QQD         = "QQD"    //前区胆
-	QQT         = "QQT"    //前区拖
-	HQD         = "HQD"    //后区胆
-	HQT         = "HQT"    //后区拖
-	I1          = "I1"     //七星彩 第一位
-	I2          = "I2"     //七星彩 第二位
-	I3          = "I3"     //七星彩 第三位
-	I4          = "I4"     //七星彩 第四位
-	I5          = "I5"     //七星彩 第五位
-	I6          = "I6"     //七星彩 第六位
-	I7          = "I7"     //七星彩 第七位
+	FOOTBALL     = "FOOTBALL"
+	SUPER_LOTTO  = "SUPER_LOTTO"
+	P3           = "P3"
+	P5           = "P5"
+	BASKETBALL   = "BASKETBALL"
+	SEVEN_STAR   = "SEVEN_STAR"
+	TOP          = 4 //前4
+	S_TOP        = 1 //连胜 1
+	ALL_WIN      = "ALLWIN"
+	NO_BONUS     = "NO_BONUS"
+	BONUS_READY  = "BONUS_READY"  //已兑奖
+	BONUS_NO_PAY = "BONUS_NO_PAY" //未兑奖
+	NO_PAY       = "NO_PAY"
+	PL_SIGNAL    = "SIGNAL"
+	SIGNAL_PLUS  = "SIGNAL_PLUS" //直选多注
+	PL_C3        = "C3"          //组合3
+	PL_C6        = "C6"          //组合6
+	ZX_GSB       = "ZX_GSB"      // 直选个十百
+	ALL_C        = "CALL"        // 直选全组合
+	ALL_FS       = "CALL_FS"     // 直选 复式
+	C3_FS        = "C3_FS"       //组选三 复式
+	C3_DT        = "C3_DT"       //组选三 胆拖
+	C6_FS        = "C3_FS"       //组选六 复式
+	C6_DT        = "C3_DT"       //组选六 胆拖
+	TOMASTER     = "TOMASTER"
+	SCORE        = "SCORE"
+	RMB          = "RMB"
+	TEMP         = "TEMP"
+	FSQQ         = "FSQQ"        //前区复式
+	FSHQ         = "FSHQ"        //后区复式
+	FSSQ         = "FSSQ"        //双区复式
+	DTQQ         = "DTQQ"        //前区胆拖
+	DTHQ         = "DTHQ"        //后区胆拖
+	DTSQ         = "DTSQ"        //双区胆拖
+	DIRECT       = "DIRECT"      //直选
+	RANDOM       = "RANDOM"      //随机
+	FSSTAR       = "FSSTAR"      //按位复式
+	QQ           = "QQ"          //前区
+	HQ           = "HQ"          //后区
+	QQD          = "QQD"         //前区胆
+	QQT          = "QQT"         //前区拖
+	HQD          = "HQD"         //后区胆
+	HQT          = "HQT"         //后区拖
+	I1           = "I1"          //七星彩 第一位
+	I2           = "I2"          //七星彩 第二位
+	I3           = "I3"          //七星彩 第三位
+	I4           = "I4"          //七星彩 第四位
+	I5           = "I5"          //七星彩 第五位
+	I6           = "I6"          //七星彩 第六位
+	I7           = "I7"          //七星彩 第七位
+	RANDOM_PLUS  = "RANDOM_PLUS" //随机多注
+	DIRECT_PLUS  = "DIRECT_PLUS" //直选多注
 )
 
 type Match struct {
@@ -231,7 +249,7 @@ type Order struct {
 	//奖金
 	Bonus float32 `max:"0"`
 
-	//兑奖状态 NO_BONUS(未中奖) READY(已发放) NO_PAY(未发放)
+	//兑奖状态 NO_BONUS(未中奖) BONUS_READY(已发放) BONUS_NO_PAY(未发放)
 	BonusStatus string
 
 	//付款金额
@@ -252,18 +270,6 @@ type Order struct {
 
 	//如果是大乐透 七星彩 排列3 5 需要填期号
 	IssueId string `validate:"required" message:"需要期号"`
-	//SIGNAL（单注）   C6 （组合6） C3 （组合3）
-	//SIGNAL    一注
-	//C3      组合3
-	//C6组合6
-	//ZX_GSB 直选个十百
-	//CALL 直选全组合
-	//CALL_FS 直选 复式
-	//C3_FS 组选三 复式
-	//C3_DT 组选三 胆拖
-	//C3_FS 组选六 复式
-	//C3_DT 组选六 胆拖
-	PL3Way string
 
 	//是否已经出票？
 	BetUpload bool
@@ -413,6 +419,7 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 			return
 		}
 		fmt.Println("=================排列3===================", order.UUID)
+		fmt.Sprintf("%s", common.GetDictsByKey(order.PL3Way))
 		fmt.Sprintf("逻辑总奖金: %s", order.LogicWinMaX)
 		fmt.Println("期号: ", order.IssueId)
 		fmt.Println("号码: ", order.Content)
@@ -430,6 +437,7 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 		}
 
 		fmt.Println("=================排列5===================", order.UUID)
+		fmt.Sprintf("%s", common.GetDictsByKey(order.PL3Way))
 		fmt.Sprintf("逻辑总奖金: %s", order.LogicWinMaX)
 		fmt.Println("期号: ", order.IssueId)
 		fmt.Println("号码: ", order.Content)
@@ -465,6 +473,7 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 			return
 		}
 		fmt.Println("=================大乐透===================", order.UUID)
+		fmt.Sprintf("%s", common.GetDictsByKey(order.Way))
 		fmt.Sprintf("逻辑总奖金: %s", order.LogicWinMaX)
 		fmt.Println("期号: ", order.IssueId)
 		fmt.Println("号码: ", order.Content)
@@ -499,6 +508,7 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 			return
 		}
 		fmt.Println("=================七星彩===================", order.UUID)
+		fmt.Sprintf("%s", common.GetDictsByKey(order.Way))
 		fmt.Sprintf("逻辑总奖金: %s", order.LogicWinMaX)
 		fmt.Println("期号: ", order.IssueId)
 		fmt.Println("号码: ", order.Content)
@@ -2552,6 +2562,7 @@ func CreatePLW(ord *Order) error {
 	}
 
 	tx := mysql.DB.Begin()
+	getArr(ord.Content, ord.LotteryType, ord.PL3Way)
 	if strings.Contains(ord.Content, ",") {
 		arr := strings.Split(ord.Content, ",")
 
@@ -3240,9 +3251,43 @@ func GetIndexCmn(ii int, arr [][]string, trace *[]string, res *[][]string) {
 // 复式：
 // I1:3 4,I2:0 8,I3:8 9,I4:0 8,I5: 1 7,I6:3,I7:7 8
 func getArr(content string, ty string, way string) ([]string, error) {
-
+	if way == "" {
+		log.Error("way is empty！")
+		return nil, errors.New("玩法不能为空")
+	}
 	switch ty {
 	case P3:
+		// ===========排列3、排列5=============
+		// DIRECT（单注）   C6 （组选6） C3 （组选3）
+		// DIRECT_PLUS    直选多注
+		// RANDOM 随机一注
+		// RANDOM_PLUS 随机多注
+		// C3      组选3
+		// C6 组选6
+		// ZX_GSB 直选个十百
+		// CALL 直选全组合
+		// CALL_FS 直选 复式
+		// C3_FS 组选三复式
+		// C3_DT 组选三胆拖
+		// C6_FS 组选六复式
+		// C6_DT 组选六胆拖
+		switch way {
+		case C3_FS:
+
+		case DIRECT:
+		case DIRECT_PLUS:
+		case RANDOM:
+		case RANDOM_PLUS:
+		default:
+			if strings.Contains(content, ",") {
+				return strings.Split(content, ","), nil
+			} else {
+				var strs []string
+				strs = append(strs, content)
+				return strs, nil
+			}
+			break
+		}
 	case P5:
 		break
 	case SEVEN_STAR: // I1:3 4,I2:0 8,I3:8 9,I4:0 8,I5: 1 7,I6:3,I7:7 8
@@ -3262,6 +3307,9 @@ func getArr(content string, ty string, way string) ([]string, error) {
 			}
 			return realNums, nil
 		case DIRECT:
+		case RANDOM:
+		case DIRECT_PLUS:
+		case RANDOM_PLUS:
 		default:
 			if strings.Contains(content, ",") {
 				return strings.Split(content, ","), nil
@@ -3412,6 +3460,9 @@ func getArr(content string, ty string, way string) ([]string, error) {
 			}
 			return realNums, nil
 		case DIRECT:
+		case DIRECT_PLUS:
+		case RANDOM:
+		case RANDOM_PLUS:
 		default:
 			if strings.Contains(content, ",") {
 				return strings.Split(content, ","), nil

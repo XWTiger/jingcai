@@ -48,6 +48,7 @@ func BindRouters(g *gin.Engine, config *config.Config) {
 	shopGroup := r.Group("/shop")
 	userGroup := r.Group("/user")
 	r.GET("/salt", common.Salt)
+	r.GET("/dict", common.Dict)
 	r.GET("/notify", advise.Query)
 	r.GET("/tiger-dragon-list", order.TigerDragonList)
 	r.POST("/cache", cache.Set)
