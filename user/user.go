@@ -521,6 +521,7 @@ func CheckScoreOrDoBill(userId uint, score float32, doBill bool, tx *gorm.DB) er
 		user.Score = user.Score - score
 
 		tx.Model(&user).Update("score", user.Score)
+		//TODO 没有添加账单？？
 
 	}
 	lock.Unlock()

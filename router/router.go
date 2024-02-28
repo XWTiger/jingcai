@@ -18,6 +18,7 @@ import (
 	"jingcai/order"
 	"jingcai/shop"
 	"jingcai/user"
+	"jingcai/util"
 )
 
 // @title           黑马推荐接口
@@ -156,7 +157,7 @@ func pong(c *gin.Context) {
 	var tmp = [][]string{{"1", "2"}, {"3", "4"}, {"5", "6"}, {"7", "8"}, {"9", "10"}, {"11"}, {"12", "13"}}
 	var strace = []string{}
 	var res = [][]string{}
-	order.GetIndexCmn(0, tmp, &strace, &res)
+	util.GetIndexCmn(0, 7, tmp, &strace, &res)
 	for _, re := range res {
 		fmt.Println(re)
 	}

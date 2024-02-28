@@ -237,6 +237,26 @@ func PermuteAnm(arr []int, m int) [][]int {
 	return result
 }
 
+// 从数组里面抽出A（n,m）
+func PermuteAnmByStr(arr []string, m int) [][]string {
+	result := [][]int{}
+	var nums = []int{}
+	for _, s := range arr {
+		v, _ := strconv.Atoi(s)
+		nums = append(nums, v)
+	}
+	permHelper(nums, m, []int{}, &result)
+	var arrStrs = make([][]string, 0, len(result))
+	for i, ints := range result {
+		var strs = []string{}
+		for _, i3 := range ints {
+			strs = append(strs, strconv.Itoa(i3))
+		}
+		arrStrs[i] = strs
+	}
+	return arrStrs
+}
+
 func permHelper(arr []int, m int, current []int, result *[][]int) {
 	if m == 0 {
 		*result = append(*result, current)
@@ -298,4 +318,22 @@ func Get2SamePlW(arr []int, sameNum int) []string {
 	}
 	fmt.Println(sum)
 	return turns
+}
+
+// 按位排列
+func GetIndexCmn(ii int, length int, arr [][]string, trace *[]string, res *[][]string) {
+	if len(*trace) == length {
+		temp := make([]string, len(*trace))
+		copy(temp, *trace)
+		*res = append(*res, temp)
+		return
+	}
+	for i := ii; i < len(arr); i++ {
+		for j := 0; j < len(arr[i]); j++ {
+			*trace = append(*trace, arr[i][j])
+			GetIndexCmn(i+1, length, arr, trace, res)
+			// 撤销选择
+			*trace = (*trace)[:len(*trace)-1]
+		}
+	}
 }

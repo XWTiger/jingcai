@@ -38,73 +38,93 @@ var log = ilog.Logger
 // ==========七星彩=================
 // 复式：
 // I1:3 4,I2:0 8,I3:8 9,I4:0 8,I5: 1 7,I6:3,I7:7 8
-// ===========排列3、排列5=============
+// ===========排列3=============
 // DIRECT（单注）   C6 （组选6） C3 （组选3）
 // DIRECT_PLUS    直选多注
 // RANDOM 随机一注
 // RANDOM_PLUS 随机多注
-// C3      组合3
-// C6 组合6
-// ZX_GSB 直选个十百
-// CALL 直选全组合
-// CALL_FS 直选 复式
-// C3_FS 组选三 复式
-// C3_DT 组选三 胆拖
-// C3_FS 组选六 复式
-// C3_DT 组选六 胆拖
+// ZX_FS_GSB //直选复式按位
+// ZX_FS_ZH3 直选组合三不同
+// ZX_FS_3T 直选组合三同
+// ZX_FS_2T 直选组合二同
+// ZX_FS_DT 直选组合胆拖
+// ZX_FS 直选复式
+// C3_FS 组选三复式
+// C6_FS 组选六复式
+// C6_DT 组选六胆拖
+// C6_DT 组选六胆拖
+// ===========排列5=============
+// DIRECT（单注）   C6 （组选6） C3 （组选3）
+// DIRECT_PLUS    直选多注
+// RANDOM 随机一注
+// RANDOM_PLUS 随机多注
+// ZX_FS_GSB: 直选复式按位: I1:1 4,I2:2,I3:3 5,I4:1 3,I5:5 9
+// ZX_FS_QZH 直选全组合(排列5)： 1 2 4 5 6 3
+// ZX_FS_QZH_ET 直选复式二同： 7 7 3 4 5 6
+// ZX_FS_QZH_WBT 五不同：  1 2 3 4 5
 const (
-	FOOTBALL     = "FOOTBALL"
-	SUPER_LOTTO  = "SUPER_LOTTO"
-	P3           = "P3"
-	P5           = "P5"
-	BASKETBALL   = "BASKETBALL"
-	SEVEN_STAR   = "SEVEN_STAR"
-	TOP          = 4 //前4
-	S_TOP        = 1 //连胜 1
-	ALL_WIN      = "ALLWIN"
-	NO_BONUS     = "NO_BONUS"
-	BONUS_READY  = "BONUS_READY"  //已兑奖
-	BONUS_NO_PAY = "BONUS_NO_PAY" //未兑奖
-	NO_PAY       = "NO_PAY"
-	PL_SIGNAL    = "SIGNAL"
-	SIGNAL_PLUS  = "SIGNAL_PLUS" //直选多注
-	PL_C3        = "C3"          //组合3
-	PL_C6        = "C6"          //组合6
-	ZX_GSB       = "ZX_GSB"      // 直选个十百
-	ALL_C        = "CALL"        // 直选全组合
-	ALL_FS       = "CALL_FS"     // 直选 复式
-	C3_FS        = "C3_FS"       //组选三 复式
-	C3_DT        = "C3_DT"       //组选三 胆拖
-	C6_FS        = "C3_FS"       //组选六 复式
-	C6_DT        = "C3_DT"       //组选六 胆拖
-	TOMASTER     = "TOMASTER"
-	SCORE        = "SCORE"
-	RMB          = "RMB"
-	TEMP         = "TEMP"
-	FSQQ         = "FSQQ"        //前区复式
-	FSHQ         = "FSHQ"        //后区复式
-	FSSQ         = "FSSQ"        //双区复式
-	DTQQ         = "DTQQ"        //前区胆拖
-	DTHQ         = "DTHQ"        //后区胆拖
-	DTSQ         = "DTSQ"        //双区胆拖
-	DIRECT       = "DIRECT"      //直选
-	RANDOM       = "RANDOM"      //随机
-	FSSTAR       = "FSSTAR"      //按位复式
-	QQ           = "QQ"          //前区
-	HQ           = "HQ"          //后区
-	QQD          = "QQD"         //前区胆
-	QQT          = "QQT"         //前区拖
-	HQD          = "HQD"         //后区胆
-	HQT          = "HQT"         //后区拖
-	I1           = "I1"          //七星彩 第一位
-	I2           = "I2"          //七星彩 第二位
-	I3           = "I3"          //七星彩 第三位
-	I4           = "I4"          //七星彩 第四位
-	I5           = "I5"          //七星彩 第五位
-	I6           = "I6"          //七星彩 第六位
-	I7           = "I7"          //七星彩 第七位
-	RANDOM_PLUS  = "RANDOM_PLUS" //随机多注
-	DIRECT_PLUS  = "DIRECT_PLUS" //直选多注
+	FOOTBALL      = "FOOTBALL"
+	SUPER_LOTTO   = "SUPER_LOTTO"
+	P3            = "P3"
+	P5            = "P5"
+	BASKETBALL    = "BASKETBALL"
+	SEVEN_STAR    = "SEVEN_STAR"
+	TOP           = 4 //前4
+	S_TOP         = 1 //连胜 1
+	ALL_WIN       = "ALLWIN"
+	NO_BONUS      = "NO_BONUS"
+	BONUS_READY   = "BONUS_READY"  //已兑奖
+	BONUS_NO_PAY  = "BONUS_NO_PAY" //未兑奖
+	NO_PAY        = "NO_PAY"
+	PL_SIGNAL     = "SIGNAL"
+	SIGNAL_PLUS   = "SIGNAL_PLUS" //直选多注
+	PL_C3         = "C3"          //组合3
+	PL_C6         = "C6"          //组合6
+	ZX_GSB        = "ZX_GSB"      // 直选个十百
+	ZX_FS_QZH     = "ZX_FS_QZH"   // 直选全组合
+	ZX_FS         = "ZX_FS"       // 直选 复式
+	ZX_FS_3T      = "ZX_FS_3T"    //直选组合三同
+	ZX_FS_2T      = "ZX_FS_2T"    //直选组合二同
+	ZX_FS_DT      = "ZX_FS_DT"    //直选组合胆拖
+	C3_FS         = "C3_FS"       //组选三 复式
+	C3_DT         = "C3_DT"       //组选三 胆拖
+	C6_FS         = "C6_FS"       //组选六 复式
+	C6_DT         = "C6_DT"       //组选六 胆拖
+	C6_PLUS       = "C6_PLUS"     //组选六（多注） 简称： 组选
+	TOMASTER      = "TOMASTER"
+	SCORE         = "SCORE"
+	RMB           = "RMB"
+	TEMP          = "TEMP"
+	FSQQ          = "FSQQ"          //前区复式
+	FSHQ          = "FSHQ"          //后区复式
+	FSSQ          = "FSSQ"          //双区复式
+	DTQQ          = "DTQQ"          //前区胆拖
+	DTHQ          = "DTHQ"          //后区胆拖
+	DTSQ          = "DTSQ"          //双区胆拖
+	DIRECT        = "DIRECT"        //直选
+	RANDOM        = "RANDOM"        //随机
+	FSSTAR        = "FSSTAR"        //按位复式
+	QQ            = "QQ"            //前区
+	HQ            = "HQ"            //后区
+	QQD           = "QQD"           //前区胆
+	QQT           = "QQT"           //前区拖
+	HQD           = "HQD"           //后区胆
+	HQT           = "HQT"           //后区拖
+	I1            = "I1"            //七星彩 第一位
+	I2            = "I2"            //七星彩 第二位
+	I3            = "I3"            //七星彩 第三位
+	I4            = "I4"            //七星彩 第四位
+	I5            = "I5"            //七星彩 第五位
+	I6            = "I6"            //七星彩 第六位
+	I7            = "I7"            //七星彩 第七位
+	RANDOM_PLUS   = "RANDOM_PLUS"   //随机多注
+	DIRECT_PLUS   = "DIRECT_PLUS"   //直选多注
+	D             = "D"             //胆码
+	T             = "T"             //拖码
+	ZX_FS_GSB     = "ZX_FS_GSB"     //直选复式（按位）
+	ZX_FS_ZH3     = "ZX_FS_ZH3"     //直选复式（组合3）
+	ZX_FS_QZH_ET  = "ZX_FS_QZH_ET"  //直选全组合 形态二同(排列5)
+	ZX_FS_QZH_WBT = "ZX_FS_QZH_WBT" //直选全组合 形态五不同(排列5)
 )
 
 type Match struct {
@@ -202,6 +222,20 @@ type Order struct {
 	//过关 足球，篮球 2x1,3x1;
 	// 大乐透：DIRECT 直选/随机;胆拖（DT，DTQQ 前区胆拖、 DTHQ 后区胆拖、 DTSQ 双区胆拖）;复式（FS， 前区复式 FSQQ、后区复式 FSHQ、双区复式 FSSQ
 	// 七星彩：复式(FSSTAR),DIRECT 直选/随机;
+	// ===========排列3、排列5=============
+	// DIRECT（单注）   C6 （组选6） C3 （组选3）
+	// DIRECT_PLUS    直选多注
+	// RANDOM 随机一注
+	// RANDOM_PLUS 随机多注
+	// C3      组选3
+	// C6 组选6
+	// ZX_FS_GSB //直选复式按位
+	// ZX_FS_ZH3 直选复式（组合三）
+	// ZX_FS_QZH 直选全组合(排列5)
+	// ZX_FS 直选复式
+	// C3_FS 组选三复式
+	// C6_FS 组选六复式
+	// C6_DT 组选六胆拖
 	Way string
 	//足彩（FOOTBALL） 大乐透（SUPER_LOTTO）  排列三（P3） 篮球(BASKETBALL) 七星彩（SEVEN_STAR） 排列五（P5）
 	LotteryType string
@@ -419,7 +453,7 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 			return
 		}
 		fmt.Println("=================排列3===================", order.UUID)
-		fmt.Sprintf("%s", common.GetDictsByKey(order.PL3Way))
+		fmt.Sprintf("%s", common.GetDictsByKey(order.Way))
 		fmt.Sprintf("逻辑总奖金: %s", order.LogicWinMaX)
 		fmt.Println("期号: ", order.IssueId)
 		fmt.Println("号码: ", order.Content)
@@ -437,7 +471,7 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 		}
 
 		fmt.Println("=================排列5===================", order.UUID)
-		fmt.Sprintf("%s", common.GetDictsByKey(order.PL3Way))
+		fmt.Sprintf("%s", common.GetDictsByKey(order.Way))
 		fmt.Sprintf("逻辑总奖金: %s", order.LogicWinMaX)
 		fmt.Println("期号: ", order.IssueId)
 		fmt.Println("号码: ", order.Content)
@@ -2562,39 +2596,15 @@ func CreatePLW(ord *Order) error {
 	}
 
 	tx := mysql.DB.Begin()
-	getArr(ord.Content, ord.LotteryType, ord.PL3Way)
-	if strings.Contains(ord.Content, ",") {
-		arr := strings.Split(ord.Content, ",")
+	arr, err := getArr(ord.Content, ord.LotteryType, ord.Way)
+	if err != nil {
+		return err
+	}
 
-		ord.ShouldPay = float32(len(arr) * 2 * ord.Times)
-		if ord.LotteryType == P3 {
-			for _, s := range arr {
-				numArr := strings.Split(s, " ")
-				if ord.PL3Way == PL_SIGNAL || ord.PL3Way == PL_C3 || ord.PL3Way == PL_C6 {
-					if len(numArr) != tp {
-						return errors.New("选号存在问题")
-					}
-				}
-				for _, s2 := range numArr {
-					num, err := strconv.Atoi(s2)
-					if err != nil {
-						log.Error(err)
-						return errors.New("号码存在异常")
-					}
-					if !(0 <= num && num <= 9) {
-						return errors.New("号码存在异常,数字不在0-9 之间")
-					}
-				}
-			}
-		}
-	} else {
-		numArr := strings.Split(ord.Content, " ")
-		if ord.LotteryType == P5 && ord.PL3Way == PL_SIGNAL {
-			if len(numArr) != tp {
-				return errors.New("选号存在问题")
-			}
-		}
+	ord.ShouldPay = float32(len(arr) * 2 * ord.Times)
 
+	for _, s := range arr {
+		numArr := strings.Split(s, " ")
 		for _, s2 := range numArr {
 			num, err := strconv.Atoi(s2)
 			if err != nil {
@@ -2605,8 +2615,6 @@ func CreatePLW(ord *Order) error {
 				return errors.New("号码存在异常,数字不在0-9 之间")
 			}
 		}
-		ord.ShouldPay = float32(1 * 2 * ord.Times)
-
 	}
 	if ord.AllWinId == 0 {
 		billErr := user.CheckScoreOrDoBill(ord.UserID, ord.ShouldPay, true, tx)
@@ -2669,16 +2677,21 @@ func AddPlwCheck(p int, when *time.Time) {
 						value, ok := mapper[o.IssueId]
 						if ok {
 
-							content, types := GetPlAllNums(&o)
+							content, err := getArr(o.Content, o.LotteryType, o.Way)
+							if err != nil {
+								log.Error(err)
+								continue
+							}
 							releaseNum := result.Value.List[value].LotteryDrawResult[0:3]
 							releaseArr := strings.Split(releaseNum, " ")
 							for _, s := range content {
 								arr := strings.Split(s, " ")
 								if strings.Compare(s, releaseNum) == 0 {
-									if strings.Compare(types, PL_SIGNAL) == 0 {
+									if strings.Compare(o.Way, DIRECT) == 0 || o.Way == DIRECT_PLUS || o.Way == RANDOM || o.Way == RANDOM_PLUS ||
+										o.Way == ZX_FS_GSB || o.Way == ZX_FS_ZH3 {
 										o.Bonus = o.Bonus + 1040
 									}
-									if strings.Compare(types, PL_C3) == 0 {
+									if strings.Compare(o.Way, C3_FS) == 0 {
 										numArr := util.CovertStrArrToInt(arr)
 										sendWorld := util.GetCombine3(numArr)
 										release := util.CovertStrArrToInt(releaseArr)
@@ -3219,24 +3232,6 @@ func NoOrderCompareTailDirectNum(index []int, number int, userNum string, releas
 	return false, count
 }
 
-// 按位组合
-func GetIndexCmn(ii int, arr [][]string, trace *[]string, res *[][]string) {
-	if len(*trace) == 7 {
-		temp := make([]string, len(*trace))
-		copy(temp, *trace)
-		*res = append(*res, temp)
-		return
-	}
-	for i := ii; i < len(arr); i++ {
-		for j := 0; j < len(arr[i]); j++ {
-			*trace = append(*trace, arr[i][j])
-			GetIndexCmn(i+1, arr, trace, res)
-			// 撤销选择
-			*trace = (*trace)[:len(*trace)-1]
-		}
-	}
-}
-
 // 大乐透：DIRECT 直选/随机;胆拖（DT，DTQQ 前区胆拖、 DTHQ 后区胆拖、 DTSQ 双区胆拖）;复式（FS， 前区复式 FSQQ、后区复式 FSHQ、双区复式 FSSQ
 // 七星彩：复式(FSSTAR),DIRECT 直选/随机;
 // ==========大乐透========
@@ -3257,23 +3252,200 @@ func getArr(content string, ty string, way string) ([]string, error) {
 	}
 	switch ty {
 	case P3:
-		// ===========排列3、排列5=============
+		// ===========排列3=============
 		// DIRECT（单注）   C6 （组选6） C3 （组选3）
 		// DIRECT_PLUS    直选多注
 		// RANDOM 随机一注
 		// RANDOM_PLUS 随机多注
-		// C3      组选3
-		// C6 组选6
-		// ZX_GSB 直选个十百
-		// CALL 直选全组合
-		// CALL_FS 直选 复式
-		// C3_FS 组选三复式
-		// C3_DT 组选三胆拖
-		// C6_FS 组选六复式
-		// C6_DT 组选六胆拖
+		// ZX_FS_GSB //直选复式按位 I1:1 2 3,I2:3 4 5,I3:6 7 8
+		// ZX_FS_ZH3 直选组合三不同 1 3 4 6
+		// ZX_FS_3T 直选组合三同 1 3 4 5
+		// ZX_FS_2T 直选组合二同 1 3 4
+		// ZX_FS_DT 直选组合胆拖
+		// ZX_FS 直选复式
+		// C3_FS 组选三复式 1 2 3 4
+		// C6_FS 组选六复式 1 2 3 4 5
+		// C6_DT 组选六胆拖 D:6,T:0 1 2 3 4 5
 		switch way {
+		case ZX_FS_3T:
+			break
+		case ZX_FS_2T:
+		case ZX_FS_DT:
+
 		case C3_FS:
 
+			arr := strings.Split(content, " ")
+			if len(arr) <= 2 {
+				return nil, errors.New("排列3 组选三复式 位数不正确")
+			}
+			var realNums []string
+			res := util.PermuteAnmByStr(arr, 2)
+			for _, re := range res {
+				var buffer []string
+				buffer = append(buffer, re[0])
+				buffer = append(buffer, re...)
+				realNums = append(realNums, strings.Join(buffer, " "))
+			}
+			fmt.Println("排列3 组选三复式： ", len(realNums), " 组")
+			return realNums, nil
+		case C6_FS:
+			arr := strings.Split(content, " ")
+			if len(arr) < 3 {
+				return nil, errors.New("排列3 组选六复式 位数不正确")
+			}
+			var realNums []string
+			res := util.CombineArray(arr, 3)
+			for _, re := range res {
+				realNums = append(realNums, strings.Join(re, " "))
+			}
+			fmt.Println("排列3 组选六复式： ", len(realNums), " 组")
+			return realNums, nil
+		case C6_DT: //D:6,T:0 1 2 3 4 5
+			buffer := strings.Split(content, ",")
+			strD := strings.ReplaceAll(buffer[0], "D:", "")
+			arrD := strings.Split(strD, " ")
+			k := 3 - len(arrD)
+			strT := strings.ReplaceAll(buffer[1], "T:", "")
+			arrT := strings.Split(strT, " ")
+			res := util.CombineArray(arrT, k)
+			var realNums []string
+			for _, re := range res {
+				realNums = append(realNums, strD+" "+strings.Join(re, " "))
+			}
+			fmt.Println("排列3 组选六复式： ", len(realNums), " 组")
+			return realNums, nil
+		case ZX_FS_GSB: // I1:1 2 3,I2:3 4 5,I3:6 7 8
+			buffer := strings.Split(content, ",")
+			if len(buffer) != 3 {
+				return nil, errors.New("排列3 直选复式（按位） 位数不正确")
+			}
+			istr := strings.ReplaceAll(buffer[0], "I1:", "")
+			istr1 := strings.ReplaceAll(buffer[1], "I2:", "")
+			istr2 := strings.ReplaceAll(buffer[2], "I3:", "")
+			var arrs = [][]string{}
+			arrs = append(arrs, strings.Split(istr, " "))
+			arrs = append(arrs, strings.Split(istr1, " "))
+			arrs = append(arrs, strings.Split(istr2, " "))
+			var combines [][]string
+			var strace []string
+			util.GetIndexCmn(0, 3, arrs, &strace, &combines)
+			var realNums []string
+			for _, combine := range combines {
+				realNums = append(realNums, strings.Join(combine, " "))
+			}
+			fmt.Println("排列3 直选复式(按位)： ", len(combines), " 组")
+			return realNums, nil
+		case ZX_FS_ZH3: // 直选组合三不同  1 3 4 6
+			arr := strings.Split(content, " ")
+			if len(arr) < 3 {
+				return nil, errors.New("排列3 复式组合三 位数不正确")
+			}
+			var realNums []string
+			res := util.CombineArray(arr, 3)
+			for _, re := range res {
+				resultArr := util.PermuteAnmByStr(re, 3)
+				for _, i := range resultArr {
+					realNums = append(realNums, strings.Join(i, " "))
+				}
+			}
+			fmt.Println("排列3 直选复式(组合三)： ", len(realNums), " 组")
+			return realNums, nil
+		case DIRECT:
+		case DIRECT_PLUS:
+		case RANDOM:
+		case RANDOM_PLUS:
+		case C6_PLUS:
+		default:
+			if strings.Contains(content, ",") {
+				return strings.Split(content, ","), nil
+			} else {
+				var strs []string
+				strs = append(strs, content)
+				return strs, nil
+			}
+		}
+		break
+	case P5:
+		//===========排列5=============
+		// ZX_FS_GSB: 直选复式按位: I1:1 4,I2:2,I3:3 5,I4:1 3,I5:5 9
+		// ZX_FS_QZH 直选全组合(排列5)： 1 2 4 5 6 3
+		// ZX_FS_QZH_ET 直选复式二同： 7 7 3 4 5 6
+		// ZX_FS_QZH_WBT 五不同：  1 2 3 4 5
+		switch way {
+		case ZX_FS_QZH: //直选复式全组合
+			arr := strings.Split(content, " ")
+			if len(arr) < 5 {
+				return nil, errors.New("排列5 直选全组合 五不同 位数不够5位")
+			}
+			res := util.PermuteAnmByStr(arr, 5)
+			var realNums []string
+			for _, re := range res {
+				realNums = append(realNums, strings.Join(re, " "))
+			}
+			return realNums, nil
+		case ZX_FS_QZH_ET: //直选复二同
+			arr := strings.Split(content, " ")
+			//找到二同的数字
+			var sameNum string
+			for i := 0; i < len(arr); i++ {
+				for j := 0; j < len(arr); j++ {
+					if arr[i] == arr[j] {
+						sameNum = arr[i]
+						break
+					}
+				}
+				if sameNum != "" {
+					break
+				}
+			}
+			num, _ := strconv.Atoi(sameNum)
+			intArr := util.CovertStrArrToInt(arr)
+			return util.Get2SamePlW(intArr, num), nil
+		case ZX_FS_QZH_WBT: //五不同
+			var sameNum string
+			arr := strings.Split(content, " ")
+			if len(arr) != 5 {
+				return nil, errors.New("排列5 直选复式五不同 位数不够5位")
+			}
+			//验证五不同
+			for i := 0; i < len(arr); i++ {
+				for j := 0; j < len(arr); j++ {
+					if arr[i] == arr[j] {
+						sameNum = arr[i]
+						break
+					}
+				}
+				if sameNum != "" {
+					break
+				}
+			}
+			if sameNum != "" {
+				return nil, errors.New("排列5 直选全组合 五不同 存在相同数字")
+			}
+			res := util.PermuteAnmByStr(arr, 5)
+			var realNums []string
+			for _, re := range res {
+				realNums = append(realNums, strings.Join(re, " "))
+			}
+			return realNums, nil
+
+		case ZX_FS_GSB: //直选复式按位 //I1:1 4,I2:2,I3:3 5,I4:1 3,I5:5 9
+			arr := strings.Split(content, ",")
+			if len(arr) != 5 {
+				return nil, errors.New("排列5 直选复式按位 位数错误")
+			}
+			var nums [][]string
+			for _, s := range arr {
+				nums = append(nums, strings.Split(s, " "))
+			}
+			var trace = []string{}
+			var res = [][]string{}
+			util.GetIndexCmn(0, 5, nums, &trace, &res)
+			var realNums []string
+			for _, re := range res {
+				realNums = append(realNums, strings.Join(re, " "))
+			}
+			return realNums, nil
 		case DIRECT:
 		case DIRECT_PLUS:
 		case RANDOM:
@@ -3286,9 +3458,8 @@ func getArr(content string, ty string, way string) ([]string, error) {
 				strs = append(strs, content)
 				return strs, nil
 			}
-			break
+
 		}
-	case P5:
 		break
 	case SEVEN_STAR: // I1:3 4,I2:0 8,I3:8 9,I4:0 8,I5: 1 7,I6:3,I7:7 8
 		switch way {
@@ -3300,7 +3471,7 @@ func getArr(content string, ty string, way string) ([]string, error) {
 			}
 			var combines [][]string
 			var strace []string
-			GetIndexCmn(0, tmp, &strace, &combines)
+			util.GetIndexCmn(0, 7, tmp, &strace, &combines)
 			var realNums []string
 			for _, combine := range combines {
 				realNums = append(realNums, strings.Join(combine, " "))
@@ -3478,42 +3649,4 @@ func getArr(content string, ty string, way string) ([]string, error) {
 		break
 	}
 	return make([]string, 0), nil
-}
-
-func GetPlAllNums(order *Order) ([]string, string) {
-
-	if strings.Compare(order.PL3Way, ZX_GSB) == 0 {
-		//个十百 组合
-		arr := strings.Split(order.Content, ",")
-		combineArr := make([][]string, 0)
-		for i, s := range arr {
-			combineArr[i] = strings.Split(s, " ")
-		}
-		var childs = make([]string, 0)
-		var sb = make([]byte, 0)
-		util.GetZxGsb(0, combineArr, &sb, &childs)
-
-		return childs, PL_SIGNAL
-	}
-	if strings.Compare(order.PL3Way, PL_C3) == 0 {
-		if strings.Contains(order.Content, ",") {
-			return strings.Split(order.Content, ","), PL_C3
-		} else {
-			var strs []string
-			strs = append(strs, order.Content)
-			return strs, PL_C3
-		}
-	}
-
-	if strings.Compare(order.PL3Way, PL_C6) == 0 {
-		if strings.Contains(order.Content, ",") {
-			return strings.Split(order.Content, ","), PL_C6
-		} else {
-			var strs []string
-			strs = append(strs, order.Content)
-			return strs, PL_C6
-		}
-	}
-
-	return nil, ""
 }
