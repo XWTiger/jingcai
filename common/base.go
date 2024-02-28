@@ -227,6 +227,7 @@ var dict = map[string]string{
 	"ZX_FS_3T":      "直选组合三同",
 	"ZX_FS_2T":      "直选组合二同",
 	"ZX_FS_DT":      "直选组合胆拖",
+	"FREE_SCORE":    "赠送积分",
 }
 
 func GetDictsByKey(key string) string {

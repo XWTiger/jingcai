@@ -550,7 +550,7 @@ func ReturnScore(userId uint, score float32) error {
 type Bill struct {
 	gorm.Model
 
-	//SCORE、RMB
+	//SCORE、RMB、FREE_SCORE（赠送的积分）
 	Type string
 	//订单id id如果是空说明是后台加账
 	OrderId string

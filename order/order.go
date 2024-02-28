@@ -30,29 +30,29 @@ var log = ilog.Logger
 // ==========大乐透========
 // 复式前区大于5个数字，后区 大于2个,只有QQ 为前区复式 ， 只有HQ 为后区复式  都有为双区复式
 // 复式：
-// QQ:01 02 04 05 11 12 35 33,HQ:06 07 12
+// 双区复式 FSSQ:  QQ:01 02 04 05 11 12 35 33,HQ:06 07 12
+// 后区复式 FSHQ:  01 02 04 05 11,HQ:06 07 12
+// 前区复式 FSQQ:  QQ:01 02 04 05 11 12 35 33,07 12
 // 胆拖：
-// QQD:09,QQT:01 02 06 07 09,HQD:12 HQT:02 08
-// 后区胆拖
-// 03 05 08 09 11 13,HQD:12 HQT:02 08
+// 前区胆拖 DTQQ： QQD:09,QQT:01 02 06 07 09,01 08
+// 后驱胆拖 DTHQ：03 05 08 09 11 13,HQD:12 HQT:02 08
+// 双区胆拖 DTSQ： QQD:09,QQT:01 02 06 07 09,HQD:12 HQT:02 08
 // ==========七星彩=================
-// 复式：
+// 复式 FSSTAR：
 // I1:3 4,I2:0 8,I3:8 9,I4:0 8,I5: 1 7,I6:3,I7:7 8
 // ===========排列3=============
 // DIRECT（单注）   C6 （组选6） C3 （组选3）
 // DIRECT_PLUS    直选多注
 // RANDOM 随机一注
 // RANDOM_PLUS 随机多注
-// ZX_FS_GSB //直选复式按位
-// ZX_FS_ZH3 直选组合三不同
-// ZX_FS_3T 直选组合三同
-// ZX_FS_2T 直选组合二同
-// ZX_FS_DT 直选组合胆拖
-// ZX_FS 直选复式
-// C3_FS 组选三复式
-// C6_FS 组选六复式
-// C6_DT 组选六胆拖
-// C6_DT 组选六胆拖
+// ZX_FS_GSB //直选复式按位 I1:1 2 3,I2:3 4 5,I3:6 7 8
+// ZX_FS_ZH3 直选组合三不同 1 3 4 6
+// ZX_FS_3T 直选组合三同 1 3 4 5
+// ZX_FS_2T 直选组合二同 1 3 4
+// ZX_FS_DT 直选组合胆拖 D:1 2,T:2 3 4 5
+// C3_FS 组选三复式 1 2 3 4
+// C6_FS 组选六复式 1 2 3 4 5
+// C6_DT 组选六胆拖 D:6,T:0 1 2 3 4 5
 // ===========排列5=============
 // DIRECT（单注）   C6 （组选6） C3 （组选3）
 // DIRECT_PLUS    直选多注
@@ -491,7 +491,7 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 		}
 
 		if order.AllWinId == 0 {
-			billErr := user.CheckScoreOrDoBill(order.UserID, order.ShouldPay, true, tx)
+			billErr := user.CheckScoreOrDoBill(order.UserID, order.ShouldPay, false, tx)
 			if billErr != nil {
 				log.Error("扣款失败， 无法提交订单")
 				common.FailedReturn(c, billErr.Error())
@@ -2616,8 +2616,9 @@ func CreatePLW(ord *Order) error {
 			}
 		}
 	}
+	//扣款逻辑统一处理
 	if ord.AllWinId == 0 {
-		billErr := user.CheckScoreOrDoBill(ord.UserID, ord.ShouldPay, true, tx)
+		billErr := user.CheckScoreOrDoBill(ord.UserID, ord.ShouldPay, false, tx)
 		if billErr != nil {
 			log.Error("扣款失败， 无法提交订单")
 			tx.Rollback()
@@ -3261,21 +3262,66 @@ func getArr(content string, ty string, way string) ([]string, error) {
 		// ZX_FS_ZH3 直选组合三不同 1 3 4 6
 		// ZX_FS_3T 直选组合三同 1 3 4 5
 		// ZX_FS_2T 直选组合二同 1 3 4
-		// ZX_FS_DT 直选组合胆拖
-		// ZX_FS 直选复式
+		// ZX_FS_DT 直选组合胆拖 D:1 2,T:2 3 4 5
 		// C3_FS 组选三复式 1 2 3 4
 		// C6_FS 组选六复式 1 2 3 4 5
 		// C6_DT 组选六胆拖 D:6,T:0 1 2 3 4 5
 		switch way {
 		case ZX_FS_3T:
-			break
+			arr := strings.Split(content, " ")
+			var realNums []string
+			for _, s := range arr {
+				realNums = append(realNums, fmt.Sprintf("%s %s %s", s, s, s))
+			}
+			return realNums, nil
 		case ZX_FS_2T:
-		case ZX_FS_DT:
+			arr := strings.Split(content, " ")
+			if len(arr) < 2 {
+				return nil, errors.New("排列3 直选二同 位数不正确")
+			}
+			var realNums []string
+			res := util.PermuteAnmByStr(arr, 2)
+			for _, re := range res {
+				var buffer []string
+				buffer = append(buffer, re[0])
+				buffer = append(buffer, re...)
+				resultArr := util.PermuteAnmByStr(buffer, 3)
+				for _, v := range resultArr {
+					realNums = append(realNums, strings.Join(v, " "))
+				}
 
+			}
+			fmt.Println("排列3 直选二同复式： ", len(realNums), " 组")
+			return realNums, nil
+		case ZX_FS_DT: //D:1 2,T:2 3 4 5
+			arr := strings.Split(content, ",")
+			if len(arr) < 2 {
+				return nil, errors.New("排列3 直选复式胆拖 位数不正确")
+			}
+			dStr := strings.ReplaceAll(arr[0], "D:", "")
+			tStr := strings.ReplaceAll(arr[1], "T:", "")
+			dArr := strings.Split(dStr, " ")
+			tArr := strings.Split(tStr, " ")
+			if len(dArr)+len(tArr) < 3 {
+				return nil, errors.New("排列3 直选复式胆拖 位数不正确,胆拖之和大于等于3位")
+			}
+			k := 3 - len(dArr)
+			res := util.CombineArray(tArr, k)
+			var realNums []string
+			for _, re := range res {
+				var buffer []string
+				buffer = append(buffer, dArr...)
+				buffer = append(buffer, re...)
+				result := util.PermuteAnmByStr(buffer, 3)
+				for _, ret := range result {
+					realNums = append(realNums, strings.Join(ret, " "))
+				}
+			}
+			return realNums, nil
 		case C3_FS:
 
 			arr := strings.Split(content, " ")
-			if len(arr) <= 2 {
+			if len(arr) < 2 {
 				return nil, errors.New("排列3 组选三复式 位数不正确")
 			}
 			var realNums []string
@@ -3338,7 +3384,7 @@ func getArr(content string, ty string, way string) ([]string, error) {
 		case ZX_FS_ZH3: // 直选组合三不同  1 3 4 6
 			arr := strings.Split(content, " ")
 			if len(arr) < 3 {
-				return nil, errors.New("排列3 复式组合三 位数不正确")
+				return nil, errors.New("排列3 复式组合三不同 位数不正确")
 			}
 			var realNums []string
 			res := util.CombineArray(arr, 3)
