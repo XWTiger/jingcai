@@ -431,6 +431,7 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 		log.Error(verr)
 		return
 	}
+	tx := mysql.DB.Begin()
 	switch order.LotteryType {
 
 	case FOOTBALL:
@@ -482,7 +483,6 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 		break
 	case SUPER_LOTTO:
 		//大乐透
-		tx := mysql.DB.Begin()
 		err := checkSuperLotto(&order)
 		if err != nil {
 			log.Error(err)
@@ -515,7 +515,6 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 		fmt.Println("实际付款: ", order.ShouldPay)
 		fmt.Println("=========================================")
 		common.SuccessReturn(c, order.UUID)
-		tx.Commit()
 		break
 	case SEVEN_STAR:
 		err := checkSevenStar(&order)
@@ -524,16 +523,15 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 			common.FailedReturn(c, err.Error())
 			return
 		}
-		tx := mysql.DB.Begin()
 		if order.AllWinId == 0 {
-			billErr := user.CheckScoreOrDoBill(order.UserID, order.ShouldPay, true, tx)
+			billErr := user.CheckScoreOrDoBill(order.UserID, order.ShouldPay, false, tx)
 			if billErr != nil {
 				log.Error("扣款失败， 无法提交订单")
 				common.FailedReturn(c, billErr.Error())
 				tx.Rollback()
 				return
 			}
-			order.PayStatus = true
+			order.PayStatus = false
 		}
 		if err := tx.Model(&Order{}).Create(&order).Error; err != nil {
 			log.Error("创建订单失败 ", err)
@@ -550,7 +548,7 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 		fmt.Println("实际付款: ", order.ShouldPay)
 		fmt.Println("=========================================")
 		common.SuccessReturn(c, order.UUID)
-		tx.Commit()
+
 		break
 	default:
 		common.FailedReturn(c, "购买类型不正确")
@@ -558,12 +556,14 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 	}
 	//TODO 扣款逻辑/扣积分逻辑
 	//积分逻辑 在上面已经完成积分扣除， 这里只创建流水
-	err := user.BillForScore(order.UUID, userInfo.ID, order.ShouldPay, user.SUBTRACT)
+	billErr := user.CheckScoreOrDoBill(order.UserID, order.ShouldPay, false, tx)
+	/*err := user.BillForScore(order.UUID, userInfo.ID, order.ShouldPay, user.SUBTRACT)
 	if err != nil {
 		log.Error(err)
 		common.FailedReturn(c, err.Error())
 		return
-	}
+	}*/
+	tx.Commit()
 }
 
 func checkSuperLotto(ord *Order) error {
