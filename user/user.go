@@ -15,6 +15,7 @@ import (
 	"jingcai/common"
 	ilog "jingcai/log"
 	"jingcai/mysql"
+	"jingcai/score"
 	"net/http"
 	"strconv"
 	"strings"
@@ -30,10 +31,14 @@ const ADMIN = "Admin"
 const USER = "User"
 const LOCK_TIMES = 5
 
+// ADD(增加) SUBTRACT(扣除)
+type Option string
+
 // 清账方式  WECHAT(微信) CARD(银行卡) ALI(支付宝) SCORE(积分清账)
 const (
 	SCORE       = "SCORE"
 	RMB         = "RMB"
+	FREE_SCORE  = "FREE_SCORE"
 	ADD         = "ADD" //增加
 	SUBTRACT    = "SUBTRACT"
 	WECHAT      = "WECHAT" //微信
@@ -67,6 +72,17 @@ type User struct {
 
 	//来自某个用户推广
 	FromUser uint
+}
+
+func (o Option) String() string {
+	switch o {
+	case ADD:
+		return ADD
+	case SUBTRACT:
+		return SUBTRACT
+	default:
+		return ""
+	}
 }
 
 // 用户对象
@@ -506,22 +522,54 @@ func UserComplain(c *gin.Context) {
 	common.SuccessReturn(c, "提交成功")
 }
 
-func CheckScoreOrDoBill(userId uint, score float32, doBill bool, tx *gorm.DB) error {
-	var user User
+func CheckScoreOrDoBill(userId uint, orderId string, scoreNum float32, doBill bool, tx *gorm.DB) error {
+	var userInfo User
 	var lock sync.Mutex
-	lock.Lock()
-	if err := tx.Model(User{}).Where(&User{Model: gorm.Model{ID: userId}}).First(&user).Error; err != nil {
-		lock.Unlock()
+
+	if err := tx.Model(User{}).Where(&User{Model: gorm.Model{ID: userId}}).First(&userInfo).Error; err != nil {
 		return errors.New("用户查询失败")
 	}
-	if score > user.Score {
+	freeScore, err := score.QueryByUserId(userId)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	if scoreNum > userInfo.Score+freeScore.Score {
 		return errors.New("积分不足，无法进行后续操作")
 	}
-	if doBill {
-		user.Score = user.Score - score
-
-		tx.Model(&user).Update("score", user.Score)
-		//TODO 没有添加账单？？
+	if !doBill {
+		return nil
+	}
+	lock.Lock()
+	var userScore = float32(0)
+	//先扣赠送积分
+	if freeScore.Score > 0 {
+		var free = float32(0)
+		if scoreNum >= freeScore.Score {
+			userScore = scoreNum - freeScore.Score
+			free = freeScore.Score
+		} else {
+			free = scoreNum
+		}
+		freeScore.Subtract(free)
+		err := BillForScore(orderId, userInfo.ID, free, FREE_SCORE, SUBTRACT, tx)
+		if err != nil {
+			lock.Unlock()
+			tx.Rollback()
+			return errors.New("记录账单失败")
+		}
+	} else {
+		userScore = scoreNum
+	}
+	if userScore > 0 {
+		userInfo.Score = userInfo.Score - scoreNum
+		tx.Model(&userInfo).Update("score", userInfo.Score)
+		err := BillForScore(orderId, userInfo.ID, userScore, SCORE, SUBTRACT, tx)
+		if err != nil {
+			lock.Unlock()
+			tx.Rollback()
+			return errors.New("记录账单失败")
+		}
 
 	}
 	lock.Unlock()
@@ -567,15 +615,19 @@ type Bill struct {
 	ShopId uint
 }
 
-func BillForScore(OrderId string, userId uint, score float32, option string) error {
+/*
+*
+option  ADD(增加) SUBTRACT(扣除)
+ty 账单类型 SCORE(用户积分)、RMB(人民币)、FREE_SCORE（赠送的积分）
+*/
+func BillForScore(OrderId string, userId uint, score float32, ty string, option Option, tx *gorm.DB) error {
 	//扣积分逻辑
-	tx := mysql.DB.Begin()
 	var bill = Bill{
 		Num:     score,
 		UserId:  userId,
 		OrderId: OrderId,
-		Type:    SCORE,
-		Option:  option,
+		Type:    ty,
+		Option:  option.String(),
 	}
 	var user User
 	tx.Model(User{}).Where(&User{Model: gorm.Model{
@@ -600,7 +652,6 @@ func BillForScore(OrderId string, userId uint, score float32, option string) err
 		tx.Rollback()
 		return errors.New("创建账单失败")
 	}
-	tx.Commit()
 	return nil
 }
 
@@ -951,6 +1002,46 @@ func AddScoreInner(score float32, userId uint, ownerId uint, way string, tx *gor
 	if err := tx.Model(User{}).Where(&User{Model: gorm.Model{
 		ID: userId,
 	}, From: ownerId,
+	}).First(&user).Error; err != nil {
+		lock.Unlock()
+		tx.Rollback()
+		return errors.New("该用户不是您的用户!")
+	}
+
+	if err := tx.Model(User{}).Where(&User{Model: gorm.Model{
+		ID: userId,
+	}}).Update("score", user.Score+score).Error; err != nil {
+		tx.Rollback()
+		lock.Unlock()
+		return errors.New("更新订单失败")
+	}
+	var bill = Bill{
+		Num:    score,
+		UserId: userId,
+		Type:   way,
+		Option: ADD,
+	}
+	bill.ShopId = user.From
+	if billerr := tx.Model(Bill{}).Save(&bill).Error; billerr != nil {
+		tx.Rollback()
+		lock.Unlock()
+		return errors.New("创建账单失败")
+
+	}
+	lock.Unlock()
+	return nil
+}
+
+// 机器兑奖
+func AddScoreInnerByMachine(score float32, userId uint, way string, tx *gorm.DB) error {
+	var lock sync.Mutex
+
+	lock.Lock()
+
+	var user User
+	if err := tx.Model(User{}).Where(&User{Model: gorm.Model{
+		ID: userId,
+	},
 	}).First(&user).Error; err != nil {
 		lock.Unlock()
 		tx.Rollback()

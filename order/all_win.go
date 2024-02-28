@@ -380,13 +380,13 @@ func AllWinCreateHandler(c *gin.Context) {
 				return
 			}
 			var shouldPay = float32(order.ShouldPay/float32(body.Number)) * float32(initAllWin.LeastTimes)
-			leastErr := user.CheckScoreOrDoBill(initAllWin.UserId, shouldPay, false, tx)
+			leastErr := user.CheckScoreOrDoBill(order.UserID, order.UUID, shouldPay, false, tx)
 			if leastErr != nil {
 				common.FailedReturn(c, "积分不够付款保底份数")
 				tx.Rollback()
 				return
 			}
-			payErr := user.CheckScoreOrDoBill(initAllWin.UserId, initAllWin.ShouldPay, true, tx)
+			payErr := user.CheckScoreOrDoBill(order.UserID, order.UUID, initAllWin.ShouldPay, true, tx)
 			if payErr != nil {
 				log.Error("all win id: ", initAllWin.ID, "扣款失败")
 				tx.Rollback()
@@ -449,14 +449,14 @@ func AllWinCreateHandler(c *gin.Context) {
 				DeadTime:         order.DeadTime,
 			}
 			GetOrderId(&userOrder)
-			payErr := user.CheckScoreOrDoBill(userInfo.ID, userOrder.ShouldPay, true, tx)
+			tx.Save(&userOrder)
+			payErr := user.CheckScoreOrDoBill(order.UserID, order.UUID, userOrder.ShouldPay, true, tx)
 			if payErr != nil {
 				log.Error("user id: ", userInfo.ID, "扣款失败")
 				tx.Rollback()
 				common.FailedReturn(c, payErr.Error())
 				return
 			}
-			tx.Save(&userOrder)
 			var allWin = AllWin{
 				Timeout:       false,
 				FinishedTime:  order.DeadTime,

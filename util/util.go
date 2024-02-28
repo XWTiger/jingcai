@@ -337,3 +337,17 @@ func GetIndexCmn(ii int, length int, arr [][]string, trace *[]string, res *[][]s
 		}
 	}
 }
+
+// 把int 数组转换为 字符串 空格分隔
+func CovertIntArrToStr(arr []int) string {
+	var str string
+	for i, v := range arr {
+		if i == 1 {
+			str = strconv.Itoa(v)
+		} else {
+			str = str + " " + strconv.Itoa(v)
+		}
+
+	}
+	return str
+}

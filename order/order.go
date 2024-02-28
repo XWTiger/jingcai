@@ -75,7 +75,6 @@ const (
 	NO_BONUS      = "NO_BONUS"
 	BONUS_READY   = "BONUS_READY"  //已兑奖
 	BONUS_NO_PAY  = "BONUS_NO_PAY" //未兑奖
-	NO_PAY        = "NO_PAY"
 	PL_SIGNAL     = "SIGNAL"
 	SIGNAL_PLUS   = "SIGNAL_PLUS" //直选多注
 	PL_C3         = "C3"          //组合3
@@ -491,14 +490,13 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 		}
 
 		if order.AllWinId == 0 {
-			billErr := user.CheckScoreOrDoBill(order.UserID, order.ShouldPay, false, tx)
+			billErr := user.CheckScoreOrDoBill(order.UserID, order.UUID, order.ShouldPay, true, tx)
 			if billErr != nil {
 				log.Error("扣款失败， 无法提交订单")
 				common.FailedReturn(c, billErr.Error())
 				tx.Rollback()
 				return
 			}
-			order.PayStatus = true
 		}
 		if err := tx.Model(&Order{}).Create(&order).Error; err != nil {
 			log.Error("创建订单失败 ", err)
@@ -524,7 +522,7 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 			return
 		}
 		if order.AllWinId == 0 {
-			billErr := user.CheckScoreOrDoBill(order.UserID, order.ShouldPay, false, tx)
+			billErr := user.CheckScoreOrDoBill(order.UserID, order.UUID, order.ShouldPay, true, tx)
 			if billErr != nil {
 				log.Error("扣款失败， 无法提交订单")
 				common.FailedReturn(c, billErr.Error())
@@ -548,21 +546,11 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 		fmt.Println("实际付款: ", order.ShouldPay)
 		fmt.Println("=========================================")
 		common.SuccessReturn(c, order.UUID)
-
 		break
 	default:
 		common.FailedReturn(c, "购买类型不正确")
 		return
 	}
-	//TODO 扣款逻辑/扣积分逻辑
-	//积分逻辑 在上面已经完成积分扣除， 这里只创建流水
-	billErr := user.CheckScoreOrDoBill(order.UserID, order.ShouldPay, false, tx)
-	/*err := user.BillForScore(order.UUID, userInfo.ID, order.ShouldPay, user.SUBTRACT)
-	if err != nil {
-		log.Error(err)
-		common.FailedReturn(c, err.Error())
-		return
-	}*/
 	tx.Commit()
 }
 
@@ -1003,7 +991,7 @@ func football(c *gin.Context, order *Order) error {
 	order.CreatedAt = time.Now()
 	fmt.Println("实际付款：", order.ShouldPay)
 	if order.AllWinId == 0 {
-		billErr := user.CheckScoreOrDoBill(order.UserID, order.ShouldPay, true, tx)
+		billErr := user.CheckScoreOrDoBill(order.UserID, order.UUID, order.ShouldPay, true, tx)
 		if err != nil {
 			log.Error("扣款失败， 无法提交订单")
 			common.FailedReturn(c, billErr.Error())
@@ -2618,7 +2606,7 @@ func CreatePLW(ord *Order) error {
 	}
 	//扣款逻辑统一处理
 	if ord.AllWinId == 0 {
-		billErr := user.CheckScoreOrDoBill(ord.UserID, ord.ShouldPay, false, tx)
+		billErr := user.CheckScoreOrDoBill(ord.UserID, ord.UUID, ord.ShouldPay, true, tx)
 		if billErr != nil {
 			log.Error("扣款失败， 无法提交订单")
 			tx.Rollback()
@@ -2684,75 +2672,64 @@ func AddPlwCheck(p int, when *time.Time) {
 								continue
 							}
 							releaseNum := result.Value.List[value].LotteryDrawResult[0:3]
-							releaseArr := strings.Split(releaseNum, " ")
 							for _, s := range content {
-								arr := strings.Split(s, " ")
-								if strings.Compare(s, releaseNum) == 0 {
-									if strings.Compare(o.Way, DIRECT) == 0 || o.Way == DIRECT_PLUS || o.Way == RANDOM || o.Way == RANDOM_PLUS ||
-										o.Way == ZX_FS_GSB || o.Way == ZX_FS_ZH3 {
+
+								switch o.Way {
+								case DIRECT:
+								case DIRECT_PLUS:
+								case RANDOM:
+								case RANDOM_PLUS:
+								case ZX_FS_GSB:
+								case ZX_FS_ZH3:
+								case ZX_FS_3T:
+								case ZX_FS_2T:
+								case ZX_FS_DT:
+									if strings.Compare(s, releaseNum) == 0 {
 										o.Bonus = o.Bonus + 1040
+										o.Comment = "中奖"
+										o.AllMatchFinished = true
+										o.Win = true
 									}
-									if strings.Compare(o.Way, C3_FS) == 0 {
-										numArr := util.CovertStrArrToInt(arr)
-										sendWorld := util.GetCombine3(numArr)
-										release := util.CovertStrArrToInt(releaseArr)
-										win := 0
-										for _, ints := range sendWorld {
-											count := 0
-											for i, value := range ints {
-												if release[i] == value {
-													count++
-													continue
-												} else {
-													break
-												}
-											}
-											if count == 3 {
-												win = 3
-												break
-											}
-										}
-										if win == 3 {
+									break
+								case C3_FS:
+									numArr := util.CovertStrArrToInt(strings.Split(s, " "))
+									sendWorld := util.GetCombine3(numArr)
+									for _, ints := range sendWorld {
+										if util.CovertIntArrToStr(ints) == releaseNum {
 											o.Bonus = o.Bonus + 346
+											o.Comment = "中奖"
+											o.AllMatchFinished = true
+											o.Win = true
 										}
-										o.Way = fmt.Sprintf("%s 组合3：%s 中奖", o.Way, s)
 									}
-									if strings.Compare(types, PL_C6) == 0 {
-										numArr := util.CovertStrArrToInt(arr)
-										sendWorld := util.Permute(numArr)
-										release := util.CovertStrArrToInt(releaseArr)
-										win := 0
-										for _, ints := range sendWorld {
-											count := 0
-											for i, value := range ints {
-												if release[i] == value {
-													count++
-													continue
-												} else {
-													break
-												}
-											}
-											if count == 3 {
-												win = 3
-												break
-											}
-										}
-										if win == 3 {
+									break
+								case C6_FS:
+								case C6_DT:
+									res := util.PermuteAnmByStr(strings.Split(s, "s"), 3)
+									for _, re := range res {
+										if strings.Join(re, " ") == releaseNum {
 											o.Bonus = o.Bonus + 173
+											o.Comment = "中奖"
+											o.AllMatchFinished = true
+											o.Win = true
 										}
-										o.Way = fmt.Sprintf("%s 组合6：%s 中奖", o.Way, s)
 									}
-									o.Win = true
+									break
+
 								}
+
 							}
-							//TODO 组合3和组合6计算
-							o.AllMatchFinished = true
+
 						} else {
 							continue
 						}
 						if o.Win == true {
-							o.BonusStatus = NO_PAY
+							o.BonusStatus = BONUS_READY
 							o.Bonus = o.Bonus * float32(o.Times)
+							scoreErr := user.AddScoreInnerByMachine(o.Bonus, o.UserID, SCORE, tx)
+							if scoreErr != nil {
+								o.BonusStatus = BONUS_NO_PAY
+							}
 						} else {
 							o.BonusStatus = NO_BONUS
 						}
@@ -2806,7 +2783,7 @@ func AddPlwCheck(p int, when *time.Time) {
 					for _, o := range orders {
 						index, ok := mapper[o.IssueId]
 						if ok {
-							content, err := getArr(o.Content, o.LotteryType, o.PL3Way)
+							content, err := getArr(o.Content, o.LotteryType, o.Way)
 							if err != nil {
 								log.Error(err)
 								continue
@@ -2820,8 +2797,12 @@ func AddPlwCheck(p int, when *time.Time) {
 							}
 							o.AllMatchFinished = true
 							if o.Win == true {
-								o.BonusStatus = NO_PAY
+								o.BonusStatus = BONUS_READY
 								o.Bonus = o.Bonus * float32(o.Times)
+								scoreErr := user.AddScoreInnerByMachine(o.Bonus, o.UserID, SCORE, tx)
+								if scoreErr != nil {
+									o.BonusStatus = BONUS_NO_PAY
+								}
 							} else {
 								o.BonusStatus = NO_BONUS
 							}
@@ -3001,8 +2982,12 @@ func AddSuperLottoCheck(when *time.Time) {
 					}
 					o.AllMatchFinished = true
 					if o.Win == true {
-						o.BonusStatus = NO_PAY
+						o.BonusStatus = BONUS_READY
 						o.Bonus = o.Bonus * float32(o.Times)
+						scoreErr := user.AddScoreInnerByMachine(o.Bonus, o.UserID, SCORE, tx)
+						if scoreErr != nil {
+							o.BonusStatus = BONUS_NO_PAY
+						}
 					} else {
 						o.BonusStatus = NO_BONUS
 					}
@@ -3132,8 +3117,12 @@ func AddSevenStarCheck(when *time.Time) {
 					}
 					o.AllMatchFinished = true
 					if o.Win == true {
-						o.BonusStatus = NO_PAY
+						o.BonusStatus = BONUS_READY
 						o.Bonus = o.Bonus * float32(o.Times)
+						scoreErr := user.AddScoreInnerByMachine(o.Bonus, o.UserID, SCORE, tx)
+						if scoreErr != nil {
+							o.BonusStatus = BONUS_NO_PAY
+						}
 					} else {
 						o.BonusStatus = NO_BONUS
 					}

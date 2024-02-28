@@ -28,7 +28,7 @@ func QueryByUserId(userId uint) (*FreeScore, error) {
 	return &fee, nil
 }
 
-func (fs *FreeScore) subtract(score float32) error {
+func (fs *FreeScore) Subtract(score float32) error {
 
 	if fs.Score < score {
 		return errors.New("积分不够")
@@ -41,7 +41,7 @@ func (fs *FreeScore) subtract(score float32) error {
 	return nil
 }
 
-func (fs *FreeScore) add(score float32) error {
+func (fs *FreeScore) Add(score float32) error {
 
 	fs.Score += score
 	err := mysql.DB.Save(fs).Error
