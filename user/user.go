@@ -16,6 +16,7 @@ import (
 	ilog "jingcai/log"
 	"jingcai/mysql"
 	"jingcai/score"
+	"jingcai/validatior"
 	"net/http"
 	"strconv"
 	"strings"
@@ -552,7 +553,15 @@ func CheckScoreOrDoBill(userId uint, orderId string, scoreNum float32, doBill bo
 			free = scoreNum
 		}
 		freeScore.Subtract(free)
-		err := BillForScore(orderId, userInfo.ID, free, FREE_SCORE, SUBTRACT, tx)
+		var bill = Bill{
+			Num:     free,
+			UserId:  userId,
+			OrderId: orderId,
+			Type:    FREE_SCORE,
+			Option:  SUBTRACT,
+			Comment: "购彩",
+		}
+		err := BillForScore(bill, tx)
 		if err != nil {
 			lock.Unlock()
 			tx.Rollback()
@@ -564,7 +573,15 @@ func CheckScoreOrDoBill(userId uint, orderId string, scoreNum float32, doBill bo
 	if userScore > 0 {
 		userInfo.Score = userInfo.Score - scoreNum
 		tx.Model(&userInfo).Update("score", userInfo.Score)
-		err := BillForScore(orderId, userInfo.ID, userScore, SCORE, SUBTRACT, tx)
+		var bill = Bill{
+			Num:     userScore,
+			UserId:  userId,
+			OrderId: orderId,
+			Type:    FREE_SCORE,
+			Option:  SUBTRACT,
+			Comment: "购彩",
+		}
+		err := BillForScore(bill, tx)
 		if err != nil {
 			lock.Unlock()
 			tx.Rollback()
@@ -599,18 +616,18 @@ type Bill struct {
 	gorm.Model
 
 	//SCORE、RMB、FREE_SCORE（赠送的积分）
-	Type string
+	Type string `validate:"required"`
 	//订单id id如果是空说明是后台加账
-	OrderId string
+	OrderId string `validate:"required"`
 
 	//数量
-	Num float32
+	Num float32 `validate:"required"`
 
 	//用户id
-	UserId uint
+	UserId uint `validate:"required"`
 
 	//ADD SUBTRACT
-	Option string
+	Option string `validate:"required"`
 
 	ShopId uint
 
@@ -624,19 +641,18 @@ type Bill struct {
 *
 option  ADD(增加) SUBTRACT(扣除)
 ty 账单类型 SCORE(用户积分)、RMB(人民币)、FREE_SCORE（赠送的积分）
+reason 原因
 */
-func BillForScore(OrderId string, userId uint, score float32, ty string, option Option, tx *gorm.DB) error {
+func BillForScore(bill Bill, tx *gorm.DB) error {
 	//扣积分逻辑
-	var bill = Bill{
-		Num:     score,
-		UserId:  userId,
-		OrderId: OrderId,
-		Type:    ty,
-		Option:  option.String(),
+
+	err := validatior.Validator(nil, bill)
+	if err != nil {
+		return err
 	}
 	var user User
 	tx.Model(User{}).Where(&User{Model: gorm.Model{
-		ID: userId,
+		ID: bill.UserId,
 	}}).First(&user)
 	bill.ShopId = user.From
 	/*if user.Score < score {
@@ -666,6 +682,9 @@ type Score struct {
 
 	//用户id
 	UserId uint
+
+	//原因
+	Reason string
 }
 
 // @Summary 积分加账
@@ -713,10 +732,11 @@ func AddScore(c *gin.Context) {
 		return
 	}
 	var bill = Bill{
-		Num:    score.Num,
-		UserId: score.UserId,
-		Type:   SCORE,
-		Option: ADD,
+		Num:     score.Num,
+		UserId:  score.UserId,
+		Type:    SCORE,
+		Option:  ADD,
+		Comment: score.Reason,
 	}
 	bill.ShopId = user.From
 	if billerr := tx.Model(Bill{}).Save(&bill).Error; billerr != nil {
@@ -769,10 +789,11 @@ func BillClear(c *gin.Context) {
 	}
 
 	var bill = Bill{
-		Num:    score.Num,
-		UserId: score.UserId,
-		Type:   SCORE,
-		Option: SUBTRACT,
+		Num:     score.Num,
+		UserId:  score.UserId,
+		Type:    SCORE,
+		Option:  SUBTRACT,
+		Comment: score.Reason,
 	}
 
 	bill.ShopId = user.From
