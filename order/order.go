@@ -2162,7 +2162,7 @@ func getBets(list []int, index int, foots *[]FootView, bets *[][]FootView, match
 	match := matches[list[index]-1]
 	for _, combine := range match.Combines {
 		*foots = append(*foots, FootView{
-			Way:          "过关方式 1x1",
+			Way:          "过关方式",
 			Time:         match.MatchNumStr,
 			League:       fmt.Sprintf("主队:%s Vs 客队:%s", match.HomeTeamName, match.AwayTeamName),
 			Mode:         GetDesc(combine.Type, combine.ScoreVsScore),
