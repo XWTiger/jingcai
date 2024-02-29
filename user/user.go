@@ -613,6 +613,11 @@ type Bill struct {
 	Option string
 
 	ShopId uint
+
+	//原因
+	Comment string `grom:"type: varchar(255)"`
+	//活动码
+	ActiveCode string `grom:"type: varchar(255)"`
 }
 
 /*
