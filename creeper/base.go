@@ -1,6 +1,7 @@
 package creeper
 
 import (
+	"fmt"
 	"gorm.io/gorm"
 	"strings"
 )
@@ -51,6 +52,7 @@ func (c *Content) FilterStrInSummery() {
 	end := strings.LastIndex(c.Summery, "人查看")
 
 	if start > 0 && end > 0 {
+		fmt.Println("=======替换summery=========")
 		c.Summery = c.Summery[:start] + "..."
 	}
 }

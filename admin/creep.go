@@ -52,8 +52,8 @@ func (cc *CreepCenter) Doing() error {
 		//log.Info("url=", k)
 		content := c.Creep()
 
-		for _, c2 := range content {
-			c2.FilterStrInSummery()
+		for i, _ := range content {
+			content[i].FilterStrInSummery()
 		}
 
 		tx.Create(&content)

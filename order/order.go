@@ -2792,6 +2792,7 @@ func AddPlwCheck(p int, when *time.Time) {
 							for _, s := range content {
 								if strings.Compare(s, releaseNum) == 0 {
 									o.Bonus = o.Bonus + 100000
+									o.Comment = "中奖"
 									o.Win = true
 								}
 							}
@@ -3065,17 +3066,19 @@ func AddSevenStarCheck(when *time.Time) {
 						for _, s := range content {
 							if strings.Compare(s, releaseNum) == 0 {
 								//一等奖
-								o.Bonus = o.Bonus + 5000000
+								bonus := getStakeAmountByPrizeLevel(result.Value.List[index].PrizeLevelList, "一等奖")
+								o.Bonus = o.Bonus + float32(bonus)
 								o.Win = true
-								o.Way = "一等奖"
+								o.Comment = "一等奖"
 								continue
 							}
 							yes, count := randomNumBeforeDirect(6, 6, s, releaseNum)
 							if yes {
 								//前6相同
-								o.Bonus = o.Bonus + 2000000
+								bonus := getStakeAmountByPrizeLevel(result.Value.List[index].PrizeLevelList, "二等奖")
+								o.Bonus = o.Bonus + float32(bonus)
 								o.Win = true
-								o.Way = fmt.Sprintf("%s + %s", o.Way, "二等奖")
+								o.Comment = fmt.Sprintf("%s + %s", o.Way, "二等奖")
 								continue
 							}
 
@@ -3086,28 +3089,28 @@ func AddSevenStarCheck(when *time.Time) {
 							if count == 5 && yr {
 								o.Bonus = o.Bonus + 3000
 								o.Win = true
-								o.Way = fmt.Sprintf("%s + %s", o.Way, "三等奖")
+								o.Comment = fmt.Sprintf("%s + %s", o.Way, "三等奖")
 								continue
 							}
 							_, countR := randomNumBeforeDirect(7, 5, s, releaseNum)
 							if countR == 5 {
 								o.Bonus = o.Bonus + 500
 								o.Win = true
-								o.Way = fmt.Sprintf("%s + %s", o.Way, "四等奖")
+								o.Comment = fmt.Sprintf("%s + %s", o.Way, "四等奖")
 								continue
 							}
 
 							if 4 == countR {
 								o.Bonus = o.Bonus + 30
 								o.Win = true
-								o.Way = fmt.Sprintf("%s + %s", o.Way, "五等奖")
+								o.Comment = fmt.Sprintf("%s + %s", o.Way, "五等奖")
 								continue
 							}
 
 							if 3 == countR || (1 == countR && yr) || yr {
 								o.Bonus = o.Bonus + 5
 								o.Win = true
-								o.Way = fmt.Sprintf("%s + %s", o.Way, "六等奖")
+								o.Comment = fmt.Sprintf("%s + %s", o.Way, "六等奖")
 								continue
 							}
 							o.Win = false
