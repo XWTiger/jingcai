@@ -270,6 +270,7 @@ func AdminOrderList(c *gin.Context) {
 			Total:    int(count),
 			Content:  resultList,
 		})
+		return
 	}
 	sort.Slice(list, func(i, j int) bool {
 		return list[i].CreatedAt.UnixMicro() > list[j].CreatedAt.UnixMicro()

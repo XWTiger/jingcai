@@ -54,6 +54,7 @@ func (cc *CreepCenter) Doing() error {
 
 		for i, _ := range content {
 			content[i].FilterStrInSummery()
+			fmt.Println("summery ====>", content[i].Summery)
 		}
 
 		tx.Create(&content)
