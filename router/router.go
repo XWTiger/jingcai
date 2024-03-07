@@ -112,6 +112,7 @@ func BindRouters(g *gin.Engine, config *config.Config) {
 	{
 		//店铺注册
 		shopGroup.GET("/users", shop.QueryShopUser)
+		shopGroup.GET("/bills/all", shop.ShopOwnerComprehensiveness)
 
 	}
 

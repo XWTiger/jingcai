@@ -229,8 +229,13 @@ var dict = map[string]string{
 	"ZX_FS_DT":      "直选组合胆拖",
 	"FREE_SCORE":    "赠送积分",
 	//ADD(增加) SUBTRACT(扣除)
-	"ADD":      "增加",
-	"SUBTRACT": "扣除",
+	"ADD":                   "增加",
+	"SUBTRACT":              "扣除",
+	"BILL_COMMENT_CASHED":   "兑奖",
+	"BILL_COMMENT_ADD":      "充值",
+	"BILL_COMMENT_CLEAR":    "清账",
+	"BILL_COMMENT_ACTIVITY": "活动赠送",
+	"BILL_COMMENT_BUY":      "购彩",
 }
 
 func GetDictsByKey(key string) string {

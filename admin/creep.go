@@ -103,7 +103,7 @@ func CreepHandler(c *gin.Context) {
 
 func InitCronForCreep(ctx context.Context) {
 	c := cron.New()
-	spec := "30 */10 * * *"
+	spec := "0 * * * *"
 	err := c.AddFunc(spec, func() {
 		CreepHandler(nil)
 	})

@@ -37,16 +37,22 @@ type Option string
 
 // 清账方式  WECHAT(微信) CARD(银行卡) ALI(支付宝) SCORE(积分清账)
 const (
-	SCORE       = "SCORE"
-	RMB         = "RMB"
-	FREE_SCORE  = "FREE_SCORE"
-	ADD         = "ADD" //增加
-	SUBTRACT    = "SUBTRACT"
-	WECHAT      = "WECHAT" //微信
-	CARD        = "CARD"   //银行卡
-	ALI         = "ALI"    //支付宝
-	SALE        = "Sale"   //销售角色
-	SUPER_ADMIN = "SuperAdmin"
+	SCORE                 = "SCORE"
+	RMB                   = "RMB"
+	FREE_SCORE            = "FREE_SCORE"
+	ADD                   = "ADD" //增加
+	SUBTRACT              = "SUBTRACT"
+	WECHAT                = "WECHAT" //微信
+	CARD                  = "CARD"   //银行卡
+	ALI                   = "ALI"    //支付宝
+	SALE                  = "Sale"   //销售角色
+	SUPER_ADMIN           = "SuperAdmin"
+	BILL_COMMENT_CASHED   = "BILL_COMMENT_CASHED"   //兑奖
+	BILL_COMMENT_ADD      = "BILL_COMMENT_ADD"      //充值
+	BILL_COMMENT_CLEAR    = "BILL_COMMENT_CLEAR"    //清账
+	BILL_COMMENT_ACTIVITY = "BILL_COMMENT_ACTIVITY" //活动赠送
+	BILL_COMMENT_BUY      = "BILL_COMMENT_BUY"      //购彩
+
 )
 
 type User struct {
@@ -118,6 +124,9 @@ type UserDTO struct {
 
 	//头像地址
 	HeaderImageUrl string
+
+	//赠送积分
+	FreeScore float32
 }
 
 func (u User) GetDTO() UserDTO {
@@ -157,6 +166,10 @@ func GetUserInfo(c *gin.Context) {
 		Ali:            userPO.Ali,
 		Score:          userPO.Score,
 		HeaderImageUrl: userPO.HeaderImageUrl,
+	}
+	free, err := score.QueryByUserId(user.ID)
+	if err == nil {
+		userDTO.FreeScore = free.Score
 	}
 	common.SuccessReturn(c, userDTO)
 }
@@ -559,7 +572,7 @@ func CheckScoreOrDoBill(userId uint, orderId string, scoreNum float32, doBill bo
 			OrderId: orderId,
 			Type:    FREE_SCORE,
 			Option:  SUBTRACT,
-			Comment: "购彩",
+			Comment: BILL_COMMENT_BUY, //购彩
 		}
 		err := BillForScore(bill, tx)
 		if err != nil {
@@ -632,9 +645,57 @@ type Bill struct {
 	ShopId uint
 
 	//原因
+	//"BILL_COMMENT_CASHED":   "兑奖",
+	//	"BILL_COMMENT_ADD":      "充值",
+	//	"BILL_COMMENT_CLEAR":    "清账",
+	//	"BILL_COMMENT_ACTIVITY": "活动赠送",
+	//	"BILL_COMMENT_BUY":      "购票",
 	Comment string `grom:"type: varchar(255)"`
 	//活动码
 	ActiveCode string `grom:"type: varchar(255)"`
+}
+
+type BillVO struct {
+	gorm.Model
+
+	//SCORE、RMB、FREE_SCORE（赠送的积分）
+	Type string `validate:"required"`
+	//订单id id如果是空说明是后台加账
+	OrderId string `validate:"required"`
+
+	//数量
+	Num float32 `validate:"required"`
+
+	//用户id
+	UserInfo UserVO
+
+	//ADD SUBTRACT
+	Option string `validate:"required"`
+
+	ShopId uint
+
+	//原因
+	Comment string `grom:"type: varchar(255)"`
+	//活动码
+	ActiveCode string `grom:"type: varchar(255)"`
+}
+
+func (bill Bill) GetVO() *BillVO {
+	vo := &BillVO{
+		Model:      bill.Model,
+		Type:       bill.Type,
+		OrderId:    bill.OrderId,
+		Num:        bill.Num,
+		Option:     bill.Option,
+		ShopId:     bill.ShopId,
+		Comment:    bill.Comment,
+		ActiveCode: bill.ActiveCode,
+	}
+	userVo := FindUserVOById(bill.UserId)
+	if userVo != (UserVO{}) {
+		vo.UserInfo = userVo
+	}
+	return vo
 }
 
 /*
@@ -682,9 +743,6 @@ type Score struct {
 
 	//用户id
 	UserId uint
-
-	//原因
-	Reason string
 }
 
 // @Summary 积分加账
@@ -736,7 +794,7 @@ func AddScore(c *gin.Context) {
 		UserId:  score.UserId,
 		Type:    SCORE,
 		Option:  ADD,
-		Comment: score.Reason,
+		Comment: BILL_COMMENT_ADD,
 	}
 	bill.ShopId = user.From
 	if billerr := tx.Model(Bill{}).Save(&bill).Error; billerr != nil {
@@ -793,7 +851,7 @@ func BillClear(c *gin.Context) {
 		UserId:  score.UserId,
 		Type:    SCORE,
 		Option:  SUBTRACT,
-		Comment: score.Reason,
+		Comment: BILL_COMMENT_CLEAR,
 	}
 
 	bill.ShopId = user.From
@@ -1019,6 +1077,7 @@ func ChangePasswordHandler(c *gin.Context) {
 	mysql.DB.Model(user).Where(user).Update("secret", pwd).Update("Salt", salt)
 }
 
+// 充值
 func AddScoreInner(score float32, userId uint, ownerId uint, way string, tx *gorm.DB) error {
 	var lock sync.Mutex
 
@@ -1042,10 +1101,11 @@ func AddScoreInner(score float32, userId uint, ownerId uint, way string, tx *gor
 		return errors.New("更新订单失败")
 	}
 	var bill = Bill{
-		Num:    score,
-		UserId: userId,
-		Type:   way,
-		Option: ADD,
+		Num:     score,
+		UserId:  userId,
+		Type:    way,
+		Option:  ADD,
+		Comment: BILL_COMMENT_ADD,
 	}
 	bill.ShopId = user.From
 	if billerr := tx.Model(Bill{}).Save(&bill).Error; billerr != nil {
@@ -1082,10 +1142,11 @@ func AddScoreInnerByMachine(score float32, userId uint, way string, tx *gorm.DB)
 		return errors.New("更新订单失败")
 	}
 	var bill = Bill{
-		Num:    score,
-		UserId: userId,
-		Type:   way,
-		Option: ADD,
+		Num:     score,
+		UserId:  userId,
+		Type:    way,
+		Option:  ADD,
+		Comment: BILL_COMMENT_CASHED,
 	}
 	bill.ShopId = user.From
 	if billerr := tx.Model(Bill{}).Save(&bill).Error; billerr != nil {
