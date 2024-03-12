@@ -595,7 +595,7 @@ func AllWinCheck(when time.Time) {
 						if allWin.Status == true {
 							for _, partner := range partners {
 								partner.Status = true
-								mysql.DB.Model(&AllWin{}).Save(&partner)
+								mysql.DB.Model(&AllWin{}).Where(&partner).Save(&partner)
 							}
 						}
 
@@ -617,7 +617,7 @@ func AllWinCheck(when time.Time) {
 			if param != nil {
 				id := fmt.Sprintf("%d", param)
 				fmt.Println("update job id:", id)
-				err := mysql.DB.Model(&JobExecution{}).Update("status", true).Where("id = ?", id).Error
+				err := mysql.DB.Model(&JobExecution{}).Where("id = ?", id).Update("status", true).Error
 				if err != nil {
 					log.Error("更新job状态失败!")
 				}

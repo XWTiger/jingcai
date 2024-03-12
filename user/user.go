@@ -546,7 +546,6 @@ func CheckScoreOrDoBill(userId uint, orderId string, scoreNum float32, doBill bo
 	freeScore, err := score.QueryByUserId(userId)
 	if err != nil {
 		log.Error(err)
-		return err
 	}
 	if scoreNum > userInfo.Score+freeScore.Score {
 		return errors.New("积分不足，无法进行后续操作")
@@ -557,7 +556,7 @@ func CheckScoreOrDoBill(userId uint, orderId string, scoreNum float32, doBill bo
 	lock.Lock()
 	var userScore = float32(0)
 	//先扣赠送积分
-	if freeScore.Score > 0 {
+	if freeScore != nil && freeScore.Score > 0 {
 		var free = float32(0)
 		if scoreNum >= freeScore.Score {
 			userScore = scoreNum - freeScore.Score

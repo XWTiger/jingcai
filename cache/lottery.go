@@ -84,6 +84,8 @@ func GetOnTimeFootballMatch(uuid string) (*FootBallGames, error) {
 	}
 	defer resp.Body.Close()
 	body, _ := io.ReadAll(resp.Body)
+	//fmt.Println("比赛信息============>", string(body))
+
 	var result LotteryResult
 	err = json.Unmarshal(body, &result)
 	if err != nil {

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/shopspring/decimal"
 	"io"
 	"jingcai/common"
 	"jingcai/mysql"
@@ -694,7 +695,8 @@ func CheckLottery(whenStart time.Time) error {
 							bonus = bonus + bet.Bonus
 						}
 					}
-					order.Bonus = bonus * float32(order.Times)
+					value, _ := decimal.NewFromFloat32(bonus).Mul(decimal.NewFromInt(int64(order.Times))).Float64()
+					order.Bonus = float32(value)
 					if err := orderTx.Save(&order).Error; err != nil {
 						log.Error("定时任务，更新订单失败")
 						log.Error(err)
@@ -705,7 +707,8 @@ func CheckLottery(whenStart time.Time) error {
 						log.Info("=====  确定合买订单  ======")
 						all := GetAllWinByParentId(order.AllWinId)
 						for _, win := range all {
-							win.Bonus = order.Bonus / float32(win.BuyNumber)
+							value2, _ := decimal.NewFromFloat32(order.Bonus).Div(decimal.NewFromInt(int64(win.BuyNumber))).Float64()
+							win.Bonus = float32(value2)
 							win.Timeout = true
 							orderTx.Save(&win)
 						}

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	uuid "github.com/satori/go.uuid"
+	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 	"io"
 	"jingcai/cache"
@@ -977,17 +978,20 @@ func football(c *gin.Context, order *Order) error {
 		return bonus[i] < bonus[j]
 	})
 	order.Bonus = 0
-	order.LogicWinMin = bonus[0] * float32(order.Times)
+	value, _ := decimal.NewFromFloat32(bonus[0]).Mul(decimal.NewFromInt(int64(order.Times))).Float64()
+	order.LogicWinMin = float32(value)
 	var bonusCout float32 = 0
 	for _, f := range bonus {
 		bonusCout += f
 	}
-	var logicCount = bonusCout * float32(order.Times)
+	v2, _ := decimal.NewFromFloat32(bonusCout).Mul(decimal.NewFromInt(int64(order.Times))).Float64()
+	var logicCount = float32(v2)
 	if order.LogicWinMaX != logicCount {
 		log.Warn("逻辑奖金和后台算出对不上", order.LogicWinMaX, logicCount)
 	}
 	order.LogicWinMaX = logicCount
-	order.ShouldPay = float32(2 * len(bonus) * order.Times)
+	v3, _ := decimal.NewFromInt(2).Mul(decimal.NewFromInt(int64(order.Times))).Mul(decimal.NewFromInt(int64(len(bonus)))).Float64()
+	order.ShouldPay = float32(v3)
 	order.CreatedAt = time.Now()
 	fmt.Println("实际付款：", order.ShouldPay)
 	if order.AllWinId == 0 {
@@ -1906,6 +1910,7 @@ func (order *Order) WayDetail() (map[string]interface{}, error) {
 							MatchNum: match.MatchNum,
 							Check:    false,
 							Win:      false,
+							Bonus:    2 * combine.Odds,
 						})
 
 					}
@@ -1928,7 +1933,8 @@ func (order *Order) WayDetail() (map[string]interface{}, error) {
 				for _, views := range betsTmp {
 					var bonus float32 = 2
 					for _, view := range views {
-						bonus = bonus * view.Odd
+						value, _ := decimal.NewFromFloat32(bonus).Mul(decimal.NewFromFloat32(view.Odd)).Float64()
+						bonus = float32(value)
 					}
 					bet := Bet{
 						OrderId:  order.UUID,
@@ -1961,7 +1967,8 @@ func (order *Order) WayDetail() (map[string]interface{}, error) {
 				for _, views := range betsTmp {
 					var bonus float32 = 2
 					for _, view := range views {
-						bonus = bonus * view.Odd
+						value, _ := decimal.NewFromFloat32(bonus).Mul(decimal.NewFromFloat32(view.Odd)).Float64()
+						bonus = float32(value)
 					}
 					bet := Bet{
 						OrderId:  order.UUID,
@@ -1994,7 +2001,8 @@ func (order *Order) WayDetail() (map[string]interface{}, error) {
 				for _, views := range betsTmp {
 					var bonus float32 = 2
 					for _, view := range views {
-						bonus = bonus * view.Odd
+						value, _ := decimal.NewFromFloat32(bonus).Mul(decimal.NewFromFloat32(view.Odd)).Float64()
+						bonus = float32(value)
 					}
 					bet := Bet{
 						OrderId:  order.UUID,
@@ -2027,7 +2035,8 @@ func (order *Order) WayDetail() (map[string]interface{}, error) {
 				for _, views := range betsTmp {
 					var bonus float32 = 2
 					for _, view := range views {
-						bonus = bonus * view.Odd
+						value, _ := decimal.NewFromFloat32(bonus).Mul(decimal.NewFromFloat32(view.Odd)).Float64()
+						bonus = float32(value)
 					}
 					bet := Bet{
 						OrderId:  order.UUID,
@@ -2060,7 +2069,8 @@ func (order *Order) WayDetail() (map[string]interface{}, error) {
 				for _, views := range betsTmp {
 					var bonus float32 = 2
 					for _, view := range views {
-						bonus = bonus * view.Odd
+						value, _ := decimal.NewFromFloat32(bonus).Mul(decimal.NewFromFloat32(view.Odd)).Float64()
+						bonus = float32(value)
 					}
 					bet := Bet{
 						OrderId:  order.UUID,
@@ -2093,7 +2103,8 @@ func (order *Order) WayDetail() (map[string]interface{}, error) {
 				for _, views := range betsTmp {
 					var bonus float32 = 2
 					for _, view := range views {
-						bonus = bonus * view.Odd
+						value, _ := decimal.NewFromFloat32(bonus).Mul(decimal.NewFromFloat32(view.Odd)).Float64()
+						bonus = float32(value)
 					}
 					bet := Bet{
 						OrderId:  order.UUID,
@@ -2126,7 +2137,8 @@ func (order *Order) WayDetail() (map[string]interface{}, error) {
 				for _, views := range betsTmp {
 					var bonus float32 = 2
 					for _, view := range views {
-						bonus = bonus * view.Odd
+						value, _ := decimal.NewFromFloat32(bonus).Mul(decimal.NewFromFloat32(view.Odd)).Float64()
+						bonus = float32(value)
 					}
 					bet := Bet{
 						OrderId:  order.UUID,

@@ -23,7 +23,9 @@ func QueryByUserId(userId uint) (*FreeScore, error) {
 	if err := mysql.DB.Where(&FreeScore{Model: gorm.Model{
 		ID: userId,
 	}}).First(&fee).Error; err != nil {
-		return nil, err
+		return &FreeScore{
+			Score: 0,
+		}, err
 	}
 	return &fee, nil
 }
