@@ -559,7 +559,7 @@ func AllWinCheck(when time.Time) {
 		CallBack: func(param interface{}) {
 			log.Info("========合买对账任务执行=============")
 			var allWinOrders = make([]AllWin, 0)
-			mysql.DB.Model(AllWin{}).Where(AllWin{Timeout: false, Status: false, ParentId: 0}).Find(&allWinOrders)
+			mysql.DB.Model(AllWin{}).Where(&AllWin{Timeout: false, Status: false, ParentId: 0}).Find(&allWinOrders)
 			if len(allWinOrders) > 0 {
 				for i := 0; i < len(allWinOrders); i++ {
 					var allWin = allWinOrders[i]
@@ -606,7 +606,7 @@ func AllWinCheck(when time.Time) {
 					}
 					if err := mysql.DB.Model(&AllWin{Model: gorm.Model{
 						ID: allWin.ID,
-					}}).Where("id=?", allWin.ID).Save(allWin).Error; err != nil {
+					}}).Where("id=?", allWin.ID).Save(&allWin).Error; err != nil {
 						log.Error(err, "更新发起者状态失败")
 						continue
 					}
