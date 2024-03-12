@@ -621,6 +621,7 @@ func AllWinCheck(when time.Time) {
 					log.Error("更新job状态失败!")
 				}
 			}
+			log.Info("==================== 完成合买校验 =======================")
 		},
 		Type: ALL_WIN,
 	}

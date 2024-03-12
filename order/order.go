@@ -2744,6 +2744,7 @@ func AddPlwCheck(p int, when *time.Time) {
 						log.Error("更新job状态失败!")
 					}
 				}
+				log.Info("========排列3对账任务结束=============")
 			},
 			Type: P3,
 		}
@@ -2820,10 +2821,12 @@ func AddPlwCheck(p int, when *time.Time) {
 						log.Error("更新job状态失败!")
 					}
 				}
+				log.Info("========排列5对账任务结束=============")
 			},
 			Type: P5,
 		}
 		break
+
 	}
 	if when != nil {
 		job.Time = *when
@@ -3004,6 +3007,7 @@ func AddSuperLottoCheck(when *time.Time) {
 					log.Error("更新job状态失败!")
 				}
 			}
+			log.Info("========大乐透对账任务执行结束=============")
 		},
 		Type: SUPER_LOTTO,
 	}
@@ -3140,6 +3144,7 @@ func AddSevenStarCheck(when *time.Time) {
 					log.Error("更新job状态失败!")
 				}
 			}
+			log.Info("========七星彩对账任务执行结束=============")
 		},
 		Type: SEVEN_STAR,
 	}

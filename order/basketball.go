@@ -178,7 +178,7 @@ func basketball(c *gin.Context, order *Order) error {
 		return errors.New("创建订单失败， 请联系店主")
 	}
 
-	CheckLottery(util.AddTwoHToTime(order.Matches[len(order.Matches)-1].TimeDate))
+	CheckBasketBallLottery(util.AddTwoHToTime(order.Matches[len(order.Matches)-1].TimeDate))
 
 	tx.Commit()
 
@@ -394,6 +394,7 @@ func CheckBasketBallLottery(checkTime time.Time) {
 					log.Error("更新job状态失败!")
 				}
 			}
+			log.Info("==================== 完成篮球中奖校验 =======================")
 		},
 		Type: BASKETBALL,
 	}

@@ -722,6 +722,7 @@ func CheckLottery(whenStart time.Time) error {
 					log.Error("更新job状态失败!")
 				}
 			}
+			log.Info("==================== 完成足球中奖校验 =======================")
 		},
 		Type: FOOTBALL,
 	}
