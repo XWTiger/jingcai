@@ -565,7 +565,7 @@ func AllWinCheck(when time.Time) {
 					var allWin = allWinOrders[i]
 
 					var partners = make([]AllWin, 0)
-					mysql.DB.Model(AllWin{}).Where(&AllWin{ParentId: allWin.ID}).Find(&partners)
+					mysql.DB.Model(&AllWin{}).Where(&AllWin{ParentId: allWin.ID}).Find(&partners)
 					if len(partners) > 0 {
 						var count = 0
 						for _, partner := range partners {
@@ -595,7 +595,7 @@ func AllWinCheck(when time.Time) {
 						if allWin.Status == true {
 							for _, partner := range partners {
 								partner.Status = true
-								mysql.DB.Model(AllWin{}).Save(partner)
+								mysql.DB.Model(&AllWin{}).Save(&partner)
 							}
 						}
 
@@ -604,7 +604,7 @@ func AllWinCheck(when time.Time) {
 							allWin.Timeout = true
 						}
 					}
-					if err := mysql.DB.Model(AllWin{Model: gorm.Model{
+					if err := mysql.DB.Model(&AllWin{Model: gorm.Model{
 						ID: allWin.ID,
 					}}).Where("id=?", allWin.ID).Save(allWin).Error; err != nil {
 						log.Error(err, "更新发起者状态失败")
@@ -616,7 +616,8 @@ func AllWinCheck(when time.Time) {
 			}
 			if param != nil {
 				id := fmt.Sprintf("%d", param)
-				err := mysql.DB.Model(JobExecution{}).Update("status", true).Where("id = ?", id).Error
+				fmt.Println("update job id:", id)
+				err := mysql.DB.Model(&JobExecution{}).Update("status", true).Where("id = ?", id).Error
 				if err != nil {
 					log.Error("更新job状态失败!")
 				}

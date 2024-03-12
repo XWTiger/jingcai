@@ -13,9 +13,9 @@ type FreeScore struct {
 	Score   float32 `gorm:"type: decimal(20,6)"`
 	Comment string  `grom:"type: varchar(255)"`
 	//来自活动名称
-	ActiveName string `grom:"type: varchar(255)"`
+	ActiveName string `grom:"type: varchar(255) comment('来自活动名称')"`
 	//活动码
-	ActiveCode string `grom:"type: varchar(255)"`
+	ActiveCode string `grom:"type: varchar(255) comment('活动码')"`
 }
 
 func QueryByUserId(userId uint) (*FreeScore, error) {

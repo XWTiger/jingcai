@@ -611,13 +611,13 @@ func ReturnScore(userId uint, score float32) error {
 	var mu sync.Mutex
 	mu.Lock()
 	tx := mysql.DB.Begin()
-	if err := tx.Model(User{}).Where(&User{Model: gorm.Model{ID: userId}}).First(&user).Error; err != nil {
+	if err := tx.Model(&User{}).Where(&User{Model: gorm.Model{ID: userId}}).First(&user).Error; err != nil {
 		mu.Unlock()
 		return errors.New("用户查询失败")
 	}
 
 	user.Score = user.Score + score
-	tx.Model(&user).Update("score", user.Score)
+	tx.Model(&User{}).Where(&user).Update("score", user.Score)
 
 	mu.Unlock()
 	tx.Commit()

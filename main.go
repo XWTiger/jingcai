@@ -17,6 +17,7 @@ import (
 	alog "jingcai/log"
 	"jingcai/mysql"
 	"jingcai/order"
+	"jingcai/score"
 	"jingcai/shop"
 	"jingcai/user"
 	"os"
@@ -84,4 +85,5 @@ func initTables() {
 	mysql.DB.AutoMigrate(&order.JobExecution{})
 	mysql.DB.AutoMigrate(&audit.AuditLog{})
 	mysql.DB.AutoMigrate(&claim.Claim{})
+	mysql.DB.AutoMigrate(&score.FreeScore{})
 }
