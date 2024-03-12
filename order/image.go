@@ -215,7 +215,7 @@ func UpdateOddHandler(c *gin.Context) {
 				}
 			}
 			bets, err := getBetByMatchId(matchs[i].MatchId)
-			if err != nil {
+			if err == nil {
 				for j, bet := range bets {
 					for i3, view := range bets[j].Group {
 						if view.MatchId == matchs[i].MatchId {
