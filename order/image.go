@@ -2,6 +2,7 @@ package order
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 	"jingcai/common"
 	"jingcai/mysql"
@@ -190,7 +191,7 @@ func UpdateOddHandler(c *gin.Context) {
 
 		for i := 0; i < len(matchs); i++ {
 			var matchPo Match
-			if err := tx.Model(Match{}).Where(&Match{
+			if err := tx.Model(&Match{}).Where(&Match{
 				MatchId: matchs[i].MatchId,
 				OrderId: betImgObj.OrderId,
 			}).Find(&matchPo).Error; err != nil {
@@ -211,6 +212,30 @@ func UpdateOddHandler(c *gin.Context) {
 				if matchs[i].Type == detail.Type && matchs[i].ScoreVsScore == detail.ScoreVsScore {
 					lottery[i2].Odds = matchs[i].Odds
 					tx.Save(&lottery[i2])
+				}
+			}
+			bets, err := getBetByMatchId(matchs[i].MatchId)
+			if err != nil {
+				for j, bet := range bets {
+					for i3, view := range bets[j].Group {
+						if view.MatchId == matchs[i].MatchId {
+							bet.Group[i3].Odd = matchs[i].Odds
+							err := tx.Model(&FootView{Model: gorm.Model{
+								ID: view.ID,
+							}}).Update("odd", bet.Group[i3].Odd).Error
+							if err != nil {
+								log.Error(err)
+							}
+							break
+						}
+					}
+					dbonus := decimal.NewFromInt(2)
+					for _, view := range bet.Group {
+						dbonus = dbonus.Mul(decimal.NewFromFloat32(view.Odd))
+					}
+					value, _ := dbonus.Float64()
+					bet.Bonus = float32(value)
+					tx.Save(&bet)
 				}
 			}
 
