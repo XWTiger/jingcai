@@ -477,14 +477,14 @@ func AllWinCreateHandler(c *gin.Context) {
 				}
 				initAll.Status = true
 				allWin.Status = true
-				tx.Save(initAll)
-				tx.Save(allOrder)
+				tx.Save(&initAll)
+				tx.Save(&allOrder)
 			}
 			tx.Save(&allWin)
 			if initAll.Status {
-				tx.Model(Order{UUID: userOrder.UUID}).Where(&Order{UUID: userOrder.UUID}).Update("pay_status", true).Update("all_win_id", allWin.ID)
+				tx.Model(&Order{UUID: userOrder.UUID}).Where(&Order{UUID: userOrder.UUID}).Update("pay_status", true).Update("all_win_id", allWin.ID)
 			} else {
-				tx.Model(Order{UUID: userOrder.UUID}).Where(&Order{UUID: userOrder.UUID}).Update("all_win_id", allWin.ID)
+				tx.Model(&Order{UUID: userOrder.UUID}).Where(&Order{UUID: userOrder.UUID}).Update("all_win_id", allWin.ID)
 			}
 		}
 	} else {
@@ -516,13 +516,17 @@ func GetAllWinByParentId(parentId uint) []AllWin {
 
 // 获取各种玩法的结束时间
 func getFinishedTime(order Order) time.Time {
+
 	switch order.LotteryType {
 
 	case FOOTBALL:
+		fmt.Println("match date =================>", order.Matches[0].TimeDate.Format("2006-01-02 15:04:05"))
+		return common.GetMatchFinishedTime(order.Matches[0].TimeDate)
 	case BASKETBALL:
 		fmt.Println("match date =================>", order.Matches[0].TimeDate.Format("2006-01-02 15:04:05"))
 		return common.GetMatchFinishedTime(order.Matches[0].TimeDate)
 	case P3:
+		return util.GetPLWFinishedTime()
 	case P5:
 		return util.GetPLWFinishedTime()
 	case SUPER_LOTTO:
