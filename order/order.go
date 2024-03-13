@@ -132,8 +132,8 @@ type Match struct {
 	//比赛编号
 	MatchNum string
 	//比赛时间 2023-05-23 01:10:00
-	TimeDate time.Time
-
+	TimeDate    time.Time
+	TimeDateStr string `gorm:"-:all"`
 	//比赛时间 2023-05-23
 	MatchDate string
 
@@ -387,7 +387,12 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 		order = *orderFrom
 	} else {
 		log.Info("======== 发起订单 =========")
-		c.BindJSON(&order)
+		err := c.BindJSON(&order)
+		if err != nil {
+			log.Error(err)
+			common.FailedReturn(c, err.Error())
+			return
+		}
 	}
 	if order.Times <= 0 {
 		common.FailedReturn(c, "倍数不能为空")
@@ -405,6 +410,11 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 	if order.ShouldPay <= 0 {
 		common.FailedReturn(c, "付款小于0")
 		return
+	}
+	//转换比赛时间
+	for i, _ := range order.Matches {
+		time, _ := util.StrToTime(order.Matches[i].TimeDateStr)
+		order.Matches[i].TimeDate = time
 	}
 
 	now := time.Now()
