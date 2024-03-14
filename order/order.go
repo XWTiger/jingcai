@@ -902,15 +902,15 @@ func FindById(uuid string, searchMatch bool) Order {
 	if searchMatch {
 		var matchList = make([]Match, 0)
 		mysql.DB.Model(&mathParam).Where(&mathParam).Find(&matchList)
-		order.Matches = matchList
-		for _, match := range matchList {
+		for i, match := range matchList {
 			var detailParam = LotteryDetail{
 				ParentId: match.ID,
 			}
 			var detailList = make([]LotteryDetail, 0)
 			mysql.DB.Model(&detailParam).Where(&detailParam).Find(&detailList)
-			match.Combines = detailList
+			matchList[i].Combines = detailList
 		}
+		order.Matches = matchList
 	}
 	return order
 }
@@ -2542,12 +2542,13 @@ func FollowOrder(c *gin.Context) {
 	order := FindById(follow.OrderId, true)
 	order.UUID = ""
 	if len(order.Matches) > 0 {
-		for _, match := range order.Matches {
-			match.OrderId = ""
-			match.ID = 0
+		for j, match := range order.Matches {
+			order.Matches[j].TimeDateStr = util.GetTodayYYHHMMSSFrom(order.Matches[j].TimeDate)
+			order.Matches[j].ID = 0
+			order.Matches[j].OrderId = ""
 			if len(match.Combines) > 0 {
-				for _, combine := range match.Combines {
-					combine.ID = 0
+				for i, _ := range match.Combines {
+					order.Matches[j].Combines[i].ID = 0
 				}
 			}
 		}
