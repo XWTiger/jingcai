@@ -52,12 +52,16 @@ func (cc *CreepCenter) Doing() error {
 		//log.Info("url=", k)
 		content := c.Creep()
 
-		for i, _ := range content {
+		var realArr []creeper.Content
+		for i, v := range content {
 			content[i].FilterStrInSummery()
 			fmt.Println("summery ====>", content[i].Summery)
+			if v.Content != "" {
+				realArr = append(realArr, v)
+			}
 		}
 
-		tx.Create(&content)
+		tx.Create(&realArr)
 		for _, ctx := range content {
 			//log.Info("content: ", ctx.Content, "url: ", ctx.Url)
 			if len(ctx.Conditions) > 0 {
