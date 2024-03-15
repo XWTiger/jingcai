@@ -62,7 +62,7 @@ func (cc *CreepCenter) Doing() error {
 		}
 
 		tx.Create(&realArr)
-		for _, ctx := range content {
+		for _, ctx := range realArr {
 			//log.Info("content: ", ctx.Content, "url: ", ctx.Url)
 			if len(ctx.Conditions) > 0 {
 				for _, cond := range ctx.Conditions {
