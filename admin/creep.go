@@ -53,11 +53,11 @@ func (cc *CreepCenter) Doing() error {
 		content := c.Creep()
 
 		var realArr []creeper.Content
-		for i, v := range content {
+		for i, _ := range content {
 			content[i].FilterStrInSummery()
 			fmt.Println("summery ====>", content[i].Summery)
-			if v.Content != "" {
-				realArr = append(realArr, v)
+			if content[i].Content != "" {
+				realArr = append(realArr, content[i])
 			}
 		}
 
