@@ -375,10 +375,10 @@ func AllWinCreateHandler(c *gin.Context) {
 				Comment:      body.Comment,
 				LeastTimes:   body.LeastTimes,
 			}
-			if initAllWin.BuyNumber > initAllWin.LeastTimes {
+			/*if initAllWin.BuyNumber > initAllWin.LeastTimes {
 				common.FailedReturn(c, "保底份数不能小于认购份数")
 				return
-			}
+			}*/
 			var shouldPay = float32(order.ShouldPay/float32(body.Number)) * float32(initAllWin.LeastTimes)
 			leastErr := user.CheckScoreOrDoBill(order.UserID, order.UUID, shouldPay, false, tx)
 			if leastErr != nil {

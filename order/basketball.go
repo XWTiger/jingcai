@@ -378,13 +378,27 @@ func CheckBasketBallLottery(checkTime time.Time) {
 					if order.AllWinId > 0 {
 						log.Info("=====  确定合买订单  ======")
 						all := GetAllWinByParentId(order.AllWinId)
+						var allB float32
 						for _, win := range all {
 							value2, _ := decimal.NewFromFloat32(order.Bonus).Div(decimal.NewFromInt(int64(win.BuyNumber))).Float64()
 							win.Bonus = float32(value2)
 							win.Timeout = true
+							allB += win.Bonus
 							orderTx.Save(&win)
 						}
-
+						err := user.AddScoreInnerByMachine(allB, order.UserID, SCORE, orderTx)
+						if err != nil {
+							log.Error(err)
+							log.Error("========= 机器兑奖失败 ==========")
+							return
+						}
+					} else {
+						err := user.AddScoreInnerByMachine(order.Bonus, order.UserID, SCORE, orderTx)
+						if err != nil {
+							log.Error(err)
+							log.Error("========= 机器兑奖失败 ==========")
+							return
+						}
 					}
 
 				}
