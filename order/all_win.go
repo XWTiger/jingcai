@@ -183,7 +183,7 @@ func (a AllWin) GetVO() AllWinVO {
 
 		var all []AllWin
 		var vo = AllWinVO{}
-		if err := mysql.DB.Model(AllWin{OrderId: a.OrderId}).Where(AllWin{OrderId: a.OrderId}).Find(&all).Error; err != nil {
+		if err := mysql.DB.Model(&AllWin{}).Where(&AllWin{ParentId: a.ID}).Find(&all).Error; err != nil {
 			log.Error(err)
 			return vo
 		}
@@ -196,11 +196,9 @@ func (a AllWin) GetVO() AllWinVO {
 		var allW = make([]AllWin, 0)
 		var partner = make([]AllWinUser, 0)
 		allW = append(allW, a)
-		//userInfo := GetAllWinUser(user.FindUserById(a.UserId))
 
-		//userInfo.BuyNumber = a.BuyNumber
-		//partner = append(partner, userInfo)
 		for _, win := range all {
+
 			userInfos := GetAllWinUser(user.FindUserById(win.UserId))
 			userInfos.BuyNumber = win.BuyNumber
 			partner = append(partner, userInfos)
