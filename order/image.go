@@ -16,8 +16,6 @@ type OrderImage struct {
 	gorm.Model
 	//访问地址
 	Url string
-	//是否删除
-	Delete bool
 
 	//order uuid
 	ParentId string
@@ -154,10 +152,32 @@ func UploadBets(c *gin.Context) {
 			ParentId: betImgObj.OrderId,
 		})
 	}
+	order := FindById(betImgObj.OrderId, false)
+	//更新订单为已上传
+	if order.BetUpload {
+		//如果订单已经传了图片 那么就要删除以前的
+		derr := tx.Model(&OrderImage{}).Delete(&OrderImage{ParentId: betImgObj.OrderId}).Error
+		if derr != nil {
+			log.Error(derr)
+			common.FailedReturn(c, "图标保存失败")
+			tx.Rollback()
+			return
+		}
+
+	}
 	if imageErr := tx.Create(&images).Error; imageErr != nil {
 		common.FailedReturn(c, "图标保存失败")
 		tx.Rollback()
 		return
+	}
+	if !order.BetUpload {
+		dbErr := tx.Model(&Order{}).Update("bet_upload", 1).Error
+		if dbErr != nil {
+			log.Error(dbErr)
+			common.FailedReturn(c, "更新图标失败")
+			tx.Rollback()
+			return
+		}
 	}
 	tx.Commit()
 }
