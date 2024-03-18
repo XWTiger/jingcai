@@ -1927,7 +1927,7 @@ func (order *Order) WayDetail() (map[string]interface{}, error) {
 				}
 			}
 			oddCombines["1x1"] = Single
-			return oddCombines, nil
+
 			break
 		case "2x1":
 			if len(order.Matches) < 2 {
@@ -1940,7 +1940,9 @@ func (order *Order) WayDetail() (map[string]interface{}, error) {
 				foots := make([]FootView, 0)
 				betsTmp := make([][]FootView, 0)
 				getBets(re, 0, &foots, &betsTmp, order.Matches)
+
 				for _, views := range betsTmp {
+
 					var bonus float32 = 2
 					for _, view := range views {
 						value, _ := decimal.NewFromFloat32(bonus).Mul(decimal.NewFromFloat32(view.Odd)).Float64()
@@ -1961,7 +1963,6 @@ func (order *Order) WayDetail() (map[string]interface{}, error) {
 
 			}
 			oddCombines["2x1"] = bets
-			return oddCombines, nil
 			break
 		case "3x1":
 			if len(order.Matches) < 3 {
@@ -1995,7 +1996,6 @@ func (order *Order) WayDetail() (map[string]interface{}, error) {
 
 			}
 			oddCombines["3x1"] = bets
-			return oddCombines, nil
 			break
 		case "4x1":
 			if len(order.Matches) < 4 {
@@ -2029,7 +2029,6 @@ func (order *Order) WayDetail() (map[string]interface{}, error) {
 
 			}
 			oddCombines["4x1"] = bets
-			return oddCombines, nil
 			break
 		case "5x1":
 			if len(order.Matches) < 5 {
@@ -2063,7 +2062,6 @@ func (order *Order) WayDetail() (map[string]interface{}, error) {
 
 			}
 			oddCombines["5x1"] = bets
-			return oddCombines, nil
 			break
 		case "6x1":
 			if len(order.Matches) < 6 {
@@ -2097,7 +2095,6 @@ func (order *Order) WayDetail() (map[string]interface{}, error) {
 
 			}
 			oddCombines["6x1"] = bets
-			return oddCombines, nil
 			break
 		case "7x1":
 			if len(order.Matches) < 3 {
@@ -2131,7 +2128,6 @@ func (order *Order) WayDetail() (map[string]interface{}, error) {
 
 			}
 			oddCombines["7x1"] = bets
-			return oddCombines, nil
 			break
 		case "8x1":
 			if len(order.Matches) < 8 {
@@ -2165,13 +2161,12 @@ func (order *Order) WayDetail() (map[string]interface{}, error) {
 
 			}
 			oddCombines["8x1"] = bets
-			return oddCombines, nil
 			break
 
 		}
 	}
 
-	return nil, nil
+	return oddCombines, nil
 }
 
 func getBets(list []int, index int, foots *[]FootView, bets *[][]FootView, matches []Match) {
