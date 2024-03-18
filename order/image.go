@@ -154,7 +154,7 @@ func UploadBets(c *gin.Context) {
 	}
 	order := FindById(betImgObj.OrderId, false)
 	//更新订单为已上传
-	if order.BetUpload {
+	if order.BetUpload == 2 {
 		//如果订单已经传了图片 那么就要删除以前的
 		derr := tx.Model(&OrderImage{}).Delete(&OrderImage{ParentId: betImgObj.OrderId}).Error
 		if derr != nil {
@@ -170,8 +170,8 @@ func UploadBets(c *gin.Context) {
 		tx.Rollback()
 		return
 	}
-	if !order.BetUpload {
-		dbErr := tx.Model(&Order{}).Update("bet_upload", 1).Error
+	if !(order.BetUpload == 2) {
+		dbErr := tx.Model(&Order{}).Update("bet_upload", 2).Error
 		if dbErr != nil {
 			log.Error(dbErr)
 			common.FailedReturn(c, "更新图标失败")
@@ -205,7 +205,7 @@ func UpdateOddHandler(c *gin.Context) {
 	}
 
 	//调整赔率
-	if betImgObj.OddChange && len(betImgObj.MatchOdds) > 0 {
+	if len(betImgObj.MatchOdds) > 0 {
 		tx := mysql.DB.Begin()
 		var matchs = betImgObj.MatchOdds
 
@@ -262,6 +262,13 @@ func UpdateOddHandler(c *gin.Context) {
 		}
 		tx.Commit()
 	}
+
+	derr := mysql.DB.Model(&Order{UUID: betImgObj.OrderId}).Update("bet_upload", 1).Error
+	if derr != nil {
+		common.FailedReturn(c, "更新传票状态失败")
+		return
+	}
+	common.SuccessReturn(c, "执行成功")
 }
 
 // @Summary 管理员订单查询接口

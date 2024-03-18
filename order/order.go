@@ -305,8 +305,8 @@ type Order struct {
 	//如果是大乐透 七星彩 排列3 5 需要填期号
 	IssueId string `validate:"required" message:"需要期号"`
 
-	//是否已经出票？
-	BetUpload bool
+	//0 代表 待打票   1 代表打票中  2 代表已传票
+	BetUpload int `gorm:"type:tinyint(1) comment '0 代表待打票   1代表打票中  2代表已传票' "`
 
 	Comment string `grom:"type:varchar(64)"`
 }
@@ -427,7 +427,7 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 	}
 	order.DeadTime = finishedTime
 	order.Bonus = 0
-	order.BetUpload = false
+	order.BetUpload = 0
 	var userInfo = user.FetUserInfo(c)
 	if userInfo == (user.User{}) {
 		common.FailedReturn(c, "用户未登录/不存在")
