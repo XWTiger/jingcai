@@ -215,7 +215,7 @@ func UpdateOddHandler(c *gin.Context) {
 					tx.Save(&lottery[i2])
 				}
 			}
-			bets, err := getBetByMatchId(matchs[i].MatchId)
+			bets, err := getBetByMatchIdAndOid(matchs[i].MatchId, betImgObj.OrderId)
 			if err == nil {
 				for j, bet := range bets {
 					for i3, view := range bets[j].Group {
