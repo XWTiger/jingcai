@@ -171,7 +171,7 @@ func UploadBets(c *gin.Context) {
 		return
 	}
 	if !(order.BetUpload == 2) {
-		dbErr := tx.Model(&Order{}).Update("bet_upload", 2).Error
+		dbErr := tx.Model(&Order{UUID: betImgObj.OrderId}).Update("bet_upload", 2).Error
 		if dbErr != nil {
 			log.Error(dbErr)
 			common.FailedReturn(c, "更新图标失败")
