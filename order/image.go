@@ -24,7 +24,7 @@ type OrderImage struct {
 func getImageByOrderId(oid string) []OrderImage {
 
 	var images = make([]OrderImage, 0)
-	if err := mysql.DB.Model(OrderImage{}).Where(&OrderImage{ParentId: oid}).Find(&images).Error; err != nil {
+	if err := mysql.DB.Model(&OrderImage{}).Where(&OrderImage{ParentId: oid}).Find(&images).Error; err != nil {
 		log.Error(err)
 		return images
 	}
@@ -36,10 +36,7 @@ type UploadBet struct {
 	OrderId string `validate:"required"`
 
 	//图片地址
-	Url []string `validate:"required"`
-
-	//赔率是否和购买赔率不一致， 不一致就
-	OddChange bool
+	Url []string
 
 	//如果OddChange 为true 才传该对象
 	MatchOdds []MatchOdd
@@ -85,31 +82,14 @@ func UploadBets(c *gin.Context) {
 	var betImgObj UploadBet
 	err := c.BindJSON(&betImgObj)
 	if err != nil {
+		log.Error(err)
 		common.FailedReturn(c, "参数错误")
 		return
 	}
 	tx := mysql.DB.Begin()
-	//
-	//order := FindById(betImgObj.OrderId, true)
-	//var mapper map[string]Match
-	//if len(order.Matches) > 0 {
-	//	for _, match := range order.Matches {
-	//		mapper[match.MatchId] = match
-	//	}
-	//}
-	//
-	//if order.LotteryType == FOOTBALL || order.LotteryType == BASKETBALL {
-	//
-	//	for i, modd := range betImgObj.MatchOdds {
-	//		v, ok := mapper[modd.MatchId]
-	//		if ok {
-	//			betImgObj.MatchOdds[i].Type = v.Combines
-	//		}
-	//	}
-	//}
 
 	//调整赔率
-	if betImgObj.OddChange && len(betImgObj.MatchOdds) > 0 {
+	if len(betImgObj.MatchOdds) > 0 {
 		var matchs = betImgObj.MatchOdds
 
 		for i := 0; i < len(matchs); i++ {
@@ -156,7 +136,7 @@ func UploadBets(c *gin.Context) {
 	//更新订单为已上传
 	if order.BetUpload == 2 {
 		//如果订单已经传了图片 那么就要删除以前的
-		derr := tx.Model(&OrderImage{}).Delete(&OrderImage{ParentId: betImgObj.OrderId}).Error
+		derr := tx.Model(&OrderImage{ParentId: betImgObj.OrderId}).Where("parent_id=?", betImgObj.OrderId).Delete(&OrderImage{ParentId: betImgObj.OrderId}).Error
 		if derr != nil {
 			log.Error(derr)
 			common.FailedReturn(c, "图标保存失败")
@@ -200,6 +180,7 @@ func UpdateOddHandler(c *gin.Context) {
 	var betImgObj UploadBet
 	err := c.BindJSON(&betImgObj)
 	if err != nil {
+		log.Error(err)
 		common.FailedReturn(c, "参数错误")
 		return
 	}
