@@ -764,9 +764,10 @@ func OrderList(c *gin.Context) {
 				matchList[idx].Combines = detailList
 			}
 		}
-		var uuid string
+		var images []OrderImage
 		//如果是参加别人的合买 就把票查回来
-		if strings.Compare(order.SaveType, ALL_WIN) == 0 {
+		if strings.Compare(order.SaveType, ALL_WIN) == 0 || order.AllWinId > 0 {
+			var uuid string
 			var initAllWin AllWin
 			mysql.DB.Model(&AllWin{
 				Model: gorm.Model{
@@ -778,9 +779,11 @@ func OrderList(c *gin.Context) {
 			} else {
 				uuid = initAllWin.ParentOrderId
 			}
-
+			images = getImageByOrderId(uuid)
+		} else {
+			images = getImageByOrderId(order.UUID)
 		}
-		images := getImageByOrderId(uuid)
+
 		resultList = append(resultList, OrderVO{
 			Order:  &list[index],
 			Images: images,
