@@ -55,7 +55,7 @@ var log = ilog.Logger
 // C6_FS 组选六复式 1 2 3 4 5
 // C6_DT 组选六胆拖 D:6,T:0 1 2 3 4 5
 // ===========排列5=============
-// DIRECT（单注）   C6 （组选6） C3 （组选3）
+// DIRECT（单注）
 // DIRECT_PLUS    直选多注
 // RANDOM 随机一注
 // RANDOM_PLUS 随机多注
@@ -3415,18 +3415,17 @@ func getArr(content string, ty string, way string) ([]string, error) {
 			fmt.Println("排列3 直选复式(组合三)： ", len(realNums), " 组")
 			return realNums, nil
 		case DIRECT:
+			return getMoreBets(content)
 		case DIRECT_PLUS:
+			return getMoreBets(content)
 		case RANDOM:
+			return getMoreBets(content)
 		case RANDOM_PLUS:
+			return getMoreBets(content)
 		case C6_PLUS:
+			return getMoreBets(content)
 		default:
-			if strings.Contains(content, ",") {
-				return strings.Split(content, ","), nil
-			} else {
-				var strs []string
-				strs = append(strs, content)
-				return strs, nil
-			}
+			return getMoreBets(content)
 		}
 		break
 	case P5:
@@ -3511,17 +3510,15 @@ func getArr(content string, ty string, way string) ([]string, error) {
 			}
 			return realNums, nil
 		case DIRECT:
+			return getMoreBets(content)
 		case DIRECT_PLUS:
+			return getMoreBets(content)
 		case RANDOM:
+			return getMoreBets(content)
 		case RANDOM_PLUS:
+			return getMoreBets(content)
 		default:
-			if strings.Contains(content, ",") {
-				return strings.Split(content, ","), nil
-			} else {
-				var strs []string
-				strs = append(strs, content)
-				return strs, nil
-			}
+			return getMoreBets(content)
 
 		}
 		break
@@ -3542,18 +3539,15 @@ func getArr(content string, ty string, way string) ([]string, error) {
 			}
 			return realNums, nil
 		case DIRECT:
+			return getMoreBets(content)
 		case RANDOM:
+			return getMoreBets(content)
 		case DIRECT_PLUS:
+			return getMoreBets(content)
 		case RANDOM_PLUS:
+			return getMoreBets(content)
 		default:
-			if strings.Contains(content, ",") {
-				return strings.Split(content, ","), nil
-			} else {
-				var strs []string
-				strs = append(strs, content)
-				return strs, nil
-			}
-			break
+			return getMoreBets(content)
 
 		}
 
@@ -3695,22 +3689,29 @@ func getArr(content string, ty string, way string) ([]string, error) {
 			}
 			return realNums, nil
 		case DIRECT:
+			return getMoreBets(content)
 		case DIRECT_PLUS:
+			return getMoreBets(content)
 		case RANDOM:
+			return getMoreBets(content)
 		case RANDOM_PLUS:
+			return getMoreBets(content)
 		default:
-			if strings.Contains(content, ",") {
-				return strings.Split(content, ","), nil
-			} else {
-				var strs []string
-				strs = append(strs, content)
-				return strs, nil
-			}
-			break
+			return getMoreBets(content)
 
 		}
 
 		break
 	}
 	return make([]string, 0), nil
+}
+
+func getMoreBets(content string) ([]string, error) {
+	if strings.Contains(content, ",") {
+		return strings.Split(content, ","), nil
+	} else {
+		var strs []string
+		strs = append(strs, content)
+		return strs, nil
+	}
 }
