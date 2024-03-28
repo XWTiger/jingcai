@@ -569,21 +569,6 @@ func checkSuperLotto(ord *Order) error {
 	if len(ord.Content) <= 0 {
 		return errors.New("选号不能为空")
 	}
-	//判断是否多注
-	if strings.Contains(ord.Content, ",") {
-		buffer := strings.Split(ord.Content, ",")
-		for _, s := range buffer {
-			temp := strings.Split(s, " ")
-			if len(temp) != 7 {
-				return errors.New("选号存在问题")
-			}
-		}
-	} else {
-		buffer := strings.Split(ord.Content, " ")
-		if len(buffer) != 7 {
-			return errors.New("选号存在问题")
-		}
-	}
 
 	if len(ord.IssueId) <= 0 {
 		return errors.New("订单期号不能为空")
@@ -615,10 +600,13 @@ func checkSuperLotto(ord *Order) error {
 	}
 	for _, num := range nums {
 		numbers := strings.Split(num, " ")
+		if len(numbers) != 7 {
+			return errors.New("选号存在问题, 不是7位数")
+		}
 		for i, number := range numbers {
-			numb, err := strconv.Atoi(number)
-			if err != nil {
-				log.Error(err)
+			numb, cverr := strconv.Atoi(number)
+			if cverr != nil {
+				log.Error(cverr)
 				return errors.New("选号存在问题")
 			}
 			if i <= 5 {
@@ -3604,7 +3592,7 @@ func getArr(content string, ty string, way string) ([]string, error) {
 			qqtStr := strings.ReplaceAll(arr[1], "QQT:", "")
 			qqt = strings.Split(qqtStr, " ")
 			hqdStr := strings.ReplaceAll(arr[2], "HQD:", "")
-			hqtStr := strings.ReplaceAll(arr[2], "HQT:", "")
+			hqtStr := strings.ReplaceAll(arr[3], "HQT:", "")
 			hqt = strings.Split(hqtStr, " ")
 			if len(qqd)+len(qqt) <= 5 || len(hqt) <= 1 || len(hqdStr) != 2 {
 				return nil, errors.New("双区胆拖数据错误")
