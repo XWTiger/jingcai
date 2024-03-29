@@ -3564,7 +3564,7 @@ func getArr(content string, ty string, way string) ([]string, error) {
 			numArr := util.CombineArray(qqt, k)
 			var realNums []string
 			for _, v := range numArr {
-				numStr := qqdStr + strings.Join(v, " ") + " " + strings.Join(hq, " ")
+				numStr := qqdStr + " " + strings.Join(v, " ") + " " + strings.Join(hq, " ")
 				realNums = append(realNums, numStr)
 			}
 			return realNums, nil
@@ -3594,7 +3594,7 @@ func getArr(content string, ty string, way string) ([]string, error) {
 			hqdStr := strings.ReplaceAll(arr[2], "HQD:", "")
 			hqtStr := strings.ReplaceAll(arr[3], "HQT:", "")
 			hqt = strings.Split(hqtStr, " ")
-			if len(qqd)+len(qqt) <= 5 || len(hqt) <= 1 || len(hqdStr) != 2 {
+			if len(qqd)+len(qqt) <= 5 || len(hqt)+len(hqdStr) <= 2 {
 				return nil, errors.New("双区胆拖数据错误")
 			}
 			var realNums []string
