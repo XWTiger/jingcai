@@ -644,10 +644,6 @@ func checkSevenStar(ord *Order) error {
 	if len(ord.Content) <= 0 {
 		return errors.New("选号不能为空")
 	}
-	buffer := strings.Split(ord.Content, " ")
-	if len(buffer) != 7 {
-		return errors.New("选号存在问题")
-	}
 
 	if len(ord.IssueId) <= 0 {
 		return errors.New("订单期号不能为空")
@@ -674,6 +670,10 @@ func checkSevenStar(ord *Order) error {
 		return errors.New("参数异常")
 	}
 	for _, num := range nums {
+		buffer := strings.Split(num, " ")
+		if len(buffer) != 7 {
+			return errors.New("选号存在问题：" + num)
+		}
 		numbers := strings.Split(num, " ")
 		for i, number := range numbers {
 			numb, err := strconv.Atoi(number)
