@@ -3485,6 +3485,11 @@ func getArr(content string, ty string, way string) ([]string, error) {
 			if len(arr) != 5 {
 				return nil, errors.New("排列5 直选复式按位 位数错误")
 			}
+			arr[0] = strings.ReplaceAll(arr[0], "I1:", "")
+			arr[1] = strings.ReplaceAll(arr[1], "I2:", "")
+			arr[2] = strings.ReplaceAll(arr[2], "I3:", "")
+			arr[3] = strings.ReplaceAll(arr[3], "I4:", "")
+			arr[4] = strings.ReplaceAll(arr[4], "I5:", "")
 			var nums [][]string
 			for _, s := range arr {
 				nums = append(nums, strings.Split(s, " "))
