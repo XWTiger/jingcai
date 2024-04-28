@@ -417,6 +417,8 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 		order.Matches[i].TimeDate = time
 	}
 
+	var frontResult = order.ShouldPay
+	order.ShouldPay = 0
 	now := time.Now()
 	//校验是否在售票时间内
 	finishedTime := getFinishedTime(order)
@@ -562,6 +564,12 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 		common.FailedReturn(c, "购买类型不正确")
 		return
 	}
+	if frontResult != order.ShouldPay {
+		log.Warn("============前后端应付不对=============")
+		log.Warn("前端：", frontResult)
+		log.Warn("后端：", order.ShouldPay)
+		log.Warn("=====================================")
+	}
 	tx.Commit()
 }
 
@@ -590,6 +598,7 @@ func checkSuperLotto(ord *Order) error {
 		return err
 	}
 
+	fmt.Println("大乐透注数 ================> ", len(nums))
 	if ord.Append {
 		ord.ShouldPay += float32(len(nums) * 3 * ord.Times)
 	} else {
@@ -672,13 +681,13 @@ func checkSevenStar(ord *Order) error {
 				log.Error(err)
 				return errors.New("选号存在问题")
 			}
-			if i <= 6 {
+			if i < 6 {
 				if numb < 0 || numb > 9 {
 					return errors.New("七星彩前六位只能在000000-999999之间")
 				}
 			}
 
-			if i > 6 {
+			if i == 6 {
 				if numb < 0 || numb > 14 {
 					return errors.New("七星彩后1位只能在0—14之间")
 				}
@@ -3426,7 +3435,7 @@ func getArr(content string, ty string, way string) ([]string, error) {
 		case ZX_FS_QZH: //直选复式全组合
 			arr := strings.Split(content, " ")
 			if len(arr) < 5 {
-				return nil, errors.New("排列5 直选全组合 五不同 位数不够5位")
+				return nil, errors.New("排列5 直选全组合  位数不够5位")
 			}
 			res := util.PermuteAnmByStr(arr, 5)
 			var realNums []string
