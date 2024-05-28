@@ -161,9 +161,9 @@ func ShopBills(c *gin.Context) {
 	var bills []user.Bill
 	var count int64
 	if start != "" && end != "" {
-		mysql.DB.Model(user.Bill{}).Where(user.Bill{ShopId: shopInfo.ID}).Where("created_at BETWEEN ? AND ? ", start, end).Offset((pageN - 1) * pageS).Limit(pageS).Count(&count).Find(&bills)
+		mysql.DB.Model(user.Bill{}).Where(user.Bill{ShopId: shopInfo.ID}).Where("created_at BETWEEN ? AND ? ", start, end).Count(&count).Offset((pageN - 1) * pageS).Limit(pageS).Order("created_at desc").Find(&bills)
 	} else {
-		mysql.DB.Model(user.Bill{}).Where(user.Bill{ShopId: shopInfo.ID}).Offset((pageN - 1) * pageS).Limit(pageS).Count(&count).Find(&bills)
+		mysql.DB.Debug().Model(user.Bill{}).Where(user.Bill{ShopId: shopInfo.ID}).Count(&count).Offset((pageN - 1) * pageS).Limit(pageS).Order("created_at desc").Find(&bills)
 	}
 
 	common.SuccessReturn(c, common.PageCL{
