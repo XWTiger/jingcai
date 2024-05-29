@@ -96,6 +96,8 @@ func BindRouters(g *gin.Engine, config *config.Config) {
 		s.Use(user.AdminCheck())
 		s.GET("/complains", admin.ListComplain)
 		s.POST("/notify", advise.Create)
+		s.GET("/notify/list", advise.List)
+		s.DELETE("/notify/:id", advise.Delete)
 		s.POST("/check/lottery_check", order.AddCheckForManual)
 		s.POST("/add-score", user.AddScore)
 		s.GET("/order", order.AdminOrderList)

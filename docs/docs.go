@@ -806,7 +806,7 @@ const docTemplate = `{
         },
         "/api/shop/bills/all": {
             "get": {
-                "description": "门店流水 统计对象 入账： 充值、兑奖、活动赠送； 出账：购彩，清账",
+                "description": "门店流水丰富查询 统计对象 入账： 充值、兑奖、活动赠送； 出账：购彩，清账",
                 "consumes": [
                     "application/json"
                 ],
@@ -816,7 +816,7 @@ const docTemplate = `{
                 "tags": [
                     "owner 店主"
                 ],
-                "summary": "门店流水",
+                "summary": "门店流水丰富查询",
                 "parameters": [
                     {
                         "type": "integer",
@@ -836,8 +836,7 @@ const docTemplate = `{
                         "type": "string",
                         "description": "BILL_COMMENT_CASHED(兑奖),BILL_COMMENT_ADD(充值),BILL_COMMENT_CLEAR(清账),BILL_COMMENT_ACTIVITY(活动赠送),BILL_COMMENT_BUY(购彩)",
                         "name": "type",
-                        "in": "query",
-                        "required": true
+                        "in": "query"
                     },
                     {
                         "type": "string",
@@ -1333,6 +1332,80 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/super/notify/list": {
+            "get": {
+                "description": "通告列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "owner 店主"
+                ],
+                "summary": "通告列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "页码",
+                        "name": "pageNo",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "每页大小",
+                        "name": "pageSize",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/super/notify/{id}": {
+            "delete": {
+                "description": "删除通告",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "owner 店主"
+                ],
+                "summary": "删除通告",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/super/order": {
             "get": {
                 "description": "订单查询接口",
@@ -1366,6 +1439,24 @@ const docTemplate = `{
                         "name": "pageSize",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "只看未上传图片， 0代表 否 1代表是",
+                        "name": "hasImage",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "截止时间 2023-01-01 21:27:00",
+                        "name": "startDate",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "截止时间 2023-01-01 21:27:00",
+                        "name": "endDate",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -2693,6 +2784,9 @@ const docTemplate = `{
                     "description": "比赛时间 2023-05-23 01:10:00",
                     "type": "string"
                 },
+                "timeDateStr": {
+                    "type": "string"
+                },
                 "updatedAt": {
                     "type": "string"
                 }
@@ -2748,8 +2842,8 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "betUpload": {
-                    "description": "是否已经出票？",
-                    "type": "boolean"
+                    "description": "0 代表 待打票   1 代表打票中  2 代表已传票",
+                    "type": "integer"
                 },
                 "bonus": {
                     "description": "奖金",
@@ -2850,10 +2944,6 @@ const docTemplate = `{
                 "createdAt": {
                     "type": "string"
                 },
-                "delete": {
-                    "description": "是否删除",
-                    "type": "boolean"
-                },
                 "deletedAt": {
                     "$ref": "#/definitions/gorm.DeletedAt"
                 },
@@ -2909,8 +2999,7 @@ const docTemplate = `{
         "order.UploadBet": {
             "type": "object",
             "required": [
-                "orderId",
-                "url"
+                "orderId"
             ],
             "properties": {
                 "matchOdds": {
@@ -2919,10 +3008,6 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/order.MatchOdd"
                     }
-                },
-                "oddChange": {
-                    "description": "赔率是否和购买赔率不一致， 不一致就",
-                    "type": "boolean"
                 },
                 "orderId": {
                     "description": "订单id",

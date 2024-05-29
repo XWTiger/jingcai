@@ -262,6 +262,9 @@ func UpdateOddHandler(c *gin.Context) {
 // @param lotteryType  query string false "足彩（FOOTBALL） 大乐透（SUPER_LOTTO）  排列三（P3） 篮球(BASKETBALL) 七星彩（SEVEN_STAR） 排列五（P5）"
 // @param pageNo  query int true "页码"
 // @param pageSize  query int true "每页大小"
+// @param hasImage query string false "只看未上传图片， 0代表 否 1代表是"
+// @param startDate  query string false "截止时间 2023-01-01 21:27:00"
+// @param endDate  query string false "截止时间 2023-01-01 21:27:00"
 // @Router /api/super/order [get]
 func AdminOrderList(c *gin.Context) {
 	var userInfo = user.FetUserInfo(c)
@@ -269,6 +272,10 @@ func AdminOrderList(c *gin.Context) {
 	lotteryType := c.Query("lotteryType")
 	page, _ := strconv.Atoi(c.Query("pageNo"))
 	pageSize, _ := strconv.Atoi(c.Query("pageSize"))
+	hasImage := c.Query("hasImage")
+
+	startDate := c.Query("startDate")
+	endDate := c.Query("endDate")
 
 	// TODO
 	if strings.Compare(userInfo.Role, user.ADMIN) != 0 {
@@ -280,20 +287,28 @@ func AdminOrderList(c *gin.Context) {
 	if lotteryType != "" {
 		param.LotteryType = lotteryType
 	}
+
 	var list = make([]Order, 0)
 	var resultList = make([]*OrderVO, 0)
 	var query *gorm.DB
 	var query2 *gorm.DB
 
 	if lotteryType != "" {
-		query = mysql.DB.Model(param).Where("all_win_id > 0 and pay_status = true  and (orders.save_type='TOMASTER' or  orders.save_type='ALLWIN')").Joins("INNER JOIN all_wins on orders.all_win_id = all_wins.id and all_wins.`parent_id`=0  and all_wins.`status` = true" + " and orders.lottery_type='" + lotteryType + "'")
-		query2 = mysql.DB.Model(param).Select("orders.* ").Where("orders.deleted_at is null and pay_status = true and (orders.save_type='TOMASTER' or  orders.save_type='ALLWIN')" + " and orders.lottery_type='" + lotteryType + "'")
+		query = mysql.DB.Model(&param).Where("all_win_id > 0 and pay_status = true  and (orders.save_type='TOMASTER' or  orders.save_type='ALLWIN')").Joins("INNER JOIN all_wins on orders.all_win_id = all_wins.id and all_wins.`parent_id`=0  and all_wins.`status` = true" + " and orders.lottery_type='" + lotteryType + "'")
+		query2 = mysql.DB.Model(&param).Select("orders.* ").Where("orders.deleted_at is null and pay_status = true and (orders.save_type='TOMASTER' or  orders.save_type='ALLWIN')" + " and orders.lottery_type='" + lotteryType + "'")
 	} else {
-		query = mysql.DB.Model(param).Where("all_win_id > 0 and pay_status = true  and (orders.save_type='TOMASTER' or  orders.save_type='ALLWIN')").Joins("INNER JOIN all_wins on orders.all_win_id = all_wins.id and all_wins.`parent_id`=0  and all_wins.`status` = true")
-		query2 = mysql.DB.Model(param).Select("orders.* ").Where("orders.deleted_at is null and pay_status = true and (orders.save_type='TOMASTER' or  orders.save_type='ALLWIN')")
+		query = mysql.DB.Model(&param).Where("all_win_id > 0 and pay_status = true  and (orders.save_type='TOMASTER' or  orders.save_type='ALLWIN')").Joins("INNER JOIN all_wins on orders.all_win_id = all_wins.id and all_wins.`parent_id`=0  and all_wins.`status` = true")
+		query2 = mysql.DB.Model(&param).Select("orders.* ").Where("orders.deleted_at is null and pay_status = true and (orders.save_type='TOMASTER' or  orders.save_type='ALLWIN')")
 	}
 	var count int64
-
+	if hasImage == "1" {
+		query.Where("orders.bet_upload != 2")
+		query2.Where("orders.bet_upload != 2")
+	}
+	if startDate != "" && endDate != "" {
+		query.Where("dead_time between " + startDate + " and " + endDate)
+		query2.Where("dead_time between " + startDate + " and " + endDate)
+	}
 	mysql.DB.Raw("? union ? ", query, query2).Count(&count)
 	mysql.DB.Raw("? union ? ", query, query2).Order("orders.create_at desc").Offset((page - 1) * pageSize).Limit(pageSize).Find(&list)
 	if len(list) <= 0 {
