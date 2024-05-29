@@ -6,6 +6,7 @@ import (
 	"golang.org/x/net/context"
 	"gopkg.in/yaml.v3"
 	"jingcai/admin"
+	"jingcai/advise"
 	"jingcai/audit"
 	"jingcai/bbs"
 	"jingcai/claim"
@@ -82,6 +83,7 @@ func initTables() {
 	mysql.DB.AutoMigrate(&shop.Shop{})
 	mysql.DB.AutoMigrate(&user.User{})
 	mysql.DB.AutoMigrate(&user.ScoreUserNotify{})
+	mysql.DB.AutoMigrate(&advise.NotificationPO{})
 	mysql.DB.AutoMigrate(&order.JobExecution{})
 	mysql.DB.AutoMigrate(&audit.AuditLog{})
 	mysql.DB.AutoMigrate(&claim.Claim{})

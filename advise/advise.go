@@ -72,12 +72,10 @@ func List(c *gin.Context) {
 	var notify []NotificationPO
 	page, _ := strconv.Atoi(c.Query("pageNo"))
 	pageSize, _ := strconv.Atoi(c.Query("pageSize"))
-	c.BindJSON(&notify)
 	var count int64
-	mysql.DB.AutoMigrate(&NotificationPO{})
 	if err := mysql.DB.Model(&NotificationPO{}).Where("expired  >= ? ", date).Count(&count).Offset((page - 1) * pageSize).Limit(pageSize).Find(&notify).Error; err != nil {
 		log.Error(err)
-		common.SuccessReturn(c, "欢迎来到黑马门店助手！")
+		common.FailedReturn(c, "欢迎来到黑马门店助手！")
 		return
 	}
 	common.SuccessReturn(c, common.PageCL{
@@ -118,7 +116,6 @@ func Query(c *gin.Context) {
 	time := time.Now()
 	date := time.Format("2006-01-02 15:04:05")
 	var notify NotificationPO
-	mysql.DB.AutoMigrate(&NotificationPO{})
 	if err := mysql.DB.Model(&NotificationPO{}).Where("expired  >= ?", date).First(&notify).Error; err != nil {
 		log.Error(err)
 		common.SuccessReturn(c, "欢迎来到黑马门店助手！")
