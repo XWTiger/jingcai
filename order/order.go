@@ -502,7 +502,7 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 			return
 		}
 
-		if order.AllWinId == 0 {
+		if order.AllWinId == 0 && order.SaveType == TOMASTER {
 			billErr := user.CheckScoreOrDoBill(order.UserID, order.UUID, order.ShouldPay, true, tx)
 			if billErr != nil {
 				log.Error("扣款失败， 无法提交订单")
@@ -534,7 +534,7 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 			common.FailedReturn(c, err.Error())
 			return
 		}
-		if order.AllWinId == 0 {
+		if order.AllWinId == 0 && order.SaveType == TOMASTER {
 			billErr := user.CheckScoreOrDoBill(order.UserID, order.UUID, order.ShouldPay, true, tx)
 			if billErr != nil {
 				log.Error("扣款失败， 无法提交订单")
@@ -700,6 +700,31 @@ func checkSevenStar(ord *Order) error {
 		AddSevenStarCheck(nil)
 	}
 	return nil
+}
+
+// @Summary 临时订单提交到店接口
+// @Description 临时订单提交到店接口
+// @Tags order 订单
+// @Accept json
+// @Produce json
+// @Success 200 {object} common.BaseResponse
+// @failure 500 {object} common.BaseResponse
+// @param orderNo  query string true "订单id"
+// @Router /api/order [put]
+func OrderTempToMaster(c *gin.Context) {
+	orderNo := c.Query("orderNo")
+	var userInfo = user.FetUserInfo(c)
+	if userInfo == (user.User{}) {
+		log.Error("用户不存在")
+		common.FailedReturn(c, "用户不存在")
+	}
+	order := FindById(orderNo, false)
+	if order.UUID != "" {
+		tx := mysql.DB.Begin()
+		tx.Model(&Order{}).Where("uuid = ?", order.UUID).Update("save_type = ?", TOMASTER)
+		user.CheckScoreOrDoBill(userInfo.ID, order.UUID, order.ShouldPay, false, tx)
+		tx.Commit()
+	}
 }
 
 // @Summary 用户自己的订单查询接口
@@ -1004,7 +1029,7 @@ func football(c *gin.Context, order *Order) error {
 	order.ShouldPay = float32(v3)
 	order.CreatedAt = time.Now()
 	fmt.Println("实际付款：", order.ShouldPay)
-	if order.AllWinId == 0 {
+	if order.AllWinId == 0 && order.SaveType == TOMASTER {
 		billErr := user.CheckScoreOrDoBill(order.UserID, order.UUID, order.ShouldPay, true, tx)
 		if err != nil {
 			log.Error("扣款失败， 无法提交订单")
@@ -2623,7 +2648,7 @@ func CreatePLW(ord *Order) error {
 		}
 	}
 	//扣款逻辑统一处理
-	if ord.AllWinId == 0 {
+	if ord.AllWinId == 0 && ord.SaveType == TOMASTER {
 		billErr := user.CheckScoreOrDoBill(ord.UserID, ord.UUID, ord.ShouldPay, true, tx)
 		if billErr != nil {
 			log.Error("扣款失败， 无法提交订单")

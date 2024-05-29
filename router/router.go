@@ -132,6 +132,7 @@ func BindRouters(g *gin.Engine, config *config.Config) {
 	{
 		orderGroup.POST("", order.OrderCreate)
 		orderGroup.GET("", order.OrderList)
+		orderGroup.PUT("", order.OrderTempToMaster)
 		orderGroup.GET("/bets", order.GetBetByOrder)
 		orderGroup.GET("/all_win", order.AllWinList)
 		orderGroup.POST("/all_win", order.AllWinCreateHandler)

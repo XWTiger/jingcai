@@ -163,7 +163,7 @@ func basketball(c *gin.Context, order *Order) error {
 	order.ShouldPay = float32(2 * len(bonus) * order.Times)
 	order.CreatedAt = time.Now()
 	fmt.Println("实际付款：", order.ShouldPay)
-	if order.AllWinId == 0 {
+	if order.AllWinId == 0 && order.SaveType == TOMASTER {
 		billErr := user.CheckScoreOrDoBill(order.UserID, order.UUID, order.ShouldPay, true, tx)
 		if billErr != nil {
 			log.Error("扣款失败， 无法提交订单")

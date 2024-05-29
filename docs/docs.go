@@ -515,6 +515,42 @@ const docTemplate = `{
                     }
                 }
             },
+            "put": {
+                "description": "临时订单提交到店接口",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "order 订单"
+                ],
+                "summary": "临时订单提交到店接口",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "订单id",
+                        "name": "orderNo",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            },
             "post": {
                 "description": "订单创建接口， matchs 比赛按时间从先到后排序, 提示：所有赔率以店主出票为准！",
                 "consumes": [

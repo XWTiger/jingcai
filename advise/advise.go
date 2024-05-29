@@ -54,6 +54,7 @@ func Create(c *gin.Context) {
 			common.FailedReturn(c, "创建失败")
 		}
 	}
+	common.SuccessReturn(c, "创建成功")
 }
 
 // @Summary 通告列表
@@ -97,7 +98,7 @@ func List(c *gin.Context) {
 func Delete(c *gin.Context) {
 	id := c.Param("id")
 	rid, _ := strconv.Atoi(id)
-	if err := mysql.DB.Model(&Notification{Model: gorm.Model{ID: uint(rid)}}).Delete(&Notification{Model: gorm.Model{ID: uint(rid)}}).Error; err != nil {
+	if err := mysql.DB.Delete(&Notification{}, rid).Error; err != nil {
 		log.Error(err)
 		return
 	}
