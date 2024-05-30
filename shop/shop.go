@@ -52,6 +52,8 @@ type Shop struct {
 	//用户基本信息
 	User user.UserVO `gorm:"-:all"`
 }
+
+// 统计对象
 type Statistics struct {
 
 	//总用户数
@@ -196,7 +198,7 @@ func ShopBills(c *gin.Context) {
 // @Tags owner 店主
 // @Accept json
 // @Produce json
-// @Success 200 {object} common.BaseResponse
+// @Success 200 {object} Statistics
 // @failure 500 {object} common.BaseResponse
 // @param start query   uint true "开始日期 2023-09-25 00:00:00"
 // @param end query   uint true "结束日期 2023-09-25 23:59:59"
