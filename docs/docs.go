@@ -988,6 +988,45 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/super/bbs/update": {
+            "put": {
+                "description": "更新帖子",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "bbs 贴吧"
+                ],
+                "summary": "更新帖子",
+                "parameters": [
+                    {
+                        "description": "提交对象",
+                        "name": "param",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/creeper.Content"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/super/bets": {
             "post": {
                 "description": "票提交接口",

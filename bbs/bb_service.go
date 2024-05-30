@@ -45,7 +45,6 @@ func CommitHandler(c *gin.Context) {
 		commit.BbsContent.CreatedAt = time.Now()
 		commit.BbsContent.UpdatedAt = time.Now()
 
-		mysql.DB.AutoMigrate(&creeper.Content{})
 		mysql.DB.Create(&commit.BbsContent)
 		c.JSON(http.StatusOK, common.Success(commit))
 	} else {
@@ -57,6 +56,37 @@ func CommitHandler(c *gin.Context) {
 	}
 
 }
+
+// @Summary 更新帖子
+// @Description 更新帖子
+// @Tags bbs 贴吧
+// @Accept json
+// @Produce json
+// @Success 200 {object} common.BaseResponse
+// @failure 500 {object} common.BaseResponse
+// @param param body creeper.Content false "提交对象"
+// @Router /api/super/bbs/update [put]
+func UpdateBBSHandler(c *gin.Context) {
+	var commit creeper.Content
+	c.Header("Content-Type", "application/json; charset=utf-8")
+	err := c.BindJSON(&commit)
+	if err == nil {
+		log.Info("commit ====> ", commit)
+		//TODO save user info
+		user := getUserInfo(c)
+		commit.UserID = user.ID
+		mysql.DB.Save(&commit)
+		c.JSON(http.StatusOK, common.Success(commit))
+	} else {
+		log.Error(err)
+		c.JSON(http.StatusInternalServerError, &common.BaseResponse{
+			Code:    0,
+			Message: "参数获取失败",
+		})
+	}
+
+}
+
 func getUserInfo(c *gin.Context) user.User {
 	userInfo, exist := c.Get("userInfo")
 	if exist == false {

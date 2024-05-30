@@ -591,7 +591,7 @@ func CheckScoreOrDoBill(userId uint, orderId string, scoreNum float32, doBill bo
 			OrderId: orderId,
 			Type:    FREE_SCORE,
 			Option:  SUBTRACT,
-			Comment: "购彩",
+			Comment: BILL_COMMENT_BUY,
 		}
 		err := BillForScore(bill, tx)
 		if err != nil {
@@ -689,6 +689,9 @@ func (bill Bill) GetVO() *BillVO {
 		ShopId:     bill.ShopId,
 		Comment:    bill.Comment,
 		ActiveCode: bill.ActiveCode,
+	}
+	if vo.Comment == "购彩" {
+		vo.Comment = BILL_COMMENT_BUY
 	}
 	userVo := FindUserVOById(bill.UserId)
 	if userVo != (UserVO{}) {
