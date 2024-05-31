@@ -879,6 +879,20 @@ const docTemplate = `{
                         "description": "option ADD(入账),SUBTRACT(出账) option 和type 不能同时传 二选一",
                         "name": "option",
                         "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "页码",
+                        "name": "pageNo",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "每页条数",
+                        "name": "pageSize",
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -1563,11 +1577,39 @@ const docTemplate = `{
                     "owner 店主"
                 ],
                 "summary": "管理员基础统计",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "开始日期 2023-09-25 00:00:00",
+                        "name": "start",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "结束日期 2023-09-25 23:59:59",
+                        "name": "end",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "BILL_COMMENT_CASHED(兑奖),BILL_COMMENT_ADD(充值),BILL_COMMENT_CLEAR(清账),BILL_COMMENT_ACTIVITY(活动赠送),BILL_COMMENT_BUY(购彩)",
+                        "name": "type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "option ADD(入账),SUBTRACT(出账) option 和type 不能同时传 二选一",
+                        "name": "option",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/common.BaseResponse"
+                            "$ref": "#/definitions/shop.Statistics"
                         }
                     },
                     "500": {
@@ -3155,6 +3197,39 @@ const docTemplate = `{
                 },
                 "userId": {
                     "type": "integer"
+                }
+            }
+        },
+        "shop.Statistics": {
+            "type": "object",
+            "properties": {
+                "freeScore": {
+                    "description": "赠送积分",
+                    "type": "number"
+                },
+                "onlineNum": {
+                    "description": "在线人数",
+                    "type": "integer"
+                },
+                "score": {
+                    "description": "积分",
+                    "type": "number"
+                },
+                "todayBill": {
+                    "description": "今日流水",
+                    "type": "number"
+                },
+                "totalUserNum": {
+                    "description": "总用户数",
+                    "type": "integer"
+                },
+                "userTotalFreeScore": {
+                    "description": "用户账户免费积分",
+                    "type": "number"
+                },
+                "userTotalScore": {
+                    "description": "用户账户总积分",
+                    "type": "number"
                 }
             }
         },

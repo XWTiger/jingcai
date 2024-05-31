@@ -265,6 +265,7 @@ func UpdateOddHandler(c *gin.Context) {
 // @param hasImage query string false "只看未上传图片， 0代表 否 1代表是"
 // @param startDate  query string false "截止时间 2023-01-01 21:27:00"
 // @param endDate  query string false "截止时间 2023-01-01 21:27:00"
+// @param deadTimeSort query bool false "true or false"
 // @Router /api/super/order [get]
 func AdminOrderList(c *gin.Context) {
 	var userInfo = user.FetUserInfo(c)
@@ -273,6 +274,7 @@ func AdminOrderList(c *gin.Context) {
 	page, _ := strconv.Atoi(c.Query("pageNo"))
 	pageSize, _ := strconv.Atoi(c.Query("pageSize"))
 	hasImage := c.Query("hasImage")
+	deadTimeSort := c.Query("deadTimeSort")
 
 	startDate := c.Query("startDate")
 	endDate := c.Query("endDate")
@@ -309,8 +311,12 @@ func AdminOrderList(c *gin.Context) {
 		query.Where("dead_time between " + startDate + " and " + endDate)
 		query2.Where("dead_time between " + startDate + " and " + endDate)
 	}
+	var orderStr = "orders.create_at desc"
+	if deadTimeSort == "true" {
+		orderStr = "orders.dead_time asc"
+	}
 	mysql.DB.Raw("? union ? ", query, query2).Count(&count)
-	mysql.DB.Raw("? union ? ", query, query2).Order("orders.create_at desc").Offset((page - 1) * pageSize).Limit(pageSize).Find(&list)
+	mysql.DB.Raw("? union ? ", query, query2).Order(orderStr).Offset((page - 1) * pageSize).Limit(pageSize).Find(&list)
 	if len(list) <= 0 {
 		common.SuccessReturn(c, &common.PageCL{
 			PageNo:   page,

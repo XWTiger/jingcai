@@ -399,7 +399,7 @@ func ShopOwnerComprehensiveness(c *gin.Context) {
 		PageNo:   pageN,
 		PageSize: pageS,
 		Total:    int(count),
-		Content:  bills,
+		Content:  vos,
 	})
 }
 
@@ -437,7 +437,10 @@ func QueryShopUser(c *gin.Context) {
 		mysql.DB.Model(user.User{}).Where(&user.User{Model: gorm.Model{
 			ID: uint(userId),
 		}}).First(&userInfo)
-		common.SuccessReturn(c, userInfo)
+		dto := userInfo.GetDTO()
+		free, _ := score.QueryByUserId(dto.ID)
+		dto.FreeScore = free.Score
+		common.SuccessReturn(c, dto)
 		return
 	} else if pageNo != "" && pageSize != "" {
 		pageN, _ := strconv.Atoi(pageNo)

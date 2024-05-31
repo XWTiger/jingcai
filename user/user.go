@@ -109,6 +109,7 @@ type TokenVO struct {
 }
 
 type UserDTO struct {
+	ID    uint
 	Phone string
 	//昵称
 	Name string
@@ -131,6 +132,7 @@ type UserDTO struct {
 
 func (u User) GetDTO() UserDTO {
 	return UserDTO{
+		ID:             u.ID,
 		Phone:          u.Phone,
 		Name:           u.Name,
 		Role:           u.Role,
