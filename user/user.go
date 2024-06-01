@@ -591,7 +591,7 @@ func CheckScoreOrDoBill(userId uint, orderId string, scoreNum float32, doBill bo
 			Num:     userScore,
 			UserId:  userId,
 			OrderId: orderId,
-			Type:    FREE_SCORE,
+			Type:    SCORE,
 			Option:  SUBTRACT,
 			Comment: BILL_COMMENT_BUY,
 		}
