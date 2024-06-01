@@ -81,6 +81,9 @@ func Upload(c *gin.Context) {
 		})
 	}
 	log.Info("=== upload ok %d files ===", len(files))
+	if len(files) <= 0 {
+		common.FailedReturn(c, "文件失败请确定参数是否错误")
+	}
 	if err := mysql.DB.Create(&filestores).Error; err != nil {
 		log.Error("mysql create failed", err)
 		common.FailedReturn(c, "保存图片失败")
