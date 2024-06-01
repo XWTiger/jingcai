@@ -38,12 +38,12 @@ func Init(c *config.Config) {
 // @Summary 上传文件或者图片
 // @Description 上传文件或者图片
 // @Tags  files 图片/文件
-// @Accept json
+// @Accept multipart/form-data
 // @Produce json
 // @Success 200 {object} common.BaseResponse
 // @failure 500 {object} common.BaseResponse
 // @param type query string false "BBS,USER,HEADER 或则null"
-// @Param files formData file true "文件"
+// @Param files formData []file true "文件"
 // @Router /api/upload [post]
 func Upload(c *gin.Context) {
 	form, err := c.MultipartForm()
@@ -81,7 +81,6 @@ func Upload(c *gin.Context) {
 		})
 	}
 	log.Info("=== upload ok %d files ===", len(files))
-	mysql.DB.AutoMigrate(&FileStore{})
 	if err := mysql.DB.Create(&filestores).Error; err != nil {
 		log.Error("mysql create failed", err)
 		common.FailedReturn(c, "保存图片失败")

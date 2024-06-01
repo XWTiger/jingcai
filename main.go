@@ -88,5 +88,6 @@ func initTables() {
 	mysql.DB.AutoMigrate(&audit.AuditLog{})
 	mysql.DB.AutoMigrate(&claim.Claim{})
 	mysql.DB.AutoMigrate(&score.FreeScore{})
+	mysql.DB.AutoMigrate(&files.FileStore{})
 
 }
