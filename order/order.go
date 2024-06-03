@@ -722,9 +722,19 @@ func OrderTempToMaster(c *gin.Context) {
 	if order.UUID != "" {
 		tx := mysql.DB.Begin()
 		tx.Model(&Order{}).Where("uuid = ?", order.UUID).Update("save_type = ?", TOMASTER)
-		user.CheckScoreOrDoBill(userInfo.ID, order.UUID, order.ShouldPay, false, tx)
+		err := user.CheckScoreOrDoBill(userInfo.ID, order.UUID, order.ShouldPay, false, tx)
+		if err != nil {
+			log.Error(err)
+			tx.Rollback()
+			common.FailedReturn(c, "积分扣除失败")
+			return
+		}
 		tx.Commit()
+		common.SuccessReturn(c, "提交订单成功")
+	} else {
+		common.FailedReturn(c, "订单编号为空")
 	}
+
 }
 
 // @Summary 用户自己的订单查询接口
