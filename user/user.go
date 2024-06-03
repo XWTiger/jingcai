@@ -1141,6 +1141,7 @@ func AddScoreInnerByMachine(score float32, userId uint, way string, tx *gorm.DB)
 	if err := tx.Model(User{}).Where(&User{Model: gorm.Model{
 		ID: userId,
 	}}).Update("score", user.Score+score).Error; err != nil {
+		log.Error("更新订单失败")
 		tx.Rollback()
 		lock.Unlock()
 		return errors.New("更新订单失败")

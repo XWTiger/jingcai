@@ -370,11 +370,21 @@ func CheckBasketBallLottery(checkTime time.Time) {
 					}
 					value, _ := decimal.NewFromFloat32(bonus).Mul(decimal.NewFromInt(int64(order.Times))).Float64()
 					order.Bonus = float32(value)
-					if err := orderTx.Save(&order).Error; err != nil {
+					var updateColumn = map[string]interface{}{"win": order.Win, "bonus": order.Bonus,
+						"comment": order.Comment, "all_match_finished": order.AllMatchFinished,
+						"bonus_status": order.BonusStatus,
+					}
+					if err := tx.Model(&order).Updates(updateColumn); err != nil {
+						log.Error("篮球定时任务，更新订单失败")
+						log.Error(err)
+						tx.Rollback()
+						return
+					}
+					/*if err := orderTx.Save(&order).Error; err != nil {
 						log.Error("定时任务，更新订单")
 						orderTx.Rollback()
 						return
-					}
+					}*/
 					if order.AllWinId > 0 {
 						log.Info("=====  确定合买订单  ======")
 						all := GetAllWinByParentId(order.AllWinId)

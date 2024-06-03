@@ -2705,7 +2705,7 @@ func AddPlwCheck(p int, when *time.Time) {
 				}
 				tx := mysql.DB.Begin()
 				if len(orders) > 0 {
-					for _, o := range orders {
+					for inx, o := range orders {
 						value, ok := mapper[o.IssueId]
 						if ok {
 
@@ -2728,10 +2728,10 @@ func AddPlwCheck(p int, when *time.Time) {
 								case ZX_FS_2T:
 								case ZX_FS_DT:
 									if strings.Compare(s, releaseNum) == 0 {
-										o.Bonus = o.Bonus + 1040
-										o.Comment = "中奖"
-										o.AllMatchFinished = true
-										o.Win = true
+										orders[inx].Bonus = o.Bonus + 1040
+										orders[inx].Comment = "中奖"
+										orders[inx].AllMatchFinished = true
+										orders[inx].Win = true
 									}
 									break
 								case C3_FS:
@@ -2739,10 +2739,10 @@ func AddPlwCheck(p int, when *time.Time) {
 									sendWorld := util.GetCombine3(numArr)
 									for _, ints := range sendWorld {
 										if util.CovertIntArrToStr(ints) == releaseNum {
-											o.Bonus = o.Bonus + 346
-											o.Comment = "中奖"
-											o.AllMatchFinished = true
-											o.Win = true
+											orders[inx].Bonus = o.Bonus + 346
+											orders[inx].Comment = "中奖"
+											orders[inx].AllMatchFinished = true
+											orders[inx].Win = true
 										}
 									}
 									break
@@ -2751,10 +2751,10 @@ func AddPlwCheck(p int, when *time.Time) {
 									res := util.PermuteAnmByStr(strings.Split(s, "s"), 3)
 									for _, re := range res {
 										if strings.Join(re, " ") == releaseNum {
-											o.Bonus = o.Bonus + 173
-											o.Comment = "中奖"
-											o.AllMatchFinished = true
-											o.Win = true
+											orders[inx].Bonus = o.Bonus + 173
+											orders[inx].Comment = "中奖"
+											orders[inx].AllMatchFinished = true
+											orders[inx].Win = true
 										}
 									}
 									break
@@ -2767,8 +2767,8 @@ func AddPlwCheck(p int, when *time.Time) {
 							continue
 						}
 						if o.Win == true {
-							o.BonusStatus = BONUS_READY
-							o.Bonus = o.Bonus * float32(o.Times)
+							orders[inx].BonusStatus = BONUS_READY
+							orders[inx].Bonus = o.Bonus * float32(o.Times)
 							scoreErr := user.AddScoreInnerByMachine(o.Bonus, o.UserID, SCORE, tx)
 							if scoreErr != nil {
 								o.BonusStatus = BONUS_NO_PAY
@@ -2776,7 +2776,17 @@ func AddPlwCheck(p int, when *time.Time) {
 						} else {
 							o.BonusStatus = NO_BONUS
 						}
-						tx.Save(o)
+						//tx.Save(o)
+						var updateColumn = map[string]interface{}{"win": orders[inx].Win, "bonus": orders[inx].Bonus,
+							"comment": orders[inx].Comment, "all_match_finished": orders[inx].AllMatchFinished,
+							"bonus_status": orders[inx].BonusStatus,
+						}
+						if err := tx.Model(&orders[inx]).Updates(updateColumn); err != nil {
+							log.Error("定时任务，更新订单失败")
+							log.Error(err)
+							tx.Rollback()
+							return
+						}
 					}
 				}
 				tx.Commit()
@@ -2824,7 +2834,7 @@ func AddPlwCheck(p int, when *time.Time) {
 				}
 				tx := mysql.DB.Begin()
 				if len(orders) > 0 {
-					for _, o := range orders {
+					for inx, o := range orders {
 						index, ok := mapper[o.IssueId]
 						if ok {
 							content, err := getArr(o.Content, o.LotteryType, o.Way)
@@ -2835,25 +2845,35 @@ func AddPlwCheck(p int, when *time.Time) {
 							releaseNum := result.Value.List[index].LotteryDrawResult
 							for _, s := range content {
 								if strings.Compare(s, releaseNum) == 0 {
-									o.Bonus = o.Bonus + 100000
-									o.Comment = "中奖"
-									o.Win = true
+									orders[inx].Bonus = o.Bonus + 100000
+									orders[inx].Comment = "中奖"
+									orders[inx].Win = true
 								}
 							}
-							o.AllMatchFinished = true
+							orders[inx].AllMatchFinished = true
 							if o.Win == true {
-								o.BonusStatus = BONUS_READY
-								o.Bonus = o.Bonus * float32(o.Times)
+								orders[inx].BonusStatus = BONUS_READY
+								orders[inx].Bonus = orders[inx].Bonus * float32(orders[inx].Times)
 								scoreErr := user.AddScoreInnerByMachine(o.Bonus, o.UserID, SCORE, tx)
 								if scoreErr != nil {
-									o.BonusStatus = BONUS_NO_PAY
+									orders[inx].BonusStatus = BONUS_NO_PAY
 								}
 							} else {
-								o.BonusStatus = NO_BONUS
+								orders[inx].BonusStatus = NO_BONUS
 							}
 
 						}
-						tx.Save(o)
+						//tx.Save(o)
+						var updateColumn = map[string]interface{}{"win": orders[inx].Win, "bonus": orders[inx].Bonus,
+							"comment": orders[inx].Comment, "all_match_finished": orders[inx].AllMatchFinished,
+							"bonus_status": orders[inx].BonusStatus,
+						}
+						if err := tx.Model(&orders[inx]).Updates(updateColumn); err != nil {
+							log.Error("p5定时任务，更新订单失败")
+							log.Error(err)
+							tx.Rollback()
+							return
+						}
 					}
 				}
 				tx.Commit()
@@ -3038,8 +3058,17 @@ func AddSuperLottoCheck(when *time.Time) {
 					} else {
 						o.BonusStatus = NO_BONUS
 					}
-
-					tx.Save(&o)
+					var updateColumn = map[string]interface{}{"win": o.Win, "bonus": o.Bonus,
+						"comment": o.Comment, "all_match_finished": o.AllMatchFinished,
+						"bonus_status": o.BonusStatus,
+					}
+					if err := tx.Model(&o).Updates(updateColumn); err != nil {
+						log.Error("大乐透定时任务，更新订单失败")
+						log.Error(err)
+						tx.Rollback()
+						return
+					}
+					//tx.Save(&o)
 				}
 			}
 			tx.Commit()
@@ -3176,7 +3205,17 @@ func AddSevenStarCheck(when *time.Time) {
 					} else {
 						o.BonusStatus = NO_BONUS
 					}
-					tx.Save(o)
+					//tx.Save(o)
+					var updateColumn = map[string]interface{}{"win": o.Win, "bonus": o.Bonus,
+						"comment": o.Comment, "all_match_finished": o.AllMatchFinished,
+						"bonus_status": o.BonusStatus,
+					}
+					if err := tx.Model(&o).Updates(updateColumn); err != nil {
+						log.Error("七星定时任务，更新订单失败")
+						log.Error(err)
+						tx.Rollback()
+						return
+					}
 				}
 			}
 			tx.Commit()

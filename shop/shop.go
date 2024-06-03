@@ -448,11 +448,18 @@ func QueryShopUser(c *gin.Context) {
 		var userInfos []user.User
 		var count int64
 		mysql.DB.Model(user.User{}).Where(&user.User{From: shopInfo.ID}).Count(&count).Offset((pageN - 1) * pageS).Limit(pageS).Find(&userInfos)
+		var vos []user.UserDTO
+		for _, info := range userInfos {
+			dto := info.GetDTO()
+			free, _ := score.QueryByUserId(dto.ID)
+			dto.FreeScore = free.Score
+			vos = append(vos, dto)
+		}
 		common.SuccessReturn(c, common.PageCL{
 			pageN,
 			pageS,
 			int(count),
-			userInfos,
+			vos,
 		})
 		return
 	}

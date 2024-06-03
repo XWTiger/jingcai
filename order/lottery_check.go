@@ -664,7 +664,7 @@ func CheckLottery(whenStart time.Time) error {
 							bet.Win = false
 						}
 						if serr := tx.Save(&bet).Error; serr != nil {
-							log.Error("保存")
+							log.Error("保存失败", serr)
 							tx.Rollback()
 							return
 						}
@@ -678,7 +678,7 @@ func CheckLottery(whenStart time.Time) error {
 			orderTx := mysql.DB.Begin()
 			//订单更新
 			orders := getNotFinishedOrders()
-			for _, order := range orders {
+			for indx, order := range orders {
 				bets := getBetByOrderId(order.UUID)
 				var countBet = 0
 				for _, bet := range bets {
@@ -688,32 +688,40 @@ func CheckLottery(whenStart time.Time) error {
 				}
 				if countBet == len(bets) {
 					//所有比赛都完成 并且中奖已经对账
-					order.AllMatchFinished = true
+					orders[indx].AllMatchFinished = true
 					var bonus float32 = 0.0
 					for _, bet := range bets {
 						if bet.Check && bet.Win {
-							order.Win = true
+							orders[indx].Win = true
 							bonus = bonus + bet.Bonus
 						}
 					}
 					value, _ := decimal.NewFromFloat32(bonus).Mul(decimal.NewFromInt(int64(order.Times))).Float64()
-					order.Bonus = float32(value)
-					if err := orderTx.Save(&order).Error; err != nil {
+					orders[indx].Bonus = float32(value)
+
+					var updateColumn = map[string]interface{}{"win": orders[indx].Win, "bonus": orders[indx].Bonus}
+					if err := orderTx.Model(&orders[indx]).Updates(updateColumn); err != nil {
 						log.Error("定时任务，更新订单失败")
 						log.Error(err)
 						orderTx.Rollback()
 						return
 					}
-					if order.AllWinId > 0 {
+					/*if err := orderTx.Save(&order).Error; err != nil {
+						log.Error("定时任务，更新订单失败")
+						log.Error(err)
+						orderTx.Rollback()
+						return
+					}*/
+					if order.AllWinId > 0 && order.SaveType == TOMASTER {
 						log.Info("=====  确定合买订单  ======")
 						all := GetAllWinByParentId(order.AllWinId)
 						var allB float32 = 0
-						for _, win := range all {
+						for inx, win := range all {
 							value2, _ := decimal.NewFromFloat32(order.Bonus).Div(decimal.NewFromInt(int64(win.BuyNumber))).Float64()
-							win.Bonus = float32(value2)
-							win.Timeout = true
-							allB += win.Bonus
-							orderTx.Save(&win)
+							all[inx].Bonus = float32(value2)
+							all[inx].Timeout = true
+							allB += all[inx].Bonus
+							orderTx.Save(&all[inx])
 
 						}
 						err := user.AddScoreInnerByMachine(allB, order.UserID, SCORE, orderTx)
@@ -722,7 +730,7 @@ func CheckLottery(whenStart time.Time) error {
 							log.Error("========= 机器兑奖失败 ==========")
 							return
 						}
-					} else {
+					} else if order.SaveType == TOMASTER {
 						err := user.AddScoreInnerByMachine(order.Bonus, order.UserID, SCORE, orderTx)
 						if err != nil {
 							log.Error(err)
