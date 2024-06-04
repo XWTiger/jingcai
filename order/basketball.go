@@ -349,7 +349,7 @@ func CheckBasketBallLottery(checkTime time.Time) {
 
 			orderTx := mysql.DB.Begin()
 			//订单更新
-			orders = getNotFinishedOrders()
+			orders = getNotFinishedOrders(BASKETBALL)
 			for _, order := range orders {
 				bets := getBetByOrderId(order.UUID)
 				var countBet = 0

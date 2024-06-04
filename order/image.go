@@ -297,10 +297,10 @@ func AdminOrderList(c *gin.Context) {
 
 	if lotteryType != "" {
 		log.Info("======1=====")
-		query = mysql.DB.Debug().Model(&param).Select("orders.*").Where("all_win_id > 0 and pay_status = true  and (orders.save_type='TOMASTER' or  orders.save_type='ALLWIN')").Joins("INNER JOIN all_wins on orders.all_win_id = all_wins.id and all_wins.`parent_id`=0  and all_wins.`status` = true" + " and orders.lottery_type='" + lotteryType + "'")
+		query = mysql.DB.Debug().Model(&param).Select("orders.*").Where("all_win_id > 0 and pay_status = true  and (orders.save_type='TOMASTER' or  orders.save_type='ALLWIN')").Joins("Left JOIN all_wins on orders.all_win_id = all_wins.id and all_wins.`parent_id`=0  and all_wins.`status` = true" + " and orders.lottery_type='" + lotteryType + "'")
 		query2 = mysql.DB.Debug().Model(&param).Select("orders.* ").Where("orders.deleted_at is null and pay_status = true and (orders.save_type='TOMASTER' or  orders.save_type='ALLWIN')" + " and orders.lottery_type='" + lotteryType + "'")
 	} else {
-		query = mysql.DB.Debug().Model(&param).Select("orders.*").Where("all_win_id > 0 and pay_status = true  and (orders.save_type='TOMASTER' or  orders.save_type='ALLWIN')").Joins("INNER JOIN all_wins on orders.all_win_id = all_wins.id and all_wins.`parent_id`=0  and all_wins.`status` = true")
+		query = mysql.DB.Debug().Model(&param).Select("orders.*").Where("all_win_id > 0 and pay_status = true  and (orders.save_type='TOMASTER' or  orders.save_type='ALLWIN')").Joins("Left JOIN all_wins on orders.all_win_id = all_wins.id and all_wins.`parent_id`=0  and all_wins.`status` = true")
 		query2 = mysql.DB.Debug().Model(&param).Select("orders.* ").Where("orders.deleted_at is null and pay_status = true and (orders.save_type='TOMASTER' or  orders.save_type='ALLWIN')")
 	}
 	var count int64

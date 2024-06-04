@@ -677,7 +677,7 @@ func CheckLottery(whenStart time.Time) error {
 
 			orderTx := mysql.DB.Begin()
 			//订单更新
-			orders := getNotFinishedOrders()
+			orders := getNotFinishedOrders(FOOTBALL)
 			for indx, order := range orders {
 				bets := getBetByOrderId(order.UUID)
 				var countBet = 0

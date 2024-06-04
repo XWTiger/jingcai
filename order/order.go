@@ -510,6 +510,7 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 				tx.Rollback()
 				return
 			}
+			order.PayStatus = true
 		}
 		if err := tx.Model(&Order{}).Create(&order).Error; err != nil {
 			log.Error("创建订单失败 ", err)
@@ -542,7 +543,7 @@ func orderCreateFunc(c *gin.Context, orderFrom *Order) {
 				tx.Rollback()
 				return
 			}
-			order.PayStatus = false
+			order.PayStatus = true
 		}
 		if err := tx.Model(&Order{}).Create(&order).Error; err != nil {
 			log.Error("创建订单失败 ", err)
@@ -960,9 +961,10 @@ func FindById(uuid string, searchMatch bool) Order {
 	return order
 }
 
-func getNotFinishedOrders() []Order {
+func getNotFinishedOrders(typ string) []Order {
 	var param = Order{
 		AllMatchFinished: false,
+		LotteryType:      typ,
 	}
 	var list = make([]Order, 0)
 	mysql.DB.Debug().Model(&param).Where("all_match_finished=?", false).Order("created_at desc").Find(&list)
