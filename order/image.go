@@ -328,6 +328,7 @@ func AdminOrderList(c *gin.Context) {
 		list = append(list, listS[i])
 	}
 
+	count = int64(len(listF) + len(listS))
 	//mysql.DB.Raw("? union ? ", query, query2).Count(&count)
 	//mysql.DB.Raw("? union ? ", query, query2).Order(orderStr).Offset((page - 1) * pageSize).Limit(pageSize).Find(&list)
 	if len(list) <= 0 {

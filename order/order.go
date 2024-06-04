@@ -721,7 +721,13 @@ func OrderTempToMaster(c *gin.Context) {
 	order := FindById(orderNo, false)
 	if order.UUID != "" {
 		tx := mysql.DB.Begin()
-		tx.Model(&Order{}).Where("uuid = ?", order.UUID).Update("save_type = ?", TOMASTER)
+		updateErr := tx.Model(&Order{}).Where("uuid = ?", order.UUID).Update("save_type", TOMASTER).Error
+		if updateErr != nil {
+			log.Error(updateErr)
+			tx.Rollback()
+			common.FailedReturn(c, "跟新订单状态失败")
+			return
+		}
 		err := user.CheckScoreOrDoBill(userInfo.ID, order.UUID, order.ShouldPay, false, tx)
 		if err != nil {
 			log.Error(err)
@@ -930,7 +936,11 @@ func FindById(uuid string, searchMatch bool) Order {
 		UUID: uuid,
 	}
 	var order Order
-	mysql.DB.Model(&param).Where(&param).First(&order)
+	err := mysql.DB.Model(&param).Where(&param).First(&order).Error
+	if err != nil {
+		log.Error(err)
+		return order
+	}
 	var mathParam = Match{
 		OrderId: order.UUID,
 	}
@@ -1034,7 +1044,7 @@ func football(c *gin.Context, order *Order) error {
 	if order.LogicWinMaX != logicCount {
 		log.Warn("逻辑奖金和后台算出对不上", order.LogicWinMaX, logicCount)
 	}
-	order.LogicWinMaX = logicCount
+	order.LogicWinMaX = bigerNumControll(*order, logicCount)
 	v3, _ := decimal.NewFromInt(2).Mul(decimal.NewFromInt(int64(order.Times))).Mul(decimal.NewFromInt(int64(len(bonus)))).Float64()
 	order.ShouldPay = float32(v3)
 	order.CreatedAt = time.Now()
@@ -1140,6 +1150,20 @@ func fillMatches(games cache.FootBallGames, order *Order, c *gin.Context, tx *go
 		}
 	}
 	return order
+}
+
+func bigerNumControll(order Order, num float32) float32 {
+	if order.Way == "1x1" && num > 100000 {
+		return 100000
+	}
+	if (order.Way == "3x1" || order.Way == "2x1") && num > 200000 {
+		return 200000
+	}
+	if num > 1000000 {
+		return 1000000
+	}
+	return num
+
 }
 
 // 回填比赛信息和赔率
