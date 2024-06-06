@@ -533,7 +533,6 @@ func UserComplain(c *gin.Context) {
 	c.BindJSON(&complain)
 	complain.UserId = user.ID
 	complain.UserName = user.Name
-	mysql.DB.AutoMigrate(&complain)
 	mysql.DB.Create(&complain)
 	common.SuccessReturn(c, "提交成功")
 }

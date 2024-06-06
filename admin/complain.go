@@ -28,6 +28,12 @@ func ListComplain(c *gin.Context) {
 		return
 	}
 	var complains []user.Complain
-	mysql.DB.Model(&user.Complain{}).Offset(pg * pgsize).Limit(pgsize).Find(&complains)
-	common.SuccessReturn(c, complains)
+	var count int64
+	mysql.DB.Debug().Model(&user.Complain{}).Count(&count).Offset((pg - 1) * pgsize).Limit(pgsize).Find(&complains)
+	common.SuccessReturn(c, common.PageCL{
+		PageNo:   pg,
+		PageSize: pgsize,
+		Total:    int(count),
+		Content:  complains,
+	})
 }
