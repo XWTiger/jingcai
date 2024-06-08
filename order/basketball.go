@@ -374,7 +374,7 @@ func CheckBasketBallLottery(checkTime time.Time) {
 						"comment": order.Comment, "all_match_finished": order.AllMatchFinished,
 						"bonus_status": order.BonusStatus,
 					}
-					if err := tx.Model(&order).Updates(updateColumn); err != nil {
+					if err := tx.Model(&order).Updates(updateColumn).Error; err != nil {
 						log.Error("篮球定时任务，更新订单失败")
 						log.Error(err)
 						tx.Rollback()
@@ -397,6 +397,11 @@ func CheckBasketBallLottery(checkTime time.Time) {
 							orderTx.Save(&win)
 						}
 						err := user.AddScoreInnerByMachine(allB, order.UserID, SCORE, orderTx)
+						errUp := orderTx.Model(&Order{}).Where("uuid = ?", order.UUID).Update("bonus_status", BONUS_READY).Error
+						if errUp != nil {
+							log.Error("更新未中奖订单失败")
+							orderTx.Rollback()
+						}
 						if err != nil {
 							log.Error(err)
 							log.Error("========= 机器兑奖失败 ==========")
@@ -404,6 +409,11 @@ func CheckBasketBallLottery(checkTime time.Time) {
 						}
 					} else {
 						err := user.AddScoreInnerByMachine(order.Bonus, order.UserID, SCORE, orderTx)
+						errUp := orderTx.Model(&Order{}).Where("uuid = ?", order.UUID).Update("bonus_status", BONUS_READY).Error
+						if errUp != nil {
+							log.Error("更新未中奖订单失败")
+							orderTx.Rollback()
+						}
 						if err != nil {
 							log.Error(err)
 							log.Error("========= 机器兑奖失败 ==========")
@@ -411,6 +421,12 @@ func CheckBasketBallLottery(checkTime time.Time) {
 						}
 					}
 
+				} else if countBet > 0 {
+					errUp := orderTx.Model(&Order{}).Where("uuid = ?", order.UUID).Update("bonus_status", NO_BONUS).Error
+					if errUp != nil {
+						log.Error("更新未中奖订单失败")
+						orderTx.Rollback()
+					}
 				}
 			}
 			orderTx.Commit()

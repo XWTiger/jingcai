@@ -2817,7 +2817,7 @@ func AddPlwCheck(p int, when *time.Time) {
 							"comment": orders[inx].Comment, "all_match_finished": orders[inx].AllMatchFinished,
 							"bonus_status": orders[inx].BonusStatus,
 						}
-						if err := tx.Model(&orders[inx]).Updates(updateColumn); err != nil {
+						if err := tx.Debug().Model(&orders[inx]).Updates(updateColumn).Error; err != nil {
 							log.Error("定时任务，更新订单失败")
 							log.Error(err)
 							tx.Rollback()
@@ -2904,7 +2904,7 @@ func AddPlwCheck(p int, when *time.Time) {
 							"comment": orders[inx].Comment, "all_match_finished": orders[inx].AllMatchFinished,
 							"bonus_status": orders[inx].BonusStatus,
 						}
-						if err := tx.Model(&orders[inx]).Updates(updateColumn); err != nil {
+						if err := tx.Model(&orders[inx]).Updates(updateColumn).Error; err != nil {
 							log.Error("p5定时任务，更新订单失败")
 							log.Error(err)
 							tx.Rollback()
@@ -3098,7 +3098,7 @@ func AddSuperLottoCheck(when *time.Time) {
 						"comment": o.Comment, "all_match_finished": o.AllMatchFinished,
 						"bonus_status": o.BonusStatus,
 					}
-					if err := tx.Model(&o).Updates(updateColumn); err != nil {
+					if err := tx.Model(&o).Updates(updateColumn).Error; err != nil {
 						log.Error("大乐透定时任务，更新订单失败")
 						log.Error(err)
 						tx.Rollback()
@@ -3246,7 +3246,7 @@ func AddSevenStarCheck(when *time.Time) {
 						"comment": o.Comment, "all_match_finished": o.AllMatchFinished,
 						"bonus_status": o.BonusStatus,
 					}
-					if err := tx.Model(&o).Updates(updateColumn); err != nil {
+					if err := tx.Model(&o).Updates(updateColumn).Error; err != nil {
 						log.Error("七星定时任务，更新订单失败")
 						log.Error(err)
 						tx.Rollback()

@@ -700,7 +700,7 @@ func CheckLottery(whenStart time.Time) error {
 					orders[indx].Bonus = float32(value)
 
 					var updateColumn = map[string]interface{}{"win": orders[indx].Win, "bonus": orders[indx].Bonus}
-					if err := orderTx.Model(&orders[indx]).Updates(updateColumn); err != nil {
+					if err := orderTx.Model(&Order{}).Where("uuid=?", orders[indx].UUID).Updates(updateColumn).Error; err != nil {
 						log.Error("定时任务，更新订单失败")
 						log.Error(err)
 						orderTx.Rollback()
@@ -725,6 +725,11 @@ func CheckLottery(whenStart time.Time) error {
 
 						}
 						err := user.AddScoreInnerByMachine(allB, order.UserID, SCORE, orderTx)
+						errUp := orderTx.Model(&Order{}).Where("uuid = ?", order.UUID).Update("bonus_status", BONUS_READY).Error
+						if errUp != nil {
+							log.Error("更新未中奖订单失败")
+							orderTx.Rollback()
+						}
 						if err != nil {
 							log.Error(err)
 							log.Error("========= 机器兑奖失败 ==========")
@@ -732,6 +737,11 @@ func CheckLottery(whenStart time.Time) error {
 						}
 					} else if order.SaveType == TOMASTER {
 						err := user.AddScoreInnerByMachine(order.Bonus, order.UserID, SCORE, orderTx)
+						errUp := orderTx.Model(&Order{}).Where("uuid = ?", order.UUID).Update("bonus_status", BONUS_READY).Error
+						if errUp != nil {
+							log.Error("更新未中奖订单失败")
+							orderTx.Rollback()
+						}
 						if err != nil {
 							log.Error(err)
 							log.Error("========= 机器兑奖失败 ==========")
@@ -739,6 +749,12 @@ func CheckLottery(whenStart time.Time) error {
 						}
 					}
 
+				} else if countBet > 0 {
+					err := orderTx.Model(&orders[indx]).Where("uuid = ?", order.UUID).Update("bonus_status", NO_BONUS).Error
+					if err != nil {
+						log.Error("更新未中奖订单失败")
+						orderTx.Rollback()
+					}
 				}
 			}
 			orderTx.Commit()
@@ -808,6 +824,7 @@ func AddCheckForManual(c *gin.Context) {
 		common.FailedReturn(c, "添加手动对账失败")
 		return
 	}
-	CheckLottery(startTime)
-	CheckBasketBallLottery(startTime)
+	/*CheckLottery(startTime)
+	CheckBasketBallLottery(startTime)*/
+	AddSuperLottoCheck(&startTime)
 }
