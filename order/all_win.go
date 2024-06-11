@@ -91,6 +91,8 @@ type AllWinVO struct {
 
 	// 带红人数
 	FollowWinCount int
+	//份数
+	BuyNumber int
 
 	//备注
 	Comment string
@@ -210,6 +212,7 @@ func (a AllWin) GetVO() AllWinVO {
 		vo.LeastTimes = a.LeastTimes
 		vo.ShowType = a.ShowType
 		vo.Number = a.Number
+		vo.BuyNumber = a.BuyNumber
 		//计算合买带红人数
 		//1.查到这人所有中奖单
 		var allOfThePerson []AllWin
