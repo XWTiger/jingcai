@@ -372,12 +372,11 @@ func CheckBasketBallLottery(checkTime time.Time) {
 					order.Bonus = float32(value)
 					var updateColumn = map[string]interface{}{"win": order.Win, "bonus": order.Bonus,
 						"comment": order.Comment, "all_match_finished": order.AllMatchFinished,
-						"bonus_status": order.BonusStatus,
 					}
-					if err := tx.Model(&order).Updates(updateColumn).Error; err != nil {
+					if err := orderTx.Model(&Order{}).Where("uuid = ?", order.UUID).Updates(updateColumn).Error; err != nil {
 						log.Error("篮球定时任务，更新订单失败")
 						log.Error(err)
-						tx.Rollback()
+						orderTx.Rollback()
 						return
 					}
 					/*if err := orderTx.Save(&order).Error; err != nil {
